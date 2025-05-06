@@ -1,9 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { useNavigate } from 'react-router-dom';
 
 type AuthContextType = {
   user: User | null;
@@ -62,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fetchUserRole(session.user.id);
           }, 0);
 
-          // If signed in explicitly (through event), redirect to app, but not on initial session check
+          // Only redirect on explicit sign-in events, not on initial session check
           if (event === 'SIGNED_IN' && window.location.pathname === '/') {
             window.location.href = '/app';
           }
