@@ -15,17 +15,19 @@ serve(async (req) => {
   try {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
     
-    // Get the price IDs from the request query params
-    const url = new URL(req.url);
-    const priceIds = url.searchParams.get("priceIds")?.split(",") || [];
+    // Get the price IDs from the request body
+    const { priceIds } = await req.json();
     
-    if (priceIds.length === 0) {
+    if (!priceIds || priceIds.length === 0) {
       throw new Error("No price IDs provided");
     }
     
+    // Split the comma-separated IDs if it's a string
+    const priceIdArray = typeof priceIds === 'string' ? priceIds.split(',') : priceIds;
+    
     // Retrieve the prices from Stripe
     const prices = await Promise.all(
-      priceIds.map(async (priceId) => {
+      priceIdArray.map(async (priceId) => {
         try {
           const price = await stripe.prices.retrieve(priceId);
           return price;

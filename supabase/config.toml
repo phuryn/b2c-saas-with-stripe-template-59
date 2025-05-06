@@ -10,3 +10,6 @@ project_id = "bnwvnlgspaxuzbfiphik"
 [functions.update-subscription]
 
 [functions.get-prices]
+
+[functions.get-invoices]
+

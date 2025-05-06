@@ -9,5 +9,6 @@ export const STRIPE_CONFIG = {
       monthly: "price_1RLoRrLdL9hht8n4LZcdyKQt",
       yearly: "price_1RLoScLdL9hht8n4hSQtsOte"
     }
-  }
+  },
+  customerPortalUrl: "https://billing.stripe.com/p/login/7sIaER27X5UWdaMeUU"
 };
