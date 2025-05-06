@@ -13,9 +13,14 @@ const Signup: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
 
+  // Only redirect if user explicitly signed up through this page, not for existing sessions
   useEffect(() => {
-    // If user is already authenticated, redirect to app
-    if (user && !isLoading) {
+    // Checking URL parameter for direct signup attempt
+    const params = new URLSearchParams(window.location.search);
+    const directSignup = params.get('directSignup') === 'true';
+    
+    // Only redirect if this is a direct signup attempt and user is authenticated
+    if (directSignup && user && !isLoading) {
       navigate("/app");
     }
   }, [user, navigate, isLoading]);
@@ -31,7 +36,7 @@ const Signup: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: baseUrl + '/app',
+          redirectTo: `${baseUrl}/app?directSignup=true`,
           queryParams: {
             prompt: "select_account"
           }

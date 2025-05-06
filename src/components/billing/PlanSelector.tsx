@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,7 +53,9 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   onSubscribe,
   onUpdateSubscription
 }) => {
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>(
+    subscription?.current_plan?.includes('yearly') ? 'yearly' : 'monthly'
+  );
   
   const plans: PlanOption[] = [
     {
@@ -101,9 +102,12 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     isFree: true,
   };
 
-  const isPlanActive = (planName: string): boolean => {
+  const isPlanActive = (planName: string, priceId: string): boolean => {
     if (!subscription?.subscribed) return planName === "Free";
-    return subscription.subscription_tier === planName;
+    
+    // Check both the tier name and the exact price ID
+    return subscription.subscription_tier === planName && 
+           subscription.current_plan === priceId;
   };
 
   const formatCurrency = (amount: number | undefined, currency: string = 'usd'): string => {
@@ -138,7 +142,8 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   };
 
   const handlePlanAction = (plan: PlanOption) => {
-    if (isPlanActive(plan.name)) return; // Already on this plan
+    const currentPriceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
+    if (isPlanActive(plan.name, currentPriceId)) return; // Already on this plan
     
     if (plan.isEnterprise && plan.emailLink) {
       window.location.href = plan.emailLink;
@@ -205,7 +210,8 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       {/* Mobile-friendly plan grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => {
-          const isActive = isPlanActive(plan.name);
+          const currentPriceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
+          const isActive = isPlanActive(plan.name, currentPriceId);
           
           return (
           <div key={plan.id} className="relative">

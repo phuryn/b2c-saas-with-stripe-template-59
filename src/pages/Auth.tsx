@@ -13,16 +13,21 @@ const Auth: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
 
+  // Only redirect if user explicitly signed in through this page, not for existing sessions
   useEffect(() => {
-    // If user is already authenticated, redirect to app
-    if (user && !isLoading) {
+    // Checking URL parameter for direct login attempt
+    const params = new URLSearchParams(window.location.search);
+    const directLogin = params.get('directLogin') === 'true';
+    
+    // Only redirect if this is a direct login attempt and user is authenticated
+    if (directLogin && user && !isLoading) {
       navigate('/app');
     }
   }, [user, navigate, isLoading]);
 
   const handleGoogleSignIn = async () => {
     try {
-      // Handle both cases: app.domain.com and domain.com
+      // Add directLogin parameter to track explicit login attempts
       const currentUrl = window.location.href;
       const baseUrl = window.location.hostname.startsWith('app.')
         ? currentUrl.split('/auth')[0]
@@ -31,7 +36,7 @@ const Auth: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: baseUrl + '/app',
+          redirectTo: `${baseUrl}/app?directLogin=true`,
           queryParams: {
             // Force a fresh login prompt even if the user is already logged in
             prompt: 'select_account'
