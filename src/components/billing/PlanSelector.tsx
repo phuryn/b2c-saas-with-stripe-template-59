@@ -58,16 +58,6 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   
   const plans: PlanOption[] = [
     {
-      id: "free",
-      name: "Free",
-      monthlyPriceId: "", // No price ID for free plan
-      yearlyPriceId: "", // No price ID for free plan
-      description: "Basic functionality for personal use.",
-      limits: ["20 links / month", "1 QR code / month"],
-      features: ["30-days of click history", "Email support"],
-      isFree: true,
-    },
-    {
       id: "standard",
       name: "Standard",
       monthlyPriceId: STRIPE_CONFIG.prices.standard.monthly,
@@ -98,6 +88,18 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       emailLink: "mailto:contact@trusty.com",
     }
   ];
+
+  // Free plan details - used for displaying on paid plans or if user is on free plan
+  const freePlan = {
+    id: "free",
+    name: "Free",
+    monthlyPriceId: "", // No price ID for free plan
+    yearlyPriceId: "", // No price ID for free plan
+    description: "Basic functionality for personal use.",
+    limits: ["20 links / month", "1 QR code / month"],
+    features: ["30-days of click history", "Email support"],
+    isFree: true,
+  };
 
   const isPlanActive = (planName: string): boolean => {
     if (!subscription?.subscribed) return planName === "Free";
@@ -166,12 +168,20 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Subscription Status Message */}
       {subscription?.subscribed && subscription.subscription_end && subscription.payment_method && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="rounded-lg p-4 mb-6 border border-blue-100 bg-blue-50/50">
           <p className="text-blue-800">
             Your subscription will auto-renew on {formatDate(subscription.subscription_end)}. On that date, the {formatCardBrand(subscription.payment_method?.brand)} card 
             (ending in {subscription.payment_method?.last4}) will be charged.
           </p>
+        </div>
+      )}
+
+      {/* Free plan message */}
+      {!subscription?.subscribed && (
+        <div className="rounded-lg p-4 mb-6 border border-gray-100 bg-gray-50/50">
+          <p>You're a free subscriber</p>
         </div>
       )}
 
@@ -192,8 +202,12 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {plans.map((plan) => (
+      {/* Mobile-friendly plan grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {plans.map((plan) => {
+          const isActive = isPlanActive(plan.name);
+          
+          return (
           <div key={plan.id} className="relative">
             {plan.recommended && (
               <div className="absolute inset-x-0 -top-6 flex justify-center">
@@ -203,7 +217,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
               </div>
             )}
             <Card 
-              className={`overflow-hidden ${isPlanActive(plan.name) ? 'border-primary border-2' : ''} ${plan.recommended ? 'ring-1 ring-blue-500' : ''}`}
+              className={`overflow-hidden ${isActive ? 'border-primary border-2' : ''} ${plan.recommended ? 'ring-1 ring-blue-500' : ''}`}
             >
               <CardHeader className={plan.recommended ? '' : ''}>
                 <CardTitle>{plan.name}</CardTitle>
@@ -230,13 +244,13 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
                   {!plan.isEnterprise ? (
                     <Button
                       className="w-full"
-                      variant={isPlanActive(plan.name) ? "outline" : "default"}
-                      disabled={isPlanActive(plan.name) || loading}
+                      variant={isActive ? "outline" : "default"}
+                      disabled={isActive || loading}
                       onClick={() => handlePlanAction(plan)}
                     >
                       {loading ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
-                      ) : isPlanActive(plan.name) ? (
+                      ) : isActive ? (
                         'Current Plan'
                       ) : plan.isFree ? (
                         'Free Plan'
@@ -273,8 +287,35 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
               </CardFooter>
             </Card>
           </div>
-        ))}
+        )})}
       </div>
+
+      {/* Free plan downgrade option when on paid plan */}
+      {subscription?.subscribed && (
+        <div className="mt-8 pt-6 border-t">
+          <h4 className="text-base font-medium mb-3">Other Options</h4>
+          <Button 
+            variant="outline" 
+            className="text-gray-600"
+            onClick={() => onUpdateSubscription('free')}
+          >
+            Downgrade to Free Plan
+          </Button>
+          <div className="mt-3">
+            <p className="text-sm text-gray-500">
+              Free plan includes:
+            </p>
+            <ul className="space-y-1 mt-2">
+              {freePlan.limits.concat(freePlan.features).map((feature, index) => (
+                <li key={index} className="flex items-start text-sm">
+                  <Check className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -14,75 +14,120 @@ const Pricing: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Starter Plan */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
+          {/* Free Plan */}
           <div className="border rounded-lg overflow-hidden shadow-sm">
             <div className="p-6">
-              <h3 className="text-xl font-bold mb-2">Starter</h3>
+              <h3 className="text-xl font-bold mb-2">Free</h3>
               <div className="mb-4">
-                <span className="text-3xl font-bold">$29</span>
+                <span className="text-3xl font-bold">$0</span>
                 <span className="text-gray-500">/month</span>
               </div>
-              <p className="text-gray-600 mb-6">Perfect for small teams getting started.</p>
-              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Start Free Trial</Button>
+              <p className="text-gray-600 mb-6">Basic functionality for personal use.</p>
+              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Try Now</Button>
             </div>
             <div className="border-t p-6">
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Up to 5 team members</span>
+                  <span>20 links / month</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>10 projects</span>
+                  <span>1 QR code / month</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>5GB storage</span>
+                  <span>30-days of click history</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Basic support</span>
+                  <span>Email support</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Starter Plan */}
+          <div className="border rounded-lg overflow-hidden shadow-sm relative">
+            <div className="absolute inset-x-0 -top-6 flex justify-center">
+              <div className="bg-primary text-white px-3 py-1 text-xs font-medium rounded-t-md">
+                RECOMMENDED
+              </div>
+            </div>
+            <div className="p-6">
+              <h3 className="text-xl font-bold mb-2">Standard</h3>
+              <div className="mb-4">
+                <span className="text-3xl font-bold">$29</span>
+                <span className="text-gray-500">/month</span>
+              </div>
+              <p className="text-gray-600 mb-6">Great for professionals and small teams.</p>
+              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Try Now</Button>
+            </div>
+            <div className="border-t p-6">
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
+                  <span>200 links / month</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
+                  <span>20 QR codes / month</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-sm font-medium">Everything in Free, plus:</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
+                  <span>6-months of click history</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
+                  <span>Bulk link & QR Code creation</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
+                  <span>Priority support</span>
                 </li>
               </ul>
             </div>
           </div>
 
           {/* Pro Plan */}
-          <div className="border rounded-lg overflow-hidden shadow-sm relative">
-            <div className="absolute top-0 right-0 bg-primary-blue text-white px-3 py-1 text-sm font-medium rounded-bl">
-              Popular
-            </div>
+          <div className="border rounded-lg overflow-hidden shadow-sm">
             <div className="p-6">
-              <h3 className="text-xl font-bold mb-2">Pro</h3>
+              <h3 className="text-xl font-bold mb-2">Premium</h3>
               <div className="mb-4">
                 <span className="text-3xl font-bold">$79</span>
                 <span className="text-gray-500">/month</span>
               </div>
               <p className="text-gray-600 mb-6">For growing teams with advanced needs.</p>
-              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Start Free Trial</Button>
+              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Try Now</Button>
             </div>
             <div className="border-t p-6">
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Up to 20 team members</span>
+                  <span>5000 links / month</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Unlimited projects</span>
+                  <span>500 QR codes / month</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-sm font-medium">Everything in Standard, plus:</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>25GB storage</span>
+                  <span>2 years of click history</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Priority support</span>
+                  <span>City-level & device analytics</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Advanced analytics</span>
+                  <span>API access</span>
                 </li>
               </ul>
             </div>
@@ -93,37 +138,31 @@ const Pricing: React.FC = () => {
             <div className="p-6">
               <h3 className="text-xl font-bold mb-2">Enterprise</h3>
               <div className="mb-4">
-                <span className="text-3xl font-bold">$199</span>
-                <span className="text-gray-500">/month</span>
+                <span className="text-3xl font-bold">Custom</span>
               </div>
               <p className="text-gray-600 mb-6">For large organizations and complex needs.</p>
-              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Contact Sales</Button>
+              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Get a Quote</Button>
             </div>
             <div className="border-t p-6">
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Unlimited team members</span>
+                  <span>Custom number of QR codes and links</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-sm font-medium">Everything in Premium, plus:</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Unlimited projects</span>
+                  <span>99.9% SLA uptime</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>100GB storage</span>
+                  <span>Dedicated customer success manager</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>24/7 dedicated support</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Custom integrations</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="h-5 w-5 text-primary-green mr-2 mt-0.5 flex-shrink-0" />
-                  <span>SLA guarantees</span>
+                  <span>Customized onboarding & priority support</span>
                 </li>
               </ul>
             </div>
