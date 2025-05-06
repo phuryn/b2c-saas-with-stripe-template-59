@@ -7,15 +7,20 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useSearchParams } from 'react-router-dom';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface PlanOption {
   id: string;
   name: string;
-  price: string;
-  priceId: string;
+  monthlyPrice: string;
+  yearlyPrice: string;
+  monthlyPriceId: string;
+  yearlyPriceId: string;
   description: string;
   features: string[];
   popular?: boolean;
+  isFree?: boolean;
 }
 
 const BillingSettings: React.FC = () => {
@@ -24,6 +29,7 @@ const BillingSettings: React.FC = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [subscription, setSubscription] = useState<{
     subscribed: boolean;
     subscription_tier: string | null;
@@ -33,36 +39,36 @@ const BillingSettings: React.FC = () => {
   
   const plans: PlanOption[] = [
     {
-      id: "starter",
-      name: "Starter",
-      price: "$29",
-      priceId: "price_starter", // Replace with actual Stripe price ID
-      description: "Perfect for small teams getting started.",
-      features: ["Up to 5 team members", "10 projects", "5GB storage", "Basic support"],
+      id: "free",
+      name: "Free",
+      monthlyPrice: "$0",
+      yearlyPrice: "$0",
+      monthlyPriceId: "", // No price ID for free plan
+      yearlyPriceId: "", // No price ID for free plan
+      description: "Basic functionality for personal use.",
+      features: ["1 project", "5 links", "Basic analytics", "Email support"],
+      isFree: true,
     },
     {
-      id: "pro",
-      name: "Pro",
-      price: "$79",
-      priceId: "price_pro", // Replace with actual Stripe price ID
-      description: "For growing teams with advanced needs.",
-      features: ["Up to 20 team members", "Unlimited projects", "25GB storage", "Priority support", "Advanced analytics"],
+      id: "standard",
+      name: "Standard",
+      monthlyPrice: "$9",
+      yearlyPrice: "$90",
+      monthlyPriceId: "price_standard_monthly", // Replace with actual Stripe price ID
+      yearlyPriceId: "price_standard_yearly", // Replace with actual Stripe price ID
+      description: "Great for professionals and small teams.",
+      features: ["10 projects", "Unlimited links", "Advanced analytics", "Priority support", "API access"],
+    },
+    {
+      id: "premium",
+      name: "Premium",
+      monthlyPrice: "$19",
+      yearlyPrice: "$190",
+      monthlyPriceId: "price_premium_monthly", // Replace with actual Stripe price ID
+      yearlyPriceId: "price_premium_yearly", // Replace with actual Stripe price ID
+      description: "Full-featured solution for businesses.",
+      features: ["Unlimited projects", "Unlimited links", "Custom analytics", "24/7 support", "API access", "White-labeling", "Custom integrations"],
       popular: true,
-    },
-    {
-      id: "enterprise",
-      name: "Enterprise",
-      price: "$199",
-      priceId: "price_enterprise", // Replace with actual Stripe price ID
-      description: "For large organizations and complex needs.",
-      features: [
-        "Unlimited team members", 
-        "Unlimited projects", 
-        "100GB storage", 
-        "24/7 dedicated support", 
-        "Custom integrations", 
-        "SLA guarantees"
-      ],
     },
   ];
 
@@ -109,7 +115,27 @@ const BillingSettings: React.FC = () => {
     }
   };
 
-  const handleSubscribe = async (priceId: string) => {
+  const handleSubscribe = async (planId: string) => {
+    const priceId = billingPeriod === 'monthly' 
+      ? plans.find(p => p.id === planId)?.monthlyPriceId
+      : plans.find(p => p.id === planId)?.yearlyPriceId;
+      
+    if (!priceId) {
+      if (plans.find(p => p.id === planId)?.isFree) {
+        toast({
+          title: 'Free Plan',
+          description: 'You are using the free plan. No payment required.',
+        });
+        return;
+      }
+      toast({
+        title: 'Error',
+        description: 'Invalid price ID.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setSubscriptionLoading(true);
       const { data, error } = await supabase.functions.invoke('create-checkout', {
@@ -132,9 +158,31 @@ const BillingSettings: React.FC = () => {
     }
   };
 
-  const handleUpdateSubscription = async (priceId: string) => {
+  const handleUpdateSubscription = async (planId: string) => {
+    if (plans.find(p => p.id === planId)?.isFree) {
+      toast({
+        title: 'Free Plan',
+        description: 'To downgrade to the free plan, please cancel your subscription in the customer portal.',
+      });
+      openCustomerPortal();
+      return;
+    }
+    
     if (!subscription?.subscribed) {
-      return handleSubscribe(priceId);
+      return handleSubscribe(planId);
+    }
+    
+    const priceId = billingPeriod === 'monthly' 
+      ? plans.find(p => p.id === planId)?.monthlyPriceId
+      : plans.find(p => p.id === planId)?.yearlyPriceId;
+      
+    if (!priceId) {
+      toast({
+        title: 'Error',
+        description: 'Invalid price ID.',
+        variant: 'destructive',
+      });
+      return;
     }
     
     try {
@@ -185,8 +233,16 @@ const BillingSettings: React.FC = () => {
   };
 
   const isPlanActive = (planName: string): boolean => {
-    if (!subscription?.subscribed) return false;
+    if (!subscription?.subscribed) return planName === "Free";
     return subscription.subscription_tier === planName;
+  };
+
+  const getPrice = (plan: PlanOption): string => {
+    return billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+  };
+
+  const getPricePeriod = (): string => {
+    return billingPeriod === 'monthly' ? '/month' : '/year';
   };
 
   if (loading) {
@@ -198,85 +254,132 @@ const BillingSettings: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <h2 className="text-xl font-medium mb-4">Billing and Usage</h2>
       
-      {subscription?.subscribed && (
-        <div className="mb-6">
-          <div className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-4">
-            <p className="text-sm text-blue-800">
-              <span className="font-medium">Current Plan:</span> {subscription.subscription_tier}
-              {subscription.subscription_end && (
-                <> · Renews on {new Date(subscription.subscription_end).toLocaleDateString()}</>
-              )}
-            </p>
-          </div>
-          
-          <Button 
-            variant="outline" 
-            onClick={openCustomerPortal}
-            disabled={subscriptionLoading}
-          >
-            {subscriptionLoading ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
-            ) : (
-              'Manage Subscription'
-            )}
-          </Button>
-        </div>
-      )}
-
-      <h3 className="text-lg font-medium mb-4">Available Plans</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans.map((plan) => (
-          <Card 
-            key={plan.id}
-            className={`overflow-hidden ${isPlanActive(plan.name) ? 'border-primary-blue border-2' : ''}`}
-          >
-            {plan.popular && (
-              <div className="bg-primary-blue text-white px-3 py-1 text-sm font-medium absolute right-0 top-0">
-                Popular
-              </div>
-            )}
-            <CardHeader>
-              <CardTitle>{plan.name}</CardTitle>
-              <CardDescription className="flex items-baseline">
-                <span className="text-3xl font-bold">{plan.price}</span>
-                <span className="text-gray-500 ml-1">/month</span>
-              </CardDescription>
-              <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button
-                className="w-full"
-                variant={isPlanActive(plan.name) ? "outline" : "default"}
-                disabled={isPlanActive(plan.name) || subscriptionLoading}
-                onClick={() => handleUpdateSubscription(plan.priceId)}
-              >
-                {subscriptionLoading ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
-                ) : isPlanActive(plan.name) ? (
-                  'Current Plan'
-                ) : subscription?.subscribed ? (
-                  'Switch Plan'
-                ) : (
-                  'Select Plan'
+      <div className="flex flex-col space-y-6">
+        {subscription?.subscribed && (
+          <div className="mb-0">
+            <div className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-4">
+              <p className="text-sm text-blue-800">
+                <span className="font-medium">Current Plan:</span> {subscription.subscription_tier}
+                {subscription.subscription_end && (
+                  <> · Renews on {new Date(subscription.subscription_end).toLocaleDateString()}</>
                 )}
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+              </p>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              onClick={openCustomerPortal}
+              disabled={subscriptionLoading}
+              className="mb-6"
+            >
+              {subscriptionLoading ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
+              ) : (
+                'Manage Subscription & Billing'
+              )}
+            </Button>
+          </div>
+        )}
+
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Available Plans</h3>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="billing-period" className={`text-sm ${billingPeriod === 'monthly' ? 'font-medium' : ''}`}>
+              Monthly
+            </Label>
+            <Switch 
+              id="billing-period" 
+              checked={billingPeriod === 'yearly'}
+              onCheckedChange={(checked) => setBillingPeriod(checked ? 'yearly' : 'monthly')}
+            />
+            <Label htmlFor="billing-period" className={`text-sm ${billingPeriod === 'yearly' ? 'font-medium' : ''}`}>
+              Yearly <span className="text-green-600 font-medium">(Save 16%)</span>
+            </Label>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {plans.map((plan) => (
+            <Card 
+              key={plan.id}
+              className={`overflow-hidden ${isPlanActive(plan.name) ? 'border-primary-blue border-2' : ''}`}
+            >
+              {plan.popular && (
+                <div className="bg-primary text-white px-3 py-1 text-xs font-medium absolute right-0 top-0 rounded-bl-md">
+                  Popular
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle>{plan.name}</CardTitle>
+                <CardDescription className="flex items-baseline mt-2">
+                  <span className="text-3xl font-bold">{getPrice(plan)}</span>
+                  {!plan.isFree && (
+                    <span className="text-gray-500 ml-1">{getPricePeriod()}</span>
+                  )}
+                </CardDescription>
+                <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                {!plan.isFree ? (
+                  <Button
+                    className="w-full"
+                    variant={isPlanActive(plan.name) ? "outline" : "default"}
+                    disabled={isPlanActive(plan.name) || subscriptionLoading}
+                    onClick={() => handleUpdateSubscription(plan.id)}
+                  >
+                    {subscriptionLoading ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
+                    ) : isPlanActive(plan.name) ? (
+                      'Current Plan'
+                    ) : subscription?.subscribed ? (
+                      'Switch Plan'
+                    ) : (
+                      'Select Plan'
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full"
+                    variant={isPlanActive("Free") ? "outline" : "default"}
+                    disabled={isPlanActive("Free") || subscriptionLoading}
+                  >
+                    {isPlanActive("Free") ? 'Current Plan' : 'Free Plan'}
+                  </Button>
+                )}
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+
+        {subscription?.subscribed && (
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-600 mb-3">Need detailed billing information or want to update payment details?</p>
+            <Button
+              variant="link"
+              onClick={openCustomerPortal}
+              disabled={subscriptionLoading}
+            >
+              {subscriptionLoading ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
+              ) : (
+                'Access Customer Portal'
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
