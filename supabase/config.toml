@@ -1,1 +1,10 @@
+
 project_id = "bnwvnlgspaxuzbfiphik"
+
+[functions.check-subscription]
+
+[functions.create-checkout]
+
+[functions.customer-portal]
+
+[functions.update-subscription]
