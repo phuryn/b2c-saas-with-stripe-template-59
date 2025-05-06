@@ -16,11 +16,15 @@ import {
   SidebarSeparator,
   SidebarTrigger
 } from '@/components/ui/sidebar';
-import { Home, Link2, Settings, Plus } from 'lucide-react';
+import { Home, Link2, Settings, Plus, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { 
+  Avatar, 
+  AvatarFallback, 
+  AvatarImage 
+} from '@/components/ui/avatar';
 
 const AppSidebar: React.FC = () => {
   const location = useLocation();
@@ -38,7 +42,7 @@ const AppSidebar: React.FC = () => {
         <div className="flex items-center px-2 py-3">
           <Link to="/app">
             <img 
-              src="/lovable-uploads/2d719fe8-edcb-42b6-a0ea-ca7e43cbe81c.png" 
+              src="/lovable-uploads/3fff3c36-d39f-4c4e-8e3f-56a242c5ac6f.png" 
               alt="TRUSTY" 
               className="h-7 w-auto" 
               width={120}
@@ -46,7 +50,9 @@ const AppSidebar: React.FC = () => {
             />
           </Link>
         </div>
-        <SidebarTrigger />
+        <SidebarTrigger>
+          <ChevronLeft className="h-4 w-4" />
+        </SidebarTrigger>
       </SidebarHeader>
       
       <SidebarContent>

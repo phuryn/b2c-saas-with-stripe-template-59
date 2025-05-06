@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 
 interface UsageStatsProps {
   subscription: {
@@ -23,10 +23,7 @@ const UsageStats: React.FC<UsageStatsProps> = ({ subscription }) => {
       <h3 className="text-lg font-medium">Monthly Usage</h3>
       
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-md">Usage Statistics</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Table>
             <TableBody>
               {usageStats.map((stat) => (

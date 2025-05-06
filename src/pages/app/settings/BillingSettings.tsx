@@ -255,13 +255,17 @@ const BillingSettings: React.FC = () => {
       <h2 className="text-xl font-medium mb-4">Billing and Usage</h2>
       
       {/* Plans Selection Section */}
-      <PlanSelector
-        subscription={subscription}
-        stripePrices={stripePrices}
-        loading={subscriptionLoading}
-        onSubscribe={handleSubscribe}
-        onUpdateSubscription={handleUpdateSubscription}
-      />
+      <div className="overflow-x-auto -mx-6 md:mx-0">
+        <div className="min-w-[800px] md:min-w-0 px-6 md:px-0">
+          <PlanSelector
+            subscription={subscription}
+            stripePrices={stripePrices}
+            loading={subscriptionLoading}
+            onSubscribe={handleSubscribe}
+            onUpdateSubscription={handleUpdateSubscription}
+          />
+        </div>
+      </div>
       
       {/* Monthly Usage Section */}
       <UsageStats subscription={subscription} />
@@ -269,7 +273,7 @@ const BillingSettings: React.FC = () => {
       {/* Billing Address Section */}
       <BillingAddress subscription={subscription} />
       
-      {/* Billing History Section - Will only show if invoices are found */}
+      {/* Billing History Section - Will always show */}
       <BillingHistory subscription={subscription} />
     </div>
   );

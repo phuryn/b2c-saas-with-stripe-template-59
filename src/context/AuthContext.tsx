@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 type AuthContextType = {
   user: User | null;
@@ -60,9 +61,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setTimeout(() => {
             fetchUserRole(session.user.id);
           }, 0);
+
+          // If signed in, redirect to app
+          if (event === 'SIGNED_IN' && window.location.pathname === '/') {
+            window.location.href = '/app';
+          }
         } else {
           setUserRole(null);
           setUserMetadata(null);
+          
+          // If signed out, redirect to home
+          if (event === 'SIGNED_OUT') {
+            window.location.href = '/';
+          }
         }
         
         // Show notification on specific auth events
@@ -126,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
+      // Redirection will be handled by onAuthStateChange
     } catch (error) {
       console.error('Error signing out:', error);
       toast({

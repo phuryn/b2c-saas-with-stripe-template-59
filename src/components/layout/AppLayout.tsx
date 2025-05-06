@@ -1,13 +1,32 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
 import AppSidebar from './AppSidebar';
+import { 
+  Avatar, 
+  AvatarFallback, 
+  AvatarImage 
+} from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Link } from 'react-router-dom';
 
 const AppLayout: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, userMetadata, signOut } = useAuth();
   const navigate = useNavigate();
+  
+  // Handle sign out
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   // Redirect to login if not authenticated
   if (!isLoading && !user) {
@@ -27,7 +46,34 @@ const AppLayout: React.FC = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <div className="flex-1 min-h-screen">
+        <div className="flex-1 min-h-screen relative">
+          {/* User Profile Dropdown */}
+          <div className="absolute top-4 right-4 z-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="focus:outline-none">
+                  <Avatar className="h-9 w-9 cursor-pointer">
+                    <AvatarImage src={userMetadata?.avatar_url} alt={userMetadata?.name || user?.email?.split('@')[0] || 'User'} />
+                    <AvatarFallback>
+                      {(userMetadata?.name || user?.email?.split('@')[0] || 'U')[0].toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="font-medium" disabled>
+                  My Account
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/app/settings/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <Outlet />
         </div>
       </div>

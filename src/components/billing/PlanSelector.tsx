@@ -33,6 +33,7 @@ interface PlanSelectorProps {
     subscribed: boolean;
     subscription_tier: string | null;
     subscription_end: string | null;
+    current_plan: string | null;
     payment_method?: {
       brand?: string;
       last4?: string;
@@ -174,7 +175,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
         <h3 className="text-lg font-medium">Plan Details</h3>
         <div className="flex items-center space-x-2">
           <Label htmlFor="billing-period" className={`text-sm ${billingPeriod === 'monthly' ? 'font-medium' : ''}`}>
@@ -191,7 +192,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {plans.map((plan) => (
           <div key={plan.id} className="relative">
             {plan.recommended && (
@@ -204,7 +205,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
             <Card 
               className={`overflow-hidden ${isPlanActive(plan.name) ? 'border-primary border-2' : ''} ${plan.recommended ? 'ring-1 ring-blue-500' : ''}`}
             >
-              <CardHeader className={`pb-3 ${plan.recommended ? 'bg-blue-50' : ''}`}>
+              <CardHeader className={plan.recommended ? '' : ''}>
                 <CardTitle>{plan.name}</CardTitle>
                 <div className="flex items-baseline mt-2">
                   <span className="text-3xl font-bold">{getPrice(plan)}</span>
