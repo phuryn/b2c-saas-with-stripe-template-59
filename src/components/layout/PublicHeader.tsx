@@ -2,10 +2,20 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, User, Settings } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const PublicHeader: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut, userRole } = useAuth();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -44,16 +54,50 @@ const PublicHeader: React.FC = () => {
             </nav>
             
             <div className="flex items-center space-x-3">
-              <Link to="/login">
-                <Button variant="outline">Log in</Button>
-              </Link>
-              <Link to="/signup">
-                <Button 
-                  className="bg-primary-blue hover:bg-primary-blue/90 text-white"
-                >
-                  Sign up Free
-                </Button>
-              </Link>
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      {user.email ? user.email.split('@')[0] : 'User'}
+                      {userRole === 'administrator' && (
+                        <span className="bg-primary-blue text-white text-xs px-2 py-0.5 rounded-full">
+                          Admin
+                        </span>
+                      )}
+                      {userRole === 'support' && (
+                        <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                          Support
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    {(userRole === 'administrator' || userRole === 'support') && (
+                      <DropdownMenuItem className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Admin Panel
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="flex items-center gap-2" onClick={signOut}>
+                      <LogOut className="h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button variant="outline">Sign in</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
           
@@ -95,23 +139,28 @@ const PublicHeader: React.FC = () => {
             </nav>
             
             <div className="flex flex-col space-y-3 mt-4">
-              <Link to="/login">
+              {user ? (
                 <Button 
                   variant="outline" 
-                  className="w-full"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    signOut();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center justify-center gap-2"
                 >
-                  Log in
+                  <LogOut className="h-4 w-4" />
+                  Sign out
                 </Button>
-              </Link>
-              <Link to="/signup">
-                <Button 
-                  className="bg-primary-blue hover:bg-primary-blue/90 text-white w-full"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Sign up Free
-                </Button>
-              </Link>
+              ) : (
+                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    Sign in
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         )}
