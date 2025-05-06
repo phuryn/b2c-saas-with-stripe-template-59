@@ -1,15 +1,67 @@
 
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { FcGoogle } from "react-icons/fc";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Separator } from "@/components/ui/separator";
 
 const Login: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // If user is already authenticated, redirect to home
+    if (user && !isLoading) {
+      navigate('/');
+    }
+  }, [user, navigate, isLoading]);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const currentUrl = window.location.href;
+      const baseUrl = currentUrl.split('/login')[0];
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: baseUrl,
+          queryParams: {
+            prompt: 'select_account'
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error with Google sign in:', error);
+      toast({
+        title: "Authentication failed",
+        description: "Could not sign in with Google. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
+      </div>
+    );
+  }
+
   return (
     <section className="section-padding">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
           <Card>
             <CardHeader>
@@ -17,24 +69,38 @@ const Login: React.FC = () => {
               <CardDescription>Enter your credentials to access your account</CardDescription>
             </CardHeader>
             <CardContent>
-              <form>
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="name@example.com" />
-                  </div>
-                  <div className="grid gap-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Password</Label>
-                      <Link to="/forgot-password" className="text-sm text-primary-blue hover:underline">
-                        Forgot password?
-                      </Link>
-                    </div>
-                    <Input id="password" type="password" />
-                  </div>
-                  <Button className="bg-primary-blue hover:bg-primary-blue/90">Log in</Button>
+              <form className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" placeholder="name@example.com" />
                 </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <Link to="/forgot-password" className="text-sm text-primary-blue hover:underline">
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <Input id="password" type="password" />
+                </div>
+                <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Log in</Button>
               </form>
+
+              <div className="relative my-6">
+                <Separator />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="bg-white px-2 text-sm text-gray-500">or</span>
+                </div>
+              </div>
+
+              <Button 
+                variant="outline" 
+                className="w-full flex items-center gap-2 justify-center py-6"
+                onClick={handleGoogleSignIn}
+              >
+                <FcGoogle className="h-6 w-6" />
+                <span>Continue with Google</span>
+              </Button>
             </CardContent>
             <CardFooter>
               <div className="text-center w-full">

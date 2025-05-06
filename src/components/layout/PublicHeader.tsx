@@ -96,6 +96,9 @@ const PublicHeader: React.FC = () => {
                   <Link to="/auth">
                     <Button variant="outline">Sign in</Button>
                   </Link>
+                  <Link to="/signup">
+                    <Button className="bg-primary-blue hover:bg-primary-blue/90">Sign up</Button>
+                  </Link>
                 </>
               )}
             </div>
@@ -152,14 +155,23 @@ const PublicHeader: React.FC = () => {
                   Sign out
                 </Button>
               ) : (
-                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                  >
-                    Sign in
-                  </Button>
-                </Link>
+                <>
+                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                    >
+                      Sign in
+                    </Button>
+                  </Link>
+                  <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
+                    <Button 
+                      className="w-full bg-primary-blue hover:bg-primary-blue/90"
+                    >
+                      Sign up
+                    </Button>
+                  </Link>
+                </>
               )}
             </div>
           </div>

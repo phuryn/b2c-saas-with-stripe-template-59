@@ -1,10 +1,10 @@
 
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -81,6 +81,16 @@ const Auth: React.FC = () => {
                 </Button>
               </div>
             </CardContent>
+            <CardFooter>
+              <div className="text-center w-full">
+                <p className="text-sm text-gray-500">
+                  Don't have an account yet?{" "}
+                  <Link to="/signup" className="text-primary-blue hover:underline">
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            </CardFooter>
           </Card>
         </div>
       </div>
