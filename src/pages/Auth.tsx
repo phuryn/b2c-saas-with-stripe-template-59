@@ -22,10 +22,17 @@ const Auth: React.FC = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      // Get the current URL's origin to use as the redirect URL
+      const redirectTo = window.location.origin;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: redirectTo,
+          queryParams: {
+            // Force a fresh login prompt even if the user is already logged in
+            prompt: 'select_account'
+          }
         }
       });
 
