@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { fileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,7 +103,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
                           size="sm"
                           onClick={() => window.open(invoice.invoice_pdf, '_blank')}
                         >
-                          <fileText className="h-4 w-4" />
+                          <FileText className="h-4 w-4" />
                           <span className="sr-only">Download PDF</span>
                         </Button>
                       )}

@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { calendar, creditCard } from 'lucide-react';
+import { Calendar, CreditCard } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
 
 interface BillingDetailsProps {
@@ -61,7 +61,7 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({
               {subscription.payment_method && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center">
-                    <creditCard className="h-4 w-4 mr-1" /> Payment Method
+                    <CreditCard className="h-4 w-4 mr-1" /> Payment Method
                   </h4>
                   <p className="font-medium">
                     {formatCardBrand(subscription.payment_method?.brand)} •••• {subscription.payment_method?.last4}
@@ -77,7 +77,7 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({
               {subscription.subscription_end && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center">
-                    <calendar className="h-4 w-4 mr-1" /> Next Renewal
+                    <Calendar className="h-4 w-4 mr-1" /> Next Renewal
                   </h4>
                   <p className="font-medium">
                     {new Date(subscription.subscription_end).toLocaleDateString()}
