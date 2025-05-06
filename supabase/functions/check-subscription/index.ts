@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -114,21 +113,27 @@ serve(async (req) => {
         currentPlan 
       });
 
-      // Determine subscription tier from price
-      const priceId = subscription.items.data[0].price.id;
-      const price = await stripe.prices.retrieve(priceId);
-      const amount = price.unit_amount || 0;
-      
-      // Map price to tier name
-      if (amount <= 2900) {
+      // Map price ID directly to tier name using our configuration
+      if (currentPlan === 'price_1RLoRRLdL9hht8n4Gcqi3p2b' || currentPlan === 'price_1RLoT5LdL9hht8n4n87AoFtZ') {
         subscriptionTier = "Standard";
-      } else if (amount <= 7900) {
+      } else if (currentPlan === 'price_1RLoRrLdL9hht8n4LZcdyKQt' || currentPlan === 'price_1RLoScLdL9hht8n4hSQtsOte') {
         subscriptionTier = "Premium";
       } else {
-        subscriptionTier = "Enterprise";
+        // Fallback to determining tier by price (less reliable)
+        const priceId = subscription.items.data[0].price.id;
+        const price = await stripe.prices.retrieve(priceId);
+        const amount = price.unit_amount || 0;
+        
+        if (amount <= 2900) {
+          subscriptionTier = "Standard";
+        } else if (amount <= 7900) {
+          subscriptionTier = "Premium";
+        } else {
+          subscriptionTier = "Enterprise";
+        }
       }
       
-      logStep("Determined subscription tier", { priceId, amount, subscriptionTier });
+      logStep("Determined subscription tier", { currentPlan, subscriptionTier });
     } else {
       logStep("No active subscription found");
     }

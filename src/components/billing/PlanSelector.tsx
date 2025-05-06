@@ -102,12 +102,14 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     isFree: true,
   };
 
-  const isPlanActive = (planName: string, priceId: string): boolean => {
-    if (!subscription?.subscribed) return planName === "Free";
+  const isPlanActive = (plan: PlanOption): boolean => {
+    if (!subscription?.subscribed || !subscription.current_plan) return false;
     
-    // Check both the tier name and the exact price ID
-    return subscription.subscription_tier === planName && 
-           subscription.current_plan === priceId;
+    // Get the current price ID that would be active for this plan and billing period
+    const currentPriceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
+    
+    // Check if this exact price ID matches the user's current plan
+    return subscription.current_plan === currentPriceId;
   };
 
   const formatCurrency = (amount: number | undefined, currency: string = 'usd'): string => {
@@ -142,19 +144,13 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   };
 
   const handlePlanAction = (plan: PlanOption) => {
-    const currentPriceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
-    if (isPlanActive(plan.name, currentPriceId)) return; // Already on this plan
-    
     if (plan.isEnterprise && plan.emailLink) {
       window.location.href = plan.emailLink;
       return;
     }
-    
-    if (subscription?.subscribed) {
-      onUpdateSubscription(plan.id);
-    } else {
-      onSubscribe(plan.id);
-    }
+
+    // For all other plan actions, redirect to Stripe portal
+    openCustomerPortal();
   };
   
   const formatCardBrand = (brand?: string) => {
@@ -169,6 +165,10 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       month: 'long', 
       day: 'numeric' 
     });
+  };
+
+  const openCustomerPortal = () => {
+    window.location.href = STRIPE_CONFIG.customerPortalUrl;
   };
 
   return (
@@ -210,8 +210,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       {/* Mobile-friendly plan grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => {
-          const currentPriceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
-          const isActive = isPlanActive(plan.name, currentPriceId);
+          const isActive = isPlanActive(plan);
           
           return (
           <div key={plan.id} className="relative">
@@ -303,7 +302,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
           <Button 
             variant="outline" 
             className="text-gray-600"
-            onClick={() => onUpdateSubscription('free')}
+            onClick={openCustomerPortal}
           >
             Downgrade to Free Plan
           </Button>

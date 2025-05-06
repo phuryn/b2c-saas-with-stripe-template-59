@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -121,92 +120,13 @@ const PlanSettings: React.FC = () => {
   };
 
   const handleSubscribe = async (planId: string) => {
-    const priceId = subscription?.current_plan?.includes('yearly') 
-      ? STRIPE_CONFIG.prices[planId as 'standard' | 'premium']?.yearly
-      : STRIPE_CONFIG.prices[planId as 'standard' | 'premium']?.monthly;
-      
-    if (!priceId) {
-      toast({
-        title: 'Error',
-        description: 'Invalid price ID.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setSubscriptionLoading(true);
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId }
-      });
-      
-      if (error) throw new Error(error.message);
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error('Error creating checkout session:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to initialize checkout.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSubscriptionLoading(false);
-    }
+    // Redirect all subscription actions to Stripe portal
+    openCustomerPortal();
   };
 
   const handleUpdateSubscription = async (planId: string) => {
-    if (planId === 'free') {
-      toast({
-        title: 'Free Plan',
-        description: 'To downgrade to the free plan, please cancel your subscription in the customer portal.',
-      });
-      openCustomerPortal();
-      return;
-    }
-    
-    if (!subscription?.subscribed) {
-      return handleSubscribe(planId);
-    }
-    
-    const priceId = subscription?.current_plan?.includes('yearly') 
-      ? STRIPE_CONFIG.prices[planId as 'standard' | 'premium']?.yearly
-      : STRIPE_CONFIG.prices[planId as 'standard' | 'premium']?.monthly;
-      
-    if (!priceId) {
-      toast({
-        title: 'Error',
-        description: 'Invalid price ID.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    try {
-      setSubscriptionLoading(true);
-      const { data, error } = await supabase.functions.invoke('update-subscription', {
-        body: { newPriceId: priceId }
-      });
-      
-      if (error) throw new Error(error.message);
-      
-      toast({
-        title: 'Success',
-        description: 'Your subscription has been updated.',
-      });
-      
-      checkSubscriptionStatus();
-    } catch (err) {
-      console.error('Error updating subscription:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to update subscription.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSubscriptionLoading(false);
-    }
+    // Redirect all subscription updates to Stripe portal
+    openCustomerPortal();
   };
 
   const openCustomerPortal = async () => {
