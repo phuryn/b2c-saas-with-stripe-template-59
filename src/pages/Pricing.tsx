@@ -57,13 +57,8 @@ const Pricing: React.FC = () => {
             </div>
           </div>
 
-          {/* Standard Plan with RECOMMENDED tag */}
-          <div className="border rounded-lg overflow-hidden shadow-sm relative">
-            <div className="absolute inset-x-0 -top-6 flex justify-center">
-              <div className="bg-primary text-white px-3 py-1 text-xs font-medium rounded-t-md">
-                RECOMMENDED
-              </div>
-            </div>
+          {/* Standard Plan */}
+          <div className="border rounded-lg overflow-hidden shadow-sm">
             <div className="p-6">
               <h3 className="text-xl font-bold mb-2">Standard</h3>
               <div className="mb-4">
@@ -108,8 +103,13 @@ const Pricing: React.FC = () => {
             </div>
           </div>
 
-          {/* Pro Plan */}
-          <div className="border rounded-lg overflow-hidden shadow-sm">
+          {/* Premium Plan with RECOMMENDED tag */}
+          <div className="border rounded-lg overflow-hidden shadow-sm relative">
+            <div className="absolute inset-x-0 -top-6 flex justify-center">
+              <div className="bg-primary text-white px-3 py-1 text-xs font-medium rounded-t-md">
+                RECOMMENDED
+              </div>
+            </div>
             <div className="p-6">
               <h3 className="text-xl font-bold mb-2">Premium</h3>
               <div className="mb-4">

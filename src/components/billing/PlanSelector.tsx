@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -66,7 +67,6 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       description: "Great for professionals and small teams.",
       limits: ["200 links / month", "20 QR codes / month"],
       features: ["Everything in Free, plus:", "6-months of click history", "Bulk link & QR Code creation", "Priority support"],
-      recommended: true,
     },
     {
       id: "premium",
@@ -76,6 +76,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       description: "Full-featured solution for businesses.",
       limits: ["5000 links / month", "500 QR codes / month"],
       features: ["Everything in Standard, plus:", "2 years of click history", "City-level & device analytics", "API access"],
+      recommended: true,
     },
     {
       id: "enterprise",

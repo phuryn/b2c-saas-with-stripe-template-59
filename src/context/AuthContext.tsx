@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fetchUserRole(session.user.id);
           }, 0);
 
-          // If signed in, redirect to app
+          // If signed in explicitly (through event), redirect to app, but not on initial session check
           if (event === 'SIGNED_IN' && window.location.pathname === '/') {
             window.location.href = '/app';
           }
