@@ -68,6 +68,32 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
+    // Get payment method details
+    let paymentMethod = null;
+    try {
+      const paymentMethods = await stripe.paymentMethods.list({
+        customer: customerId,
+        type: 'card',
+        limit: 1
+      });
+      
+      if (paymentMethods.data.length > 0) {
+        const card = paymentMethods.data[0].card;
+        if (card) {
+          paymentMethod = {
+            brand: card.brand,
+            last4: card.last4,
+            exp_month: card.exp_month,
+            exp_year: card.exp_year
+          };
+          logStep("Found payment method", { brand: card.brand, last4: card.last4 });
+        }
+      }
+    } catch (err) {
+      logStep("Error fetching payment method", { error: err.message });
+      // Continue execution even if payment method fetch fails
+    }
+
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
@@ -95,9 +121,9 @@ serve(async (req) => {
       
       // Map price to tier name
       if (amount <= 2900) {
-        subscriptionTier = "Starter";
+        subscriptionTier = "Standard";
       } else if (amount <= 7900) {
-        subscriptionTier = "Pro";
+        subscriptionTier = "Premium";
       } else {
         subscriptionTier = "Enterprise";
       }
@@ -126,7 +152,8 @@ serve(async (req) => {
       subscribed: hasActiveSub,
       subscription_tier: subscriptionTier,
       subscription_end: subscriptionEnd,
-      current_plan: currentPlan
+      current_plan: currentPlan,
+      payment_method: paymentMethod
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

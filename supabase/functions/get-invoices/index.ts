@@ -7,12 +7,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[GET-INVOICES] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    logStep("Function started");
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
     
     // Get customer ID from authenticated user
@@ -22,13 +28,18 @@ serve(async (req) => {
     }
     
     const token = authHeader.replace("Bearer ", "");
+    logStep("Authentication token extracted");
     
     // Create a Supabase client to get user info
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
-    const supabaseAuthUrl = `${supabaseUrl}/auth/v1/user`;
-    const userResponse = await fetch(supabaseAuthUrl, {
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Supabase configuration is missing");
+    }
+    
+    // Using fetch directly for simplicity and to avoid potential issues with the Supabase client
+    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
@@ -36,10 +47,13 @@ serve(async (req) => {
     });
     
     if (!userResponse.ok) {
+      const errorData = await userResponse.text();
+      logStep("Failed to authenticate user", { status: userResponse.status, error: errorData });
       throw new Error("Failed to authenticate user");
     }
     
     const user = await userResponse.json();
+    logStep("User authenticated", { email: user.email });
     
     // Get customer ID using the email
     const customers = await stripe.customers.list({
@@ -48,6 +62,7 @@ serve(async (req) => {
     });
     
     if (customers.data.length === 0) {
+      logStep("No customer found for user");
       return new Response(JSON.stringify({ invoices: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200
@@ -55,6 +70,7 @@ serve(async (req) => {
     }
     
     const customerId = customers.data[0].id;
+    logStep("Found Stripe customer", { customerId });
     
     // Fetch invoices
     const invoices = await stripe.invoices.list({
@@ -62,6 +78,8 @@ serve(async (req) => {
       limit: 10,
       status: 'paid'
     });
+    
+    logStep("Fetched invoices", { count: invoices.data.length });
     
     // Format the response
     const formattedInvoices = invoices.data.map(invoice => ({
