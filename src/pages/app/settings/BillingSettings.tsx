@@ -4,12 +4,12 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
 import { Button } from '@/components/ui/button';
 
 // Import our components
-import BillingHistory from '@/components/billing/BillingHistory';
+import BillingInvoices from '@/components/billing/BillingInvoices';
 import UsageStats from '@/components/billing/UsageStats';
 import BillingAddress from '@/components/billing/BillingAddress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -208,7 +208,20 @@ const BillingSettings: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-medium mb-4">Billing and Usage</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-medium">Billing and Usage</h2>
+        {subscription?.subscribed && (
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={checkSubscriptionStatus}
+            disabled={loading}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        )}
+      </div>
       
       {/* Current Plan Section */}
       <div className="space-y-4">
@@ -226,12 +239,26 @@ const BillingSettings: React.FC = () => {
                   'No active subscription'}
               </p>
             </div>
-            <Button 
-              onClick={handleManagePlan}
-              className="w-full md:w-auto"
-            >
-              Manage Plan
-            </Button>
+            <div className="flex flex-wrap gap-4">
+              <Button 
+                onClick={handleManagePlan}
+                className="w-full md:w-auto"
+                variant="default"
+              >
+                Manage Plan
+              </Button>
+              {subscription?.subscribed && (
+                <Button 
+                  onClick={openCustomerPortal}
+                  className="w-full md:w-auto"
+                  variant="outline"
+                  disabled={subscriptionLoading}
+                >
+                  {subscriptionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Customer Portal
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -243,7 +270,7 @@ const BillingSettings: React.FC = () => {
       <BillingAddress subscription={subscription} />
       
       {/* Billing History Section */}
-      <BillingHistory subscription={subscription} />
+      <BillingInvoices subscription={subscription} />
     </div>
   );
 };
