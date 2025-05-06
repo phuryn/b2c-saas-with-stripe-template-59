@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useSearchParams } from 'react-router-dom';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { STRIPE_CONFIG } from '@/config/stripe';
 
 interface PlanOption {
   id: string;
@@ -54,8 +55,8 @@ const BillingSettings: React.FC = () => {
       name: "Standard",
       monthlyPrice: "$9",
       yearlyPrice: "$90",
-      monthlyPriceId: "price_standard_monthly", // Replace with actual Stripe price ID
-      yearlyPriceId: "price_standard_yearly", // Replace with actual Stripe price ID
+      monthlyPriceId: STRIPE_CONFIG.prices.standard.monthly,
+      yearlyPriceId: STRIPE_CONFIG.prices.standard.yearly,
       description: "Great for professionals and small teams.",
       features: ["10 projects", "Unlimited links", "Advanced analytics", "Priority support", "API access"],
     },
@@ -64,8 +65,8 @@ const BillingSettings: React.FC = () => {
       name: "Premium",
       monthlyPrice: "$19",
       yearlyPrice: "$190",
-      monthlyPriceId: "price_premium_monthly", // Replace with actual Stripe price ID
-      yearlyPriceId: "price_premium_yearly", // Replace with actual Stripe price ID
+      monthlyPriceId: STRIPE_CONFIG.prices.premium.monthly,
+      yearlyPriceId: STRIPE_CONFIG.prices.premium.yearly,
       description: "Full-featured solution for businesses.",
       features: ["Unlimited projects", "Unlimited links", "Custom analytics", "24/7 support", "API access", "White-labeling", "Custom integrations"],
       popular: true,
