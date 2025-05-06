@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
@@ -246,7 +245,7 @@ const BillingSettings: React.FC = () => {
     <div className="space-y-6">
       <h2 className="text-xl font-medium mb-4">Billing and Usage</h2>
       
-      {/* Billing Details Section */}
+      {/* Billing Details Section - Always shown, content differs based on subscription status */}
       <BillingDetails 
         subscription={subscription} 
         loading={subscriptionLoading} 
@@ -262,25 +261,23 @@ const BillingSettings: React.FC = () => {
         onUpdateSubscription={handleUpdateSubscription}
       />
       
-      {/* Billing History Section */}
+      {/* Billing History Section - Will only show if invoices are found */}
       <BillingHistory subscription={subscription} />
       
-      {subscription?.subscribed && (
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600 mb-3">Need detailed billing information or want to update payment details?</p>
-          <Button
-            variant="link"
-            onClick={openCustomerPortal}
-            disabled={subscriptionLoading}
-          >
-            {subscriptionLoading ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
-            ) : (
-              'Access Customer Portal'
-            )}
-          </Button>
-        </div>
-      )}
+      <div className="mt-8 text-center">
+        <p className="text-sm text-gray-600 mb-3">Need detailed billing information or want to update payment details?</p>
+        <Button
+          variant="link"
+          onClick={openCustomerPortal}
+          disabled={subscriptionLoading}
+        >
+          {subscriptionLoading ? (
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
+          ) : (
+            'Access Customer Portal'
+          )}
+        </Button>
+      </div>
     </div>
   );
 };

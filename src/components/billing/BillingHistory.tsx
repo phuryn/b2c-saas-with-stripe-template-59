@@ -28,12 +28,12 @@ interface BillingHistoryProps {
 const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
 
   useEffect(() => {
-    if (subscription?.subscribed) {
-      fetchInvoices();
-    }
-  }, [subscription?.subscribed]);
+    // Always attempt to fetch invoices - the user might have past invoices
+    fetchInvoices();
+  }, []);
 
   const fetchInvoices = async () => {
     try {
@@ -52,6 +52,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
       console.error('Error fetching invoice history:', err);
     } finally {
       setLoading(false);
+      setFetchAttempted(true);
     }
   };
 
@@ -63,7 +64,10 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
     }).format(dollars);
   };
 
-  if (!subscription?.subscribed) return null;
+  // Hide component only if we tried to fetch invoices and got none
+  if (fetchAttempted && invoices.length === 0) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
