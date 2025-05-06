@@ -1,4 +1,3 @@
-
 import React from "react";
 
 const Terms: React.FC = () => {
@@ -7,7 +6,7 @@ const Terms: React.FC = () => {
       <div className="container mx-auto px-4">
         <h1 className="text-center font-bold mb-8">Terms of Service</h1>
         <div className="max-w-3xl mx-auto prose">
-          <p className="text-sm text-gray-500 mb-8 text-center">Last Updated: February 20, 2025</p>
+          <p className="text-sm text-gray-500 mb-8 text-center">Last Updated: May 6, 2025</p>
           
           <h2 className="text-xl font-bold mb-4">Introduction</h2>
           <p>
@@ -211,7 +210,7 @@ const Terms: React.FC = () => {
             Address: 123 Tech Avenue, Silicon Valley, CA 94043, USA
           </p>
           
-          <p className="text-sm text-gray-500 mt-10 pt-6 border-t border-gray-200">Last updated: February 20, 2025</p>
+          <p className="text-sm text-gray-500 mt-10 pt-6 border-t border-gray-200">Last updated: May 6, 2025</p>
         </div>
       </div>
     </section>

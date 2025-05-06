@@ -20,11 +20,9 @@ const Testimonial: React.FC<TestimonialProps> = ({ quote, author, company, image
         </div>
       </div>
       <div className="flex mb-3 text-yellow-400">
-        <Star size={16} fill="currentColor" />
-        <Star size={16} fill="currentColor" />
-        <Star size={16} fill="currentColor" />
-        <Star size={16} fill="currentColor" />
-        <Star size={16} fill="currentColor" />
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} size={16} fill="currentColor" />
+        ))}
       </div>
       <p className="text-gray-600 italic">"{quote}"</p>
     </div>

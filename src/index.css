@@ -99,4 +99,19 @@
   .section-padding {
     @apply py-12 md:py-20;
   }
+
+  /* Add new style for list with empty circles */
+  .list-circle {
+    @apply list-none;
+  }
+  
+  .list-circle > li {
+    @apply relative pl-6;
+  }
+  
+  .list-circle > li::before {
+    content: "○";
+    @apply absolute left-0 text-gray-500;
+  }
 }
+
