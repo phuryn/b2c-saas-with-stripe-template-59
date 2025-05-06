@@ -10,6 +10,11 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   userRole: 'administrator' | 'support' | 'user' | null;
   isLoading: boolean;
+  userMetadata: {
+    avatar_url?: string;
+    full_name?: string;
+    name?: string;
+  } | null;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   userRole: null,
   isLoading: true,
+  userMetadata: null,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -27,6 +33,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<'administrator' | 'support' | 'user' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userMetadata, setUserMetadata] = useState<{
+    avatar_url?: string;
+    full_name?: string;
+    name?: string;
+  } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,13 +47,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch user role if we have a user
+        // Set user metadata from Google auth
         if (session?.user) {
+          const metadata = {
+            avatar_url: session.user.user_metadata.avatar_url,
+            full_name: session.user.user_metadata.full_name,
+            name: session.user.user_metadata.name
+          };
+          setUserMetadata(metadata);
+          
+          // Fetch user role if we have a user
           setTimeout(() => {
             fetchUserRole(session.user.id);
           }, 0);
         } else {
           setUserRole(null);
+          setUserMetadata(null);
         }
         
         // Show notification on specific auth events
@@ -66,6 +86,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
+        const metadata = {
+          avatar_url: session.user.user_metadata.avatar_url,
+          full_name: session.user.user_metadata.full_name,
+          name: session.user.user_metadata.name
+        };
+        setUserMetadata(metadata);
         fetchUserRole(session.user.id);
       }
       setIsLoading(false);
@@ -118,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signOut,
         userRole,
         isLoading,
+        userMetadata,
       }}
     >
       {children}

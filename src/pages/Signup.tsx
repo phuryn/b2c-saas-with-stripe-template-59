@@ -14,21 +14,24 @@ const Signup: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // If user is already authenticated, redirect to home
+    // If user is already authenticated, redirect to app
     if (user && !isLoading) {
-      navigate("/");
+      navigate("/app");
     }
   }, [user, navigate, isLoading]);
 
   const handleGoogleSignIn = async () => {
     try {
       const currentUrl = window.location.href;
-      const baseUrl = currentUrl.split('/signup')[0];
+      // Handle both cases: app.domain.com and domain.com
+      const baseUrl = window.location.hostname.startsWith('app.')
+        ? currentUrl.split('/signup')[0]
+        : currentUrl.split('/signup')[0].replace('://', '://app.');
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: baseUrl,
+          redirectTo: baseUrl + '/app',
           queryParams: {
             prompt: "select_account"
           }

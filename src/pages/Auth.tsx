@@ -14,24 +14,24 @@ const Auth: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // If user is already authenticated, redirect to home
+    // If user is already authenticated, redirect to app
     if (user && !isLoading) {
-      navigate('/');
+      navigate('/app');
     }
   }, [user, navigate, isLoading]);
 
   const handleGoogleSignIn = async () => {
     try {
-      // Instead of using window.location.origin, we'll use the current URL
-      // This ensures it works regardless of where the app is hosted
+      // Handle both cases: app.domain.com and domain.com
       const currentUrl = window.location.href;
-      // Extract the base URL (everything before the route)
-      const baseUrl = currentUrl.split('/auth')[0];
+      const baseUrl = window.location.hostname.startsWith('app.')
+        ? currentUrl.split('/auth')[0]
+        : currentUrl.split('/auth')[0].replace('://', '://app.');
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: baseUrl,
+          redirectTo: baseUrl + '/app',
           queryParams: {
             // Force a fresh login prompt even if the user is already logged in
             prompt: 'select_account'

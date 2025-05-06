@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, User, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +16,7 @@ import {
 
 const PublicHeader: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, signOut, userRole } = useAuth();
+  const { user, signOut, userRole, userMetadata } = useAuth();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -57,17 +58,18 @@ const PublicHeader: React.FC = () => {
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2">
-                      {user.email ? user.email.split('@')[0] : 'User'}
+                    <Button variant="ghost" className="flex items-center gap-2 rounded-full p-0 h-10 w-10">
+                      <Avatar>
+                        <AvatarImage src={userMetadata?.avatar_url} alt={userMetadata?.name || user.email?.split('@')[0] || 'User'} />
+                        <AvatarFallback>
+                          {(userMetadata?.name || user.email?.split('@')[0] || 'U')[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
                       {userRole === 'administrator' && (
-                        <span className="bg-primary-blue text-white text-xs px-2 py-0.5 rounded-full">
-                          Admin
-                        </span>
+                        <span className="sr-only">Admin</span>
                       )}
                       {userRole === 'support' && (
-                        <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
-                          Support
-                        </span>
+                        <span className="sr-only">Support</span>
                       )}
                     </Button>
                   </DropdownMenuTrigger>
