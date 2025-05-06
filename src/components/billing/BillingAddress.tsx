@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, MapPin, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -31,12 +31,15 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
       setLoading(true);
       setError(null);
       
+      console.log('Refreshing billing address information...');
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
+        console.error('Error refreshing subscription data:', error);
         throw new Error(error.message);
       }
       
+      console.log('Billing address data received:', data);
       setSubscription(data);
       toast({
         description: "Billing address information updated.",
@@ -59,10 +62,15 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
       setLoading(true);
       const { data, error } = await supabase.functions.invoke('customer-portal');
       
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error('Error opening customer portal:', error);
+        throw new Error(error.message);
+      }
+      
       if (data?.url) {
         window.location.href = data.url;
       } else {
+        console.error('No portal URL returned:', data);
         throw new Error("No portal URL returned");
       }
     } catch (err) {
@@ -77,6 +85,7 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
     }
   };
 
+  // Hide the component if the user doesn't have an active subscription
   if (!subscription?.subscribed) {
     return null;
   }
@@ -90,6 +99,7 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
             variant="ghost" 
             size="sm" 
             onClick={refreshSubscriptionData}
+            className="transition-all hover:bg-primary/10"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -104,6 +114,9 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
             </div>
           ) : error ? (
             <div className="text-center py-4">
+              <div className="flex justify-center mb-2">
+                <AlertTriangle className="h-8 w-8 text-amber-500" />
+              </div>
               <p className="text-red-500 mb-4">{error}</p>
               <Button variant="outline" onClick={refreshSubscriptionData}>
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -112,6 +125,10 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
             </div>
           ) : subscription?.billing_address ? (
             <div className="space-y-2">
+              <div className="flex items-center mb-3">
+                <MapPin className="h-5 w-5 mr-2 text-gray-400" />
+                <span className="text-sm font-medium text-gray-500">Billing Address</span>
+              </div>
               <p>{subscription.billing_address.line1}</p>
               {subscription.billing_address.line2 && <p>{subscription.billing_address.line2}</p>}
               <p>
@@ -119,7 +136,7 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
               </p>
               <p>{subscription.billing_address.country}</p>
               
-              <div className="mt-4">
+              <div className="mt-4 pt-2 border-t border-gray-100">
                 <Button variant="outline" onClick={openCustomerPortal} disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Edit Billing Address

@@ -12,3 +12,4 @@ project_id = "bnwvnlgspaxuzbfiphik"
 [functions.get-prices]
 
 [functions.get-invoices]
+

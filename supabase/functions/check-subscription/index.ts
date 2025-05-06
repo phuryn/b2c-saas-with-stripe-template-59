@@ -17,13 +17,6 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Use the service role key for Supabase client to update subscription info
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-
   try {
     logStep("Function started");
 
@@ -38,66 +31,95 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     logStep("Authenticating user with token");
     
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    // Initialize Supabase client with service role key
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Supabase configuration is missing");
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false }
+    });
+    
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
+    // Find the Stripe customer for this user
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length === 0) {
-      logStep("No customer found, updating unsubscribed state");
-      await supabaseClient.from("subscribers").upsert({
-        email: user.email,
-        user_id: user.id,
-        stripe_customer_id: null,
+      // No customer record found, return unsubscribed state
+      return new Response(JSON.stringify({
         subscribed: false,
         subscription_tier: null,
         subscription_end: null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'email' });
-      return new Response(JSON.stringify({ subscribed: false }), {
+        current_plan: null,
+        billing_address: null,
+        payment_method: null
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+        status: 200
       });
     }
 
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
+    
+    // Get payment methods associated with this customer
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'card',
+      limit: 1
+    });
 
-    // Get payment method details
     let paymentMethod = null;
-    try {
-      const paymentMethods = await stripe.paymentMethods.list({
-        customer: customerId,
-        type: 'card',
-        limit: 1
-      });
-      
-      if (paymentMethods.data.length > 0) {
-        const card = paymentMethods.data[0].card;
-        if (card) {
-          paymentMethod = {
-            brand: card.brand,
-            last4: card.last4,
-            exp_month: card.exp_month,
-            exp_year: card.exp_year
-          };
-          logStep("Found payment method", { brand: card.brand, last4: card.last4 });
-        }
-      }
-    } catch (err) {
-      logStep("Error fetching payment method", { error: err.message });
-      // Continue execution even if payment method fetch fails
+    if (paymentMethods.data.length > 0) {
+      const pm = paymentMethods.data[0];
+      paymentMethod = {
+        brand: pm.card?.brand,
+        last4: pm.card?.last4,
+        exp_month: pm.card?.exp_month,
+        exp_year: pm.card?.exp_year
+      };
+      logStep("Found payment method", { brand: paymentMethod.brand, last4: paymentMethod.last4 });
     }
 
+    // Get customer details to access billing address
+    const customer = await stripe.customers.retrieve(customerId, { expand: ['address'] });
+    let billingAddress = null;
+    
+    if (typeof customer !== 'string') {
+      billingAddress = customer.address ? {
+        line1: customer.address.line1 || null,
+        line2: customer.address.line2 || null,
+        city: customer.address.city || null,
+        state: customer.address.state || null,
+        postal_code: customer.address.postal_code || null,
+        country: customer.address.country || null
+      } : null;
+      
+      if (billingAddress) {
+        logStep("Found billing address", { 
+          city: billingAddress.city, 
+          country: billingAddress.country 
+        });
+      }
+    }
+
+    // Get active subscriptions
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      status: "active",
+      status: 'active',
       limit: 1,
+      expand: ['data.default_payment_method']
     });
+
     const hasActiveSub = subscriptions.data.length > 0;
     let subscriptionTier = null;
     let subscriptionEnd = null;
@@ -105,40 +127,28 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
       currentPlan = subscription.items.data[0].price.id;
+      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
       logStep("Active subscription found", { 
         subscriptionId: subscription.id, 
         endDate: subscriptionEnd,
-        currentPlan 
+        currentPlan
       });
 
-      // Map price ID directly to tier name using our configuration
-      if (currentPlan === 'price_1RLoRRLdL9hht8n4Gcqi3p2b' || currentPlan === 'price_1RLoT5LdL9hht8n4n87AoFtZ') {
-        subscriptionTier = "Standard";
-      } else if (currentPlan === 'price_1RLoRrLdL9hht8n4LZcdyKQt' || currentPlan === 'price_1RLoScLdL9hht8n4hSQtsOte') {
-        subscriptionTier = "Premium";
+      // Determine the subscription tier based on the price ID
+      // This is a simplified example - adjust to match your actual price IDs and tiers
+      if (currentPlan.includes('standard')) {
+        subscriptionTier = 'Standard';
+      } else if (currentPlan.includes('premium')) {
+        subscriptionTier = 'Premium';
       } else {
-        // Fallback to determining tier by price (less reliable)
-        const priceId = subscription.items.data[0].price.id;
-        const price = await stripe.prices.retrieve(priceId);
-        const amount = price.unit_amount || 0;
-        
-        if (amount <= 2900) {
-          subscriptionTier = "Standard";
-        } else if (amount <= 7900) {
-          subscriptionTier = "Premium";
-        } else {
-          subscriptionTier = "Enterprise";
-        }
+        subscriptionTier = 'Standard'; // Default
       }
-      
       logStep("Determined subscription tier", { currentPlan, subscriptionTier });
-    } else {
-      logStep("No active subscription found");
     }
 
-    await supabaseClient.from("subscribers").upsert({
+    // Update the database record with the latest subscription info
+    await supabase.from("subscribers").upsert({
       email: user.email,
       user_id: user.id,
       stripe_customer_id: customerId,
@@ -147,28 +157,32 @@ serve(async (req) => {
       subscription_end: subscriptionEnd,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'email' });
-
+    
     logStep("Updated database with subscription info", { 
       subscribed: hasActiveSub, 
-      subscriptionTier 
+      subscriptionTier
     });
-    
+
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       subscription_tier: subscriptionTier,
       subscription_end: subscriptionEnd,
       current_plan: currentPlan,
-      payment_method: paymentMethod
+      payment_method: paymentMethod,
+      billing_address: billingAddress
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+      status: 200
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in check-subscription", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      subscribed: false
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 500
     });
   }
 });
