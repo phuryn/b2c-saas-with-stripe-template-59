@@ -6,10 +6,183 @@ const Privacy: React.FC = () => {
     <section className="section-padding">
       <div className="container mx-auto px-4">
         <h1 className="text-center font-bold mb-8">Privacy Policy</h1>
-        <div className="max-w-3xl mx-auto">
-          <p className="text-lg mb-4">
-            This is the Privacy Policy page. The full privacy policy will be displayed here.
+        <div className="max-w-3xl mx-auto prose">
+          <p className="text-sm text-gray-500 mb-8 text-center">Last Updated: December 4, 2024</p>
+          
+          <h2 className="text-xl font-bold mb-4">Introduction</h2>
+          <p>
+            This privacy policy explains how TRUSTY LTD ("TRUSTY," "we," or "us") collects, uses, and protects your information when you use our website (trustyboilerplate.io) and services. This policy applies to all users of our platform and services and should be read in conjunction with our <a href="/terms" className="text-primary-blue hover:underline">Terms of service</a> ("Terms"), which contain additional important information about how we handle your data and content.
           </p>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">Data Collection and Use</h2>
+          <h3 className="text-lg font-semibold mb-3">Information We Collect</h3>
+          <h4 className="font-semibold mb-2">Account Information</h4>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Email address</li>
+            <li>Name</li>
+            <li>Payment information for paid plans</li>
+            <li>Account preferences and settings</li>
+          </ul>
+          <p>
+            For detailed information about account management and your responsibilities regarding account information, please see the "User accounts and content" section of our Terms.
+          </p>
+          
+          <h4 className="font-semibold mb-2 mt-4">Service Usage Data</h4>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Generated code and prompts</li>
+            <li>Platform interaction data</li>
+            <li>Feature usage statistics</li>
+            <li>Error logs and debugging information</li>
+          </ul>
+          <p>
+            The ownership and usage rights of generated code and content are detailed in the "Intellectual property rights" section of our Terms.
+          </p>
+          
+          <h4 className="font-semibold mb-2 mt-4">Automatically Collected Information</h4>
+          <ul className="list-disc pl-6 mb-4">
+            <li>IP addresses</li>
+            <li>Browser type and version</li>
+            <li>Device information</li>
+            <li>Operating system</li>
+            <li>Access times and dates</li>
+            <li>Pages visited</li>
+          </ul>
+          
+          <h3 className="text-lg font-semibold mb-3 mt-6">Analytics and Tracking</h3>
+          <p>We use the following analytics and tracking tools:</p>
+          <ul className="list-disc pl-6 mb-4">
+            <li>
+              <strong>Microsoft Clarity</strong>
+              <ul className="list-disc pl-6 my-2">
+                <li>We use Microsoft Clarity for website analytics and user experience insights</li>
+                <li>For details about Microsoft Clarity's data handling, please see their Privacy policy</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Google Analytics and related services</strong>
+              <ul className="list-disc pl-6 my-2">
+                <li>We use Google Analytics to understand website traffic and usage</li>
+                <li>You can opt out using Google Analytics Opt-out Browser Add-on</li>
+                <li>For more information, visit Google's Privacy & Terms</li>
+              </ul>
+            </li>
+          </ul>
+          
+          <h3 className="text-lg font-semibold mb-3 mt-6">Cookies and Tracking Technologies</h3>
+          <p>We use cookies and similar tracking technologies to:</p>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Maintain your session</li>
+            <li>Remember your preferences</li>
+            <li>Analyze platform usage</li>
+            <li>Improve our services</li>
+          </ul>
+          <p>You can control cookie preferences through your browser settings.</p>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">How We Use Your Information</h2>
+          <p>We use collected information as detailed in our Terms of service for the following purposes:</p>
+          <h3 className="text-lg font-semibold mb-3 mt-4">Provide and improve our services, including:</h3>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Platform functionality improvements</li>
+            <li>AI model training</li>
+            <li>Service quality enhancements</li>
+          </ul>
+          
+          <h3 className="text-lg font-semibold mb-3 mt-4">Support and operations:</h3>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Provide customer support</li>
+            <li>Process payments</li>
+            <li>Send service updates</li>
+          </ul>
+          
+          <h3 className="text-lg font-semibold mb-3 mt-4">Security and maintenance:</h3>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Maintain platform security</li>
+            <li>Analyze usage patterns</li>
+            <li>Debug technical issues</li>
+            <li>Prevent abuse and fraud</li>
+          </ul>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">Data Sharing and Processing</h2>
+          <h3 className="text-lg font-semibold mb-3">Third-party Service Providers</h3>
+          <p>
+            We share data with trusted service providers as outlined in our Terms. This may include providers of:
+          </p>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Cloud hosting services</li>
+            <li>Payment processors</li>
+            <li>Analytics tools</li>
+            <li>Customer support platforms</li>
+            <li>Marketing service providers</li>
+          </ul>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">Your Rights</h2>
+          <p>You have the right to:</p>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Access your personal data</li>
+            <li>Request data correction</li>
+            <li>Request data deletion</li>
+            <li>Export your data</li>
+            <li>Opt out of certain processing</li>
+            <li>Withdraw consent</li>
+          </ul>
+          <p>
+            Contact <a href="mailto:contact@trusty.com" className="text-primary-blue hover:underline">contact@trusty.com</a> to exercise these rights.
+          </p>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">Security Measures</h2>
+          <p>We implement industry-standard security measures:</p>
+          <ul className="list-disc pl-6 mb-4">
+            <li>Encrypted data transmission</li>
+            <li>Secure data storage</li>
+            <li>Access controls</li>
+            <li>Regular security audits</li>
+            <li>Employee training</li>
+          </ul>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">User Content Visibility</h2>
+          <p>
+            The content and code you generate using our services, including prompts and project files, are private and only accessible to you and TRUSTY's authorized employees, contractors, and partners as necessary to provide support and maintain platform functionality.
+          </p>
+          <p className="mt-3">
+            If your project is set to "public," then the prompts and code can be visible to other users. Your public project can also be remixed and used as a starting point for other projects. Private projects are not remixable, and their code and prompts are not visible to other users.
+          </p>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">Children's Privacy</h2>
+          <p>Our services are not intended for users under 18. We do not knowingly collect data from children.</p>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">International Data Transfers</h2>
+          <p>We may transfer data internationally within our service provider network. We ensure appropriate safeguards are in place for these transfers.</p>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">Changes to This Policy</h2>
+          <p>We may update this policy periodically. Changes will be handled in accordance with the process outlined in our Terms regarding policy updates.</p>
+          
+          <h2 className="text-xl font-bold mb-4 mt-8">Contact Details</h2>
+          <h3 className="text-lg font-semibold mb-3">General Contact Information</h3>
+          <ul className="list-none mb-6">
+            <li><strong>Company name:</strong> TRUSTY LTD</li>
+            <li><strong>Address:</strong> 123 Tech Avenue, Silicon Valley, CA 94043, USA</li>
+            <li><strong>Website:</strong> <a href="https://trustyboilerplate.io" className="text-primary-blue hover:underline">https://trustyboilerplate.io</a></li>
+            <li><strong>Email:</strong> <a href="mailto:contact@trusty.com" className="text-primary-blue hover:underline">contact@trusty.com</a></li>
+          </ul>
+          
+          <h3 className="text-lg font-semibold mb-3">Contact Us For</h3>
+          <ul className="list-none mb-6">
+            <li><strong>Privacy questions:</strong> <a href="mailto:contact@trusty.com" className="text-primary-blue hover:underline">contact@trusty.com</a></li>
+            <li><strong>Support:</strong> <a href="mailto:contact@trusty.com" className="text-primary-blue hover:underline">contact@trusty.com</a></li>
+            <li><strong>DMCA and legal issues:</strong> <a href="mailto:contact@trusty.com" className="text-primary-blue hover:underline">contact@trusty.com</a></li>
+          </ul>
+          
+          <h3 className="text-lg font-semibold mb-3">Response Times</h3>
+          <p>We aim to respond to privacy-related inquiries within 7 business days.</p>
+          
+          <h3 className="text-lg font-semibold mb-3 mt-6">Additional Resources</h3>
+          <ul className="list-disc pl-6 mb-4">
+            <li><a href="/terms" className="text-primary-blue hover:underline">Terms of Service</a></li>
+            <li><a href="/pricing" className="text-primary-blue hover:underline">Pricing information</a></li>
+            <li><a href="/faqs" className="text-primary-blue hover:underline">FAQs</a></li>
+          </ul>
+          
+          <p className="text-sm text-gray-500 mt-10 pt-6 border-t border-gray-200">Last updated: December 4, 2024</p>
         </div>
       </div>
     </section>

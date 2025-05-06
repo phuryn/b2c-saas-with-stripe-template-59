@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Star } from "lucide-react";
 
 interface TestimonialProps {
   quote: string;
@@ -17,6 +18,13 @@ const Testimonial: React.FC<TestimonialProps> = ({ quote, author, company, image
           <h4 className="font-semibold">{author}</h4>
           <p className="text-gray-500 text-sm">{company}</p>
         </div>
+      </div>
+      <div className="flex mb-3 text-yellow-400">
+        <Star size={16} fill="currentColor" />
+        <Star size={16} fill="currentColor" />
+        <Star size={16} fill="currentColor" />
+        <Star size={16} fill="currentColor" />
+        <Star size={16} fill="currentColor" />
       </div>
       <p className="text-gray-600 italic">"{quote}"</p>
     </div>
