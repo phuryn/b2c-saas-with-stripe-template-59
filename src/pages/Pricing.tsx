@@ -2,8 +2,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const Pricing: React.FC = () => {
+  const { user } = useAuth();
+  
   return (
     <section className="section-padding">
       <div className="container mx-auto px-4">
@@ -24,7 +28,13 @@ const Pricing: React.FC = () => {
                 <span className="text-gray-500">/month</span>
               </div>
               <p className="text-gray-600 mb-6">Basic functionality for personal use.</p>
-              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Try Now</Button>
+              {user ? (
+                <Link to="/app/settings/billing">
+                  <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Manage Your Plan</Button>
+                </Link>
+              ) : (
+                <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Try Now</Button>
+              )}
             </div>
             <div className="border-t p-6">
               <ul className="space-y-3">
@@ -62,7 +72,13 @@ const Pricing: React.FC = () => {
                 <span className="text-gray-500">/month</span>
               </div>
               <p className="text-gray-600 mb-6">Great for professionals and small teams.</p>
-              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Try Now</Button>
+              {user ? (
+                <Link to="/app/settings/billing">
+                  <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Manage Your Plan</Button>
+                </Link>
+              ) : (
+                <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Try Now</Button>
+              )}
             </div>
             <div className="border-t p-6">
               <ul className="space-y-3">
@@ -102,7 +118,13 @@ const Pricing: React.FC = () => {
                 <span className="text-gray-500">/month</span>
               </div>
               <p className="text-gray-600 mb-6">For growing teams with advanced needs.</p>
-              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Try Now</Button>
+              {user ? (
+                <Link to="/app/settings/billing">
+                  <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Manage Your Plan</Button>
+                </Link>
+              ) : (
+                <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Try Now</Button>
+              )}
             </div>
             <div className="border-t p-6">
               <ul className="space-y-3">
@@ -141,7 +163,13 @@ const Pricing: React.FC = () => {
                 <span className="text-3xl font-bold">Custom</span>
               </div>
               <p className="text-gray-600 mb-6">For large organizations and complex needs.</p>
-              <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Get a Quote</Button>
+              {user ? (
+                <Link to="/app/settings/billing">
+                  <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Manage Your Plan</Button>
+                </Link>
+              ) : (
+                <Button className="w-full bg-primary-blue hover:bg-primary-blue/90">Get a Quote</Button>
+              )}
             </div>
             <div className="border-t p-6">
               <ul className="space-y-3">

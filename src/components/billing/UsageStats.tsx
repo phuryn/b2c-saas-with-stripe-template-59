@@ -20,6 +20,7 @@ const UsageStats: React.FC<UsageStatsProps> = ({ subscription }) => {
 
   return (
     <div className="space-y-4">
+      <h3 className="text-lg font-medium">Usage Statistics</h3>
       <Card>
         <CardContent className="pt-6">
           <Table>

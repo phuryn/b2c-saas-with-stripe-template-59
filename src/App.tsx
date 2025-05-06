@@ -31,6 +31,7 @@ import Links from "./pages/app/Links";
 import Settings from "./pages/app/settings/Settings";
 import ProfileSettings from "./pages/app/settings/ProfileSettings";
 import BillingSettings from "./pages/app/settings/BillingSettings";
+import PlanSettings from "./pages/app/settings/PlanSettings";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const App = () => {
                   <Route index element={<Navigate to="/app/settings/profile" replace />} />
                   <Route path="profile" element={<ProfileSettings />} />
                   <Route path="billing" element={<BillingSettings />} />
+                  <Route path="plan" element={<PlanSettings />} />
                 </Route>
               </Route>
               

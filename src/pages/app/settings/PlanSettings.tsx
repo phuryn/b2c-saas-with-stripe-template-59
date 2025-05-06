@@ -6,13 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
-import { Button } from '@/components/ui/button';
-
-// Import our components
-import BillingHistory from '@/components/billing/BillingHistory';
-import UsageStats from '@/components/billing/UsageStats';
-import BillingAddress from '@/components/billing/BillingAddress';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import PlanSelector from '@/components/billing/PlanSelector';
 
 interface StripePrice {
   id: string;
@@ -21,7 +15,7 @@ interface StripePrice {
   interval?: string;
 }
 
-const BillingSettings: React.FC = () => {
+const PlanSettings: React.FC = () => {
   const { user, session } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -39,14 +33,6 @@ const BillingSettings: React.FC = () => {
       last4?: string;
       exp_month?: number;
       exp_year?: number;
-    } | null;
-    billing_address?: {
-      line1?: string;
-      line2?: string;
-      city?: string;
-      state?: string;
-      postal_code?: string;
-      country?: string;
     } | null;
   } | null>(null);
   const [stripePrices, setStripePrices] = useState<Record<string, StripePrice>>({});
@@ -134,6 +120,95 @@ const BillingSettings: React.FC = () => {
     }
   };
 
+  const handleSubscribe = async (planId: string) => {
+    const priceId = subscription?.current_plan?.includes('yearly') 
+      ? STRIPE_CONFIG.prices[planId as 'standard' | 'premium']?.yearly
+      : STRIPE_CONFIG.prices[planId as 'standard' | 'premium']?.monthly;
+      
+    if (!priceId) {
+      toast({
+        title: 'Error',
+        description: 'Invalid price ID.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setSubscriptionLoading(true);
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId }
+      });
+      
+      if (error) throw new Error(error.message);
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error('Error creating checkout session:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to initialize checkout.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
+  const handleUpdateSubscription = async (planId: string) => {
+    if (planId === 'free') {
+      toast({
+        title: 'Free Plan',
+        description: 'To downgrade to the free plan, please cancel your subscription in the customer portal.',
+      });
+      openCustomerPortal();
+      return;
+    }
+    
+    if (!subscription?.subscribed) {
+      return handleSubscribe(planId);
+    }
+    
+    const priceId = subscription?.current_plan?.includes('yearly') 
+      ? STRIPE_CONFIG.prices[planId as 'standard' | 'premium']?.yearly
+      : STRIPE_CONFIG.prices[planId as 'standard' | 'premium']?.monthly;
+      
+    if (!priceId) {
+      toast({
+        title: 'Error',
+        description: 'Invalid price ID.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      setSubscriptionLoading(true);
+      const { data, error } = await supabase.functions.invoke('update-subscription', {
+        body: { newPriceId: priceId }
+      });
+      
+      if (error) throw new Error(error.message);
+      
+      toast({
+        title: 'Success',
+        description: 'Your subscription has been updated.',
+      });
+      
+      checkSubscriptionStatus();
+    } catch (err) {
+      console.error('Error updating subscription:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to update subscription.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
   const openCustomerPortal = async () => {
     try {
       setSubscriptionLoading(true);
@@ -155,47 +230,6 @@ const BillingSettings: React.FC = () => {
     }
   };
 
-  const handleManagePlan = () => {
-    navigate('/app/settings/plan');
-  };
-
-  const formatPriceDisplay = (price: number | undefined, currency: string = 'usd'): string => {
-    if (price === undefined) return '$0';
-    
-    // Convert cents to dollars
-    const dollars = price / 100;
-    
-    return new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: currency.toUpperCase(),
-      minimumFractionDigits: dollars % 1 === 0 ? 0 : 2
-    }).format(dollars);
-  };
-
-  const getPlanDetails = () => {
-    if (!subscription) return { name: 'Free', price: '$0/month' };
-    
-    const tier = subscription.subscription_tier || 'Free';
-    
-    if (tier === 'Free' || !subscription.subscribed) {
-      return { name: 'Free', price: '$0/month' };
-    }
-    
-    // Determine if plan is monthly or yearly
-    const isYearly = subscription.current_plan?.includes('yearly');
-    const planType = tier.toLowerCase() as 'standard' | 'premium';
-    const priceId = isYearly 
-      ? STRIPE_CONFIG.prices[planType]?.yearly
-      : STRIPE_CONFIG.prices[planType]?.monthly;
-    
-    const price = stripePrices[priceId];
-    const formattedPrice = price 
-      ? `${formatPriceDisplay(price.unit_amount, price.currency)}/${isYearly ? 'year' : 'month'}`
-      : `${'$' + (tier === 'Standard' ? '29' : '79')}/${isYearly ? 'year' : 'month'}`;
-    
-    return { name: tier, price: formattedPrice };
-  };
-
   if (loading || pricesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -204,48 +238,24 @@ const BillingSettings: React.FC = () => {
     );
   }
 
-  const planDetails = getPlanDetails();
-
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-medium mb-4">Billing and Usage</h2>
+      <h2 className="text-xl font-medium mb-4">Select Your Plan</h2>
       
-      {/* Current Plan Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Your Plan</h3>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-md">{planDetails.name} Plan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <p className="text-2xl font-bold">{planDetails.price}</p>
-              <p className="text-gray-500 text-sm mt-1">
-                {subscription?.subscription_end && subscription.subscribed ? 
-                  `Next billing date: ${new Date(subscription.subscription_end).toLocaleDateString()}` : 
-                  'No active subscription'}
-              </p>
-            </div>
-            <Button 
-              onClick={handleManagePlan}
-              className="w-full md:w-auto"
-            >
-              Manage Plan
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Plans Selection Section */}
+      <div className="overflow-x-auto -mx-6 md:mx-0">
+        <div className="min-w-[800px] md:min-w-0 px-6 md:px-0">
+          <PlanSelector
+            subscription={subscription}
+            stripePrices={stripePrices}
+            loading={subscriptionLoading}
+            onSubscribe={handleSubscribe}
+            onUpdateSubscription={handleUpdateSubscription}
+          />
+        </div>
       </div>
-      
-      {/* Monthly Usage Section */}
-      <UsageStats subscription={subscription} />
-      
-      {/* Billing Address Section */}
-      <BillingAddress subscription={subscription} />
-      
-      {/* Billing History Section */}
-      <BillingHistory subscription={subscription} />
     </div>
   );
 };
 
-export default BillingSettings;
+export default PlanSettings;

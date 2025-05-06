@@ -74,30 +74,35 @@ const PublicHeader: React.FC = () => {
         {/* CTA Buttons / User Menu */}
         <div className="flex items-center">
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="focus:outline-none">
-                  <Avatar className="h-9 w-9 cursor-pointer">
-                    <AvatarImage src={userMetadata?.avatar_url} alt={userMetadata?.name || user?.email?.split('@')[0] || 'User'} />
-                    <AvatarFallback>
-                      {(userMetadata?.name || user?.email?.split('@')[0] || 'U')[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem className="font-medium" disabled>
-                  My Account
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/app/settings/profile">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut}>
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <Link to="/app" className="hidden md:inline-flex mr-4">
+                <Button className="bg-primary-blue hover:bg-primary-blue/90">Open Your App</Button>
+              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="focus:outline-none">
+                    <Avatar className="h-9 w-9 cursor-pointer">
+                      <AvatarImage src={userMetadata?.avatar_url} alt={userMetadata?.name || user?.email?.split('@')[0] || 'User'} />
+                      <AvatarFallback>
+                        {(userMetadata?.name || user?.email?.split('@')[0] || 'U')[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="font-medium" disabled>
+                    My Account
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/app/settings/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <>
               <Link to="/auth" className="hidden md:inline-flex">
@@ -135,6 +140,11 @@ const PublicHeader: React.FC = () => {
                 {!user && (
                   <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button variant="outline" className="w-full mt-4">Log In</Button>
+                  </Link>
+                )}
+                {user && (
+                  <Link to="/app" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full mt-4 bg-primary-blue hover:bg-primary-blue/90">Open Your App</Button>
                   </Link>
                 )}
               </div>
