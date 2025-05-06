@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -16,7 +15,7 @@ import {
   SidebarSeparator,
   SidebarTrigger
 } from '@/components/ui/sidebar';
-import { Home, Link2, Settings, Plus, ChevronLeft } from 'lucide-react';
+import { Home, Link2, Settings, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -25,10 +24,12 @@ import {
   AvatarFallback, 
   AvatarImage 
 } from '@/components/ui/avatar';
+import { useSidebar } from '@/components/ui/sidebar';
 
 const AppSidebar: React.FC = () => {
   const location = useLocation();
   const { userMetadata, user } = useAuth();
+  const { state } = useSidebar();
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -38,20 +39,30 @@ const AppSidebar: React.FC = () => {
     <Sidebar collapsible="icon">
       <SidebarRail />
       <SidebarHeader className="flex items-center justify-between">
-        {/* App Logo */}
+        {/* App Logo - conditional based on sidebar state */}
         <div className="flex items-center px-2 py-3">
           <Link to="/app">
-            <img 
-              src="/lovable-uploads/3fff3c36-d39f-4c4e-8e3f-56a242c5ac6f.png" 
-              alt="TRUSTY" 
-              className="h-7 w-auto" 
-              width={120}
-              height={28}
-            />
+            {state === 'collapsed' ? (
+              <img 
+                src="/lovable-uploads/bec53901-4fa4-4be3-8f2b-a169abae6cc7.png" 
+                alt="TRUSTY" 
+                className="h-7 w-auto" 
+                width={28}
+                height={28}
+              />
+            ) : (
+              <img 
+                src="/lovable-uploads/3fff3c36-d39f-4c4e-8e3f-56a242c5ac6f.png" 
+                alt="TRUSTY" 
+                className="h-7 w-auto" 
+                width={120}
+                height={28}
+              />
+            )}
           </Link>
         </div>
         <SidebarTrigger>
-          <ChevronLeft className="h-4 w-4" />
+          {state === 'collapsed' ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </SidebarTrigger>
       </SidebarHeader>
       
