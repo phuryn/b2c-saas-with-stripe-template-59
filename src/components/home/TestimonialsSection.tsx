@@ -15,7 +15,7 @@ const Testimonial: React.FC<TestimonialProps> = ({ quote, author, company, image
       <div className="flex items-center mb-4">
         <img src={image} alt={author} className="w-12 h-12 rounded-full object-cover mr-4" />
         <div>
-          <h4 className="font-semibold">{author}</h4>
+          <h4 className="font-semibold transition-colors duration-200 hover:text-primary-blue">{author}</h4>
           <p className="text-gray-500 text-sm">{company}</p>
         </div>
       </div>
@@ -61,7 +61,7 @@ const TestimonialsSection: React.FC = () => {
     <section className="section-padding bg-gray-highlight">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="font-bold mb-4">What Our Customers Say</h2>
+          <h2 className="font-bold mb-4 transition-transform duration-300 hover:scale-105 hover:text-primary-blue inline-block">What Our Customers Say</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Thousands of companies rely on TRUSTY to build and scale their business.
           </p>

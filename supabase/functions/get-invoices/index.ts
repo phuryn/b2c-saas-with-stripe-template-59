@@ -21,9 +21,17 @@ serve(async (req) => {
     logStep("Function started");
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
     
+    // Check if the Stripe key is valid
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey || stripeKey.trim() === "") {
+      logStep("Missing Stripe secret key");
+      throw new Error("Stripe API key is not configured properly");
+    }
+    
     // Get customer ID from authenticated user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      logStep("No authorization header provided");
       throw new Error("No authorization header provided");
     }
     
@@ -35,6 +43,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
     if (!supabaseUrl || !supabaseServiceKey) {
+      logStep("Supabase configuration is missing");
       throw new Error("Supabase configuration is missing");
     }
     
@@ -47,8 +56,8 @@ serve(async (req) => {
     });
     
     if (!userResponse.ok) {
-      const errorData = await userResponse.text();
-      logStep("Failed to authenticate user", { status: userResponse.status, error: errorData });
+      const errorText = await userResponse.text();
+      logStep("Failed to authenticate user", { status: userResponse.status, error: errorText });
       throw new Error("Failed to authenticate user");
     }
     
@@ -62,7 +71,7 @@ serve(async (req) => {
     });
     
     if (customers.data.length === 0) {
-      logStep("No customer found for user");
+      logStep("No customer found for user", { email: user.email });
       return new Response(JSON.stringify({ invoices: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200

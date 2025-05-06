@@ -36,8 +36,6 @@ const PublicHeader: React.FC = () => {
   const menuItems = [
     { label: "Home", href: "/" },
     { label: "Pricing", href: "/pricing" },
-    { label: "About", href: "/about" },
-    { label: "FAQs", href: "/faqs" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

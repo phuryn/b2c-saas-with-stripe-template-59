@@ -3,8 +3,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const HeroSection: React.FC = () => {
+  const { user } = useAuth();
+  
   return (
     <section className="bg-gray-highlight section-padding">
       <div className="container mx-auto px-4">
@@ -15,21 +18,35 @@ const HeroSection: React.FC = () => {
         }}>
             TRUSTY provides all the tools you need to transform your ideas into reality, with enterprise-grade reliability and security.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 animate-fade-up" style={{
-          animationDelay: "0.4s"
-        }}>
-            <Link to="/signup">
-              <Button className="bg-primary-blue hover:bg-primary-blue/90 text-white text-lg px-8 py-6">
-                Get Started Free
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/pricing">
-              <Button variant="outline" className="text-lg px-8 py-6">
-                View Pricing
-              </Button>
-            </Link>
-          </div>
+          {!user && (
+            <div className="flex flex-col sm:flex-row gap-4 animate-fade-up" style={{
+              animationDelay: "0.4s"
+            }}>
+              <Link to="/signup">
+                <Button className="bg-primary-blue hover:bg-primary-blue/90 text-white text-lg px-8 py-6">
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/pricing">
+                <Button variant="outline" className="text-lg px-8 py-6">
+                  View Pricing
+                </Button>
+              </Link>
+            </div>
+          )}
+          {user && (
+            <div className="animate-fade-up" style={{
+              animationDelay: "0.4s"
+            }}>
+              <Link to="/app">
+                <Button className="bg-primary-blue hover:bg-primary-blue/90 text-white text-lg px-8 py-6">
+                  Open Your App
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          )}
           <div className="mt-12 w-full max-w-4xl animate-fade-in" style={{
           animationDelay: "0.6s"
         }}>
