@@ -38,7 +38,7 @@ const AppSidebar: React.FC = () => {
           <Link to="/app">
             {state === 'collapsed' ? (
               <img 
-                src="/lovable-uploads/bec53901-4fa4-4be3-8f2b-a169abae6cc7.png" 
+                src="/lovable-uploads/dfe9a235-bb0a-46f7-83e6-7b96aa0b49bd.png" 
                 alt="TRUSTY" 
                 className="h-7 w-auto object-contain" 
                 width={28}
@@ -61,11 +61,14 @@ const AppSidebar: React.FC = () => {
       </SidebarHeader>
       
       <SidebarContent>
-        {/* Create New Button */}
+        {/* Create New Button - shows icon only when collapsed */}
         <div className="px-2 mb-2">
-          <Button className="w-full flex gap-2 bg-primary-blue hover:bg-primary-blue/90">
+          <Button className={cn(
+            "w-full flex gap-2 bg-primary-blue hover:bg-primary-blue/90",
+            state === 'collapsed' ? "justify-center" : ""
+          )}>
             <Plus className="h-4 w-4" />
-            <span>Create New</span>
+            {state !== 'collapsed' && <span>Create New</span>}
           </Button>
         </div>
         
@@ -126,8 +129,6 @@ const AppSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      
-      {/* Removed the user avatar from SidebarFooter */}
     </Sidebar>
   );
 };
