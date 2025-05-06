@@ -1,9 +1,12 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+
 const HeroSection: React.FC = () => {
-  return <section className="bg-gray-highlight section-padding">
+  return (
+    <section className="bg-gray-highlight section-padding">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center text-center">
           <h1 className="font-bold mb-6 animate-fade-up">Start building. Stop theorizing.</h1>
@@ -34,6 +37,8 @@ const HeroSection: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default HeroSection;

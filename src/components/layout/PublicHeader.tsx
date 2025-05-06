@@ -18,7 +18,7 @@ const PublicHeader: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
             <img 
-              src="/lovable-uploads/e78a0b1d-9beb-4669-af36-a6999daa3bd3.png" 
+              src="/lovable-uploads/2d719fe8-edcb-42b6-a0ea-ca7e43cbe81c.png" 
               alt="TRUSTY" 
               className="h-7 w-auto" 
               width={120}
