@@ -50,7 +50,7 @@ const PublicHeader: React.FC = () => {
             <img 
               src="/lovable-uploads/3fff3c36-d39f-4c4e-8e3f-56a242c5ac6f.png" 
               alt="TRUSTY" 
-              className="h-8 w-auto" 
+              className="h-[28px] w-[120px] object-contain" 
             />
           </Link>
         </div>
