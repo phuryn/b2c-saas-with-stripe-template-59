@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -13,9 +13,12 @@ interface PlanOption {
   monthlyPriceId: string;
   yearlyPriceId: string;
   description: string;
+  limits: string[];
   features: string[];
-  popular?: boolean;
+  recommended?: boolean;
   isFree?: boolean;
+  isEnterprise?: boolean;
+  emailLink?: string;
 }
 
 interface StripePrice {
@@ -29,6 +32,13 @@ interface PlanSelectorProps {
   subscription: {
     subscribed: boolean;
     subscription_tier: string | null;
+    subscription_end: string | null;
+    payment_method?: {
+      brand?: string;
+      last4?: string;
+      exp_month?: number;
+      exp_year?: number;
+    } | null;
   } | null;
   stripePrices: Record<string, StripePrice>;
   loading: boolean;
@@ -52,7 +62,8 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       monthlyPriceId: "", // No price ID for free plan
       yearlyPriceId: "", // No price ID for free plan
       description: "Basic functionality for personal use.",
-      features: ["1 project", "5 links", "Basic analytics", "Email support"],
+      limits: ["20 links / month", "1 QR code / month"],
+      features: ["30-days of click history", "Email support"],
       isFree: true,
     },
     {
@@ -61,8 +72,9 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       monthlyPriceId: STRIPE_CONFIG.prices.standard.monthly,
       yearlyPriceId: STRIPE_CONFIG.prices.standard.yearly,
       description: "Great for professionals and small teams.",
-      features: ["10 projects", "Unlimited links", "Advanced analytics", "Priority support", "API access"],
-      popular: true, // Marking Standard as the most commonly chosen plan
+      limits: ["200 links / month", "20 QR codes / month"],
+      features: ["Everything in Free, plus:", "6-months of click history", "Bulk link & QR Code creation", "Priority support"],
+      recommended: true,
     },
     {
       id: "premium",
@@ -70,8 +82,20 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       monthlyPriceId: STRIPE_CONFIG.prices.premium.monthly,
       yearlyPriceId: STRIPE_CONFIG.prices.premium.yearly,
       description: "Full-featured solution for businesses.",
-      features: ["Unlimited projects", "Unlimited links", "Custom analytics", "24/7 support", "API access", "White-labeling", "Custom integrations"],
+      limits: ["5000 links / month", "500 QR codes / month"],
+      features: ["Everything in Standard, plus:", "2 years of click history", "City-level & device analytics", "API access"],
     },
+    {
+      id: "enterprise",
+      name: "Enterprise",
+      monthlyPriceId: "", // No direct price ID
+      yearlyPriceId: "", // No direct price ID
+      description: "Customized solution for large organizations.",
+      limits: ["Custom number of QR codes and links"],
+      features: ["Everything in Premium, plus:", "99.9% SLA uptime", "Dedicated customer success manager", "Customized onboarding & priority support"],
+      isEnterprise: true,
+      emailLink: "mailto:contact@trusty.com",
+    }
   ];
 
   const isPlanActive = (planName: string): boolean => {
@@ -94,6 +118,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
 
   const getPrice = (plan: PlanOption): string => {
     if (plan.isFree) return "$0";
+    if (plan.isEnterprise) return "Custom";
     
     const priceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
     const price = stripePrices[priceId];
@@ -112,17 +137,45 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   const handlePlanAction = (plan: PlanOption) => {
     if (isPlanActive(plan.name)) return; // Already on this plan
     
+    if (plan.isEnterprise && plan.emailLink) {
+      window.location.href = plan.emailLink;
+      return;
+    }
+    
     if (subscription?.subscribed) {
       onUpdateSubscription(plan.id);
     } else {
       onSubscribe(plan.id);
     }
   };
+  
+  const formatCardBrand = (brand?: string) => {
+    if (!brand) return 'Card';
+    return brand.charAt(0).toUpperCase() + brand.slice(1);
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
 
   return (
     <div className="space-y-6">
+      {subscription?.subscribed && subscription.subscription_end && subscription.payment_method && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <p className="text-blue-800">
+            Your subscription will auto-renew on {formatDate(subscription.subscription_end)}. On that date, the {formatCardBrand(subscription.payment_method?.brand)} card 
+            (ending in {subscription.payment_method?.last4}) will be charged.
+          </p>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">Available Plans</h3>
+        <h3 className="text-lg font-medium">Plan Details</h3>
         <div className="flex items-center space-x-2">
           <Label htmlFor="billing-period" className={`text-sm ${billingPeriod === 'monthly' ? 'font-medium' : ''}`}>
             Monthly
@@ -138,64 +191,82 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {plans.map((plan) => (
           <Card 
             key={plan.id}
-            className={`overflow-hidden ${isPlanActive(plan.name) ? 'border-primary-blue border-2' : ''}`}
+            className={`overflow-hidden ${isPlanActive(plan.name) ? 'border-primary border-2' : ''} ${plan.recommended ? 'ring-1 ring-blue-500' : ''}`}
           >
-            {plan.popular && (
-              <div className="bg-primary text-white px-3 py-1 text-xs font-medium absolute right-0 top-0 rounded-bl-md">
-                Most Popular
+            {plan.recommended && (
+              <div className="bg-primary text-white px-3 py-1 text-xs font-medium text-center w-full">
+                RECOMMENDED
               </div>
             )}
-            <CardHeader>
+            <CardHeader className={`pb-3 ${plan.recommended ? 'bg-blue-50' : ''}`}>
               <CardTitle>{plan.name}</CardTitle>
-              <CardDescription className="flex items-baseline mt-2">
+              <div className="flex items-baseline mt-2">
                 <span className="text-3xl font-bold">{getPrice(plan)}</span>
-                {!plan.isFree && (
+                {!plan.isFree && !plan.isEnterprise && (
                   <span className="text-gray-500 ml-1">{getPricePeriod()}</span>
                 )}
-              </CardDescription>
+              </div>
               <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
+            <CardContent className="pb-0">
+              <ul className="space-y-3 border-b border-gray-100 pb-4">
+                {plan.limits.map((limit, index) => (
+                  <li key={`limit-${index}`} className="flex items-start">
                     <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
+                    <span className="text-sm">{limit}</span>
                   </li>
                 ))}
               </ul>
             </CardContent>
-            <CardFooter>
-              {!plan.isFree ? (
-                <Button
-                  className="w-full"
-                  variant={isPlanActive(plan.name) ? "outline" : "default"}
-                  disabled={isPlanActive(plan.name) || loading}
-                  onClick={() => handlePlanAction(plan)}
-                >
-                  {loading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
-                  ) : isPlanActive(plan.name) ? (
-                    'Current Plan'
-                  ) : subscription?.subscribed ? (
-                    'Switch Plan'
-                  ) : (
-                    'Select Plan'
-                  )}
-                </Button>
-              ) : (
-                <Button
-                  className="w-full"
-                  variant={isPlanActive("Free") ? "outline" : "default"}
-                  disabled={isPlanActive("Free") || loading}
-                >
-                  {isPlanActive("Free") ? 'Current Plan' : 'Free Plan'}
-                </Button>
-              )}
+            <CardFooter className="flex flex-col items-start pt-4">
+              <div className="w-full mb-4">
+                {!plan.isEnterprise ? (
+                  <Button
+                    className="w-full"
+                    variant={isPlanActive(plan.name) ? "outline" : "default"}
+                    disabled={isPlanActive(plan.name) || loading}
+                    onClick={() => handlePlanAction(plan)}
+                  >
+                    {loading ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
+                    ) : isPlanActive(plan.name) ? (
+                      'Current Plan'
+                    ) : plan.isFree ? (
+                      'Free Plan'
+                    ) : subscription?.subscribed ? (
+                      'Switch Plan'
+                    ) : (
+                      'Select Plan'
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full"
+                    variant="default"
+                    onClick={() => handlePlanAction(plan)}
+                  >
+                    Get a Quote
+                  </Button>
+                )}
+              </div>
+              <ul className="space-y-3 w-full">
+                {plan.features.map((feature, index) => (
+                  <li key={`feature-${index}`} className="flex items-start">
+                    {feature.startsWith("Everything in") ? (
+                      <span className="text-sm font-medium">{feature}</span>
+                    ) : (
+                      <>
+                        <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </CardFooter>
           </Card>
         ))}

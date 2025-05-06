@@ -66,7 +66,18 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
 
   // Hide component only if we tried to fetch invoices and got none
   if (fetchAttempted && invoices.length === 0) {
-    return null;
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Billing History</h3>
+        <Card>
+          <CardContent>
+            <div className="text-center py-8 text-gray-500">
+              No invoice history available
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -89,7 +100,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
                   <TableHead>Date</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Amount</TableHead>
-                  <TableHead className="text-right">Invoice</TableHead>
+                  <TableHead className="text-right">Download</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -1,5 +1,5 @@
+
 import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -7,10 +7,12 @@ import { useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
 
-// Import our new components
+// Import our components
 import PlanSelector from '@/components/billing/PlanSelector';
 import BillingDetails from '@/components/billing/BillingDetails';
 import BillingHistory from '@/components/billing/BillingHistory';
+import UsageStats from '@/components/billing/UsageStats';
+import BillingAddress from '@/components/billing/BillingAddress';
 
 interface StripePrice {
   id: string;
@@ -36,6 +38,14 @@ const BillingSettings: React.FC = () => {
       last4?: string;
       exp_month?: number;
       exp_year?: number;
+    } | null;
+    billing_address?: {
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      postal_code?: string;
+      country?: string;
     } | null;
   } | null>(null);
   const [stripePrices, setStripePrices] = useState<Record<string, StripePrice>>({});
@@ -242,15 +252,8 @@ const BillingSettings: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <h2 className="text-xl font-medium mb-4">Billing and Usage</h2>
-      
-      {/* Billing Details Section - Always shown, content differs based on subscription status */}
-      <BillingDetails 
-        subscription={subscription} 
-        loading={subscriptionLoading} 
-        onOpenCustomerPortal={openCustomerPortal} 
-      />
       
       {/* Plans Selection Section */}
       <PlanSelector
@@ -261,23 +264,21 @@ const BillingSettings: React.FC = () => {
         onUpdateSubscription={handleUpdateSubscription}
       />
       
+      {/* Monthly Usage Section */}
+      <UsageStats subscription={subscription} />
+      
+      {/* Billing Details Section - Always shown, content differs based on subscription status */}
+      <BillingDetails 
+        subscription={subscription} 
+        loading={subscriptionLoading} 
+        onOpenCustomerPortal={openCustomerPortal} 
+      />
+      
+      {/* Billing Address Section */}
+      <BillingAddress subscription={subscription} />
+      
       {/* Billing History Section - Will only show if invoices are found */}
       <BillingHistory subscription={subscription} />
-      
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-600 mb-3">Need detailed billing information or want to update payment details?</p>
-        <Button
-          variant="link"
-          onClick={openCustomerPortal}
-          disabled={subscriptionLoading}
-        >
-          {subscriptionLoading ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
-          ) : (
-            'Access Customer Portal'
-          )}
-        </Button>
-      </div>
     </div>
   );
 };
