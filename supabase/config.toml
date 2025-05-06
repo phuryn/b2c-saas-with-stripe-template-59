@@ -8,3 +8,5 @@ project_id = "bnwvnlgspaxuzbfiphik"
 [functions.customer-portal]
 
 [functions.update-subscription]
+
+[functions.get-prices]
