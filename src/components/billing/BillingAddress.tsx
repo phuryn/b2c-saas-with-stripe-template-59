@@ -28,10 +28,7 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription }) => {
       <h3 className="text-lg font-medium">Billing Address</h3>
       
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-md">Address Details</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {subscription?.subscribed && subscription?.billing_address ? (
             <div className="space-y-2">
               <p>{subscription.billing_address.line1}</p>

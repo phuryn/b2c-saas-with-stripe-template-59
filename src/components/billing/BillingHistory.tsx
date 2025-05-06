@@ -70,7 +70,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Billing History</h3>
         <Card>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="text-center py-8 text-gray-500">
               No invoice history available
             </div>
@@ -85,10 +85,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
       <h3 className="text-lg font-medium">Billing History</h3>
       
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-md">Past Invoices</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -9,7 +9,6 @@ import { STRIPE_CONFIG } from '@/config/stripe';
 
 // Import our components
 import PlanSelector from '@/components/billing/PlanSelector';
-import BillingDetails from '@/components/billing/BillingDetails';
 import BillingHistory from '@/components/billing/BillingHistory';
 import UsageStats from '@/components/billing/UsageStats';
 import BillingAddress from '@/components/billing/BillingAddress';
@@ -266,13 +265,6 @@ const BillingSettings: React.FC = () => {
       
       {/* Monthly Usage Section */}
       <UsageStats subscription={subscription} />
-      
-      {/* Billing Details Section - Always shown, content differs based on subscription status */}
-      <BillingDetails 
-        subscription={subscription} 
-        loading={subscriptionLoading} 
-        onOpenCustomerPortal={openCustomerPortal} 
-      />
       
       {/* Billing Address Section */}
       <BillingAddress subscription={subscription} />

@@ -193,82 +193,85 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {plans.map((plan) => (
-          <Card 
-            key={plan.id}
-            className={`overflow-hidden ${isPlanActive(plan.name) ? 'border-primary border-2' : ''} ${plan.recommended ? 'ring-1 ring-blue-500' : ''}`}
-          >
+          <div key={plan.id} className="relative">
             {plan.recommended && (
-              <div className="bg-primary text-white px-3 py-1 text-xs font-medium text-center w-full">
-                RECOMMENDED
+              <div className="absolute inset-x-0 -top-6 flex justify-center">
+                <div className="bg-primary text-white px-3 py-1 text-xs font-medium rounded-t-md">
+                  RECOMMENDED
+                </div>
               </div>
             )}
-            <CardHeader className={`pb-3 ${plan.recommended ? 'bg-blue-50' : ''}`}>
-              <CardTitle>{plan.name}</CardTitle>
-              <div className="flex items-baseline mt-2">
-                <span className="text-3xl font-bold">{getPrice(plan)}</span>
-                {!plan.isFree && !plan.isEnterprise && (
-                  <span className="text-gray-500 ml-1">{getPricePeriod()}</span>
-                )}
-              </div>
-              <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
-            </CardHeader>
-            <CardContent className="pb-0">
-              <ul className="space-y-3 border-b border-gray-100 pb-4">
-                {plan.limits.map((limit, index) => (
-                  <li key={`limit-${index}`} className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{limit}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter className="flex flex-col items-start pt-4">
-              <div className="w-full mb-4">
-                {!plan.isEnterprise ? (
-                  <Button
-                    className="w-full"
-                    variant={isPlanActive(plan.name) ? "outline" : "default"}
-                    disabled={isPlanActive(plan.name) || loading}
-                    onClick={() => handlePlanAction(plan)}
-                  >
-                    {loading ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
-                    ) : isPlanActive(plan.name) ? (
-                      'Current Plan'
-                    ) : plan.isFree ? (
-                      'Free Plan'
-                    ) : subscription?.subscribed ? (
-                      'Switch Plan'
-                    ) : (
-                      'Select Plan'
-                    )}
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full"
-                    variant="default"
-                    onClick={() => handlePlanAction(plan)}
-                  >
-                    Get a Quote
-                  </Button>
-                )}
-              </div>
-              <ul className="space-y-3 w-full">
-                {plan.features.map((feature, index) => (
-                  <li key={`feature-${index}`} className="flex items-start">
-                    {feature.startsWith("Everything in") ? (
-                      <span className="text-sm font-medium">{feature}</span>
-                    ) : (
-                      <>
-                        <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </CardFooter>
-          </Card>
+            <Card 
+              className={`overflow-hidden ${isPlanActive(plan.name) ? 'border-primary border-2' : ''} ${plan.recommended ? 'ring-1 ring-blue-500' : ''}`}
+            >
+              <CardHeader className={`pb-3 ${plan.recommended ? 'bg-blue-50' : ''}`}>
+                <CardTitle>{plan.name}</CardTitle>
+                <div className="flex items-baseline mt-2">
+                  <span className="text-3xl font-bold">{getPrice(plan)}</span>
+                  {!plan.isFree && !plan.isEnterprise && (
+                    <span className="text-gray-500 ml-1">{getPricePeriod()}</span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 mt-2">{plan.description}</p>
+              </CardHeader>
+              <CardContent className="pb-0">
+                <ul className="space-y-3 border-b border-gray-100 pb-4">
+                  {plan.limits.map((limit, index) => (
+                    <li key={`limit-${index}`} className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{limit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter className="flex flex-col items-start pt-4">
+                <div className="w-full mb-4">
+                  {!plan.isEnterprise ? (
+                    <Button
+                      className="w-full"
+                      variant={isPlanActive(plan.name) ? "outline" : "default"}
+                      disabled={isPlanActive(plan.name) || loading}
+                      onClick={() => handlePlanAction(plan)}
+                    >
+                      {loading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
+                      ) : isPlanActive(plan.name) ? (
+                        'Current Plan'
+                      ) : plan.isFree ? (
+                        'Free Plan'
+                      ) : subscription?.subscribed ? (
+                        'Switch Plan'
+                      ) : (
+                        'Select Plan'
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      variant="default"
+                      onClick={() => handlePlanAction(plan)}
+                    >
+                      Get a Quote
+                    </Button>
+                  )}
+                </div>
+                <ul className="space-y-3 w-full">
+                  {plan.features.map((feature, index) => (
+                    <li key={`feature-${index}`} className="flex items-start">
+                      {feature.startsWith("Everything in") ? (
+                        <span className="text-sm font-medium">{feature}</span>
+                      ) : (
+                        <>
+                          <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{feature}</span>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </CardFooter>
+            </Card>
+          </div>
         ))}
       </div>
     </div>
