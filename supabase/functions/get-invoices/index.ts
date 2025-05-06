@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,13 +14,13 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     logStep("Function started");
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
     
     // Check if the Stripe key is valid
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -28,7 +29,11 @@ serve(async (req) => {
       throw new Error("Stripe API key is not configured properly");
     }
     
-    // Get customer ID from authenticated user
+    // Initialize Stripe
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    logStep("Stripe initialized");
+    
+    // Get authentication token
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       logStep("No authorization header provided");
@@ -38,7 +43,7 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     logStep("Authentication token extracted");
     
-    // Create a Supabase client to get user info
+    // Initialize Supabase client with service role key
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
@@ -47,22 +52,24 @@ serve(async (req) => {
       throw new Error("Supabase configuration is missing");
     }
     
-    // Using fetch directly for simplicity and to avoid potential issues with the Supabase client
-    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      }
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false }
     });
     
-    if (!userResponse.ok) {
-      const errorText = await userResponse.text();
-      logStep("Failed to authenticate user", { status: userResponse.status, error: errorText });
+    // Get user information
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      logStep("Failed to authenticate user", { error: userError });
       throw new Error("Failed to authenticate user");
     }
     
-    const user = await userResponse.json();
     logStep("User authenticated", { email: user.email });
+    
+    if (!user.email) {
+      logStep("User email not available");
+      throw new Error("User email not available");
+    }
     
     // Get customer ID using the email
     const customers = await stripe.customers.list({

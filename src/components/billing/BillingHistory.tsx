@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, AlertTriangle } from 'lucide-react';
+import { FileText, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -111,6 +111,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
             className="mt-4"
             onClick={() => fetchInvoices()}
           >
+            <RefreshCw className="h-4 w-4 mr-2" />
             Try again
           </Button>
         </div>
@@ -162,20 +163,10 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
     );
   };
 
-  // Hide component only if we tried to fetch invoices and got none
+  // Only hide component if we tried to fetch invoices and got none
+  // AND the user doesn't have an active subscription
   if (fetchAttempted && invoices.length === 0 && !error && !subscription?.subscribed) {
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Billing History</h3>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8 text-gray-500">
-              No invoice history available
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return null;
   }
 
   return (
