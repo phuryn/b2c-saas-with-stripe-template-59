@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,9 +61,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fetchUserRole(session.user.id);
           }, 0);
 
-          // Only redirect on explicit sign-in events, not on initial session check
-          if (event === 'SIGNED_IN' && window.location.pathname === '/') {
-            window.location.href = '/app';
+          // Only redirect on explicit sign-in events with directLogin/directSignup parameters
+          // This prevents automatic redirects when just checking for an existing session
+          if (event === 'SIGNED_IN') {
+            const params = new URLSearchParams(window.location.search);
+            const isDirect = params.get('directLogin') === 'true' || params.get('directSignup') === 'true';
+            
+            if (isDirect && window.location.pathname === '/') {
+              window.location.href = '/app';
+            }
           }
         } else {
           setUserRole(null);
@@ -76,10 +83,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Show notification on specific auth events
         if (event === 'SIGNED_IN') {
-          toast({
-            title: "Signed in successfully",
-            description: `Welcome${session?.user?.email ? ', ' + session.user.email : ''}!`,
-          });
+          const params = new URLSearchParams(window.location.search);
+          const isDirect = params.get('directLogin') === 'true' || params.get('directSignup') === 'true';
+          
+          // Only show toast for explicit sign-in actions
+          if (isDirect) {
+            toast({
+              title: "Signed in successfully",
+              description: `Welcome${session?.user?.email ? ', ' + session.user.email : ''}!`,
+            });
+          }
         } else if (event === 'SIGNED_OUT') {
           toast({
             title: "Signed out",
