@@ -52,7 +52,7 @@ const PublicHeader: React.FC = () => {
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
             <img 
-              src="/lovable-uploads/3fff3c36-d39f-4c4e-8e3f-56a242c5ac6f.png" 
+              src="/primary-logo.svg" 
               alt="TRUSTY" 
               className="h-[28px] w-[120px] object-contain" 
             />
