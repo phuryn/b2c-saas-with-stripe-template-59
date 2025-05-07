@@ -251,43 +251,38 @@ const BillingSettings: React.FC = () => {
           </Button>}
       </div>
       
-      {/* Responsive grid layout for Your Plan and Usage Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Your Plan Section */}
-        <div className="min-w-[360px] space-y-4">
-          <h3 className="text-lg font-medium">Your Plan</h3>
-          
-          {/* Subscription Info Component */}
-          {subscription?.subscribed && (
-            <SubscriptionInfo
-              subscription={subscription}
-              onManageSubscription={openCustomerPortal}
-              onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined}
-              subscriptionLoading={subscriptionLoading}
-            />
-          )}
-          
-          {/* Plan Card */}
-          {currentPlan && (
-            <PlanCard
-              name={currentPlan.name}
-              description={currentPlan.description}
-              price={currentPlan.free ? 'Free' : `${formatPriceDisplay(currentPlan.price?.monthly || 0)}/${currentCycle}`}
-              limits={currentPlan.limits}
-              features={currentPlan.features}
-              isActive={true}
-              buttonText="Manage Plan"
-              onSelect={handleManagePlan}
-              isLoading={subscriptionLoading}
-            />
-          )}
-        </div>
+      {/* Your Plan Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Your Plan</h3>
         
-        {/* Monthly Usage Section */}
-        <div className="min-w-[360px]">
-          <UsageStats subscription={subscription} />
-        </div>
+        {/* Subscription Info Component */}
+        {subscription?.subscribed && (
+          <SubscriptionInfo
+            subscription={subscription}
+            onManageSubscription={openCustomerPortal}
+            onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined}
+            subscriptionLoading={subscriptionLoading}
+          />
+        )}
+        
+        {/* Plan Card */}
+        {currentPlan && (
+          <PlanCard
+            name={currentPlan.name}
+            description={currentPlan.description}
+            price={currentPlan.free ? 'Free' : `${formatPriceDisplay(currentPlan.price?.monthly || 0)}/${currentCycle}`}
+            limits={currentPlan.limits}
+            features={currentPlan.features}
+            isActive={true}
+            buttonText="Manage Plan"
+            onSelect={handleManagePlan}
+            isLoading={subscriptionLoading}
+          />
+        )}
       </div>
+      
+      {/* Monthly Usage Section */}
+      <UsageStats subscription={subscription} />
       
       {/* Payment Method Section - New component */}
       <BillingPaymentMethod subscription={subscription} />
