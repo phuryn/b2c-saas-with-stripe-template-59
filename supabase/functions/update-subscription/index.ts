@@ -42,7 +42,64 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Parse request body
-    const { newPriceId } = await req.json();
+    const requestBody = await req.json();
+    logStep("Request data parsed", requestBody);
+    
+    // Handle cancellation case
+    if (requestBody.cancel === true) {
+      logStep("Processing cancellation request");
+      const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+      
+      // Get customer
+      logStep("Searching for customer");
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length === 0) {
+        throw new Error("No Stripe customer found for this user");
+      }
+      const customerId = customers.data[0].id;
+      logStep("Customer found", { customerId });
+
+      // Get current subscription
+      logStep("Searching for active subscription");
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
+
+      if (subscriptions.data.length === 0) {
+        throw new Error("No active subscription found to cancel");
+      }
+
+      const subscriptionId = subscriptions.data[0].id;
+      logStep("Active subscription found", { subscriptionId });
+      
+      // Cancel subscription at period end
+      const canceledSubscription = await stripe.subscriptions.update(subscriptionId, {
+        cancel_at_period_end: true,
+      });
+      
+      logStep("Subscription scheduled for cancellation at period end", {
+        subscriptionId,
+        cancel_at_period_end: canceledSubscription.cancel_at_period_end,
+        current_period_end: new Date(canceledSubscription.current_period_end * 1000)
+      });
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        subscription: {
+          id: canceledSubscription.id,
+          current_period_end: new Date(canceledSubscription.current_period_end * 1000),
+          cancel_at_period_end: canceledSubscription.cancel_at_period_end,
+          action: "canceled_subscription"
+        }
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+    
+    const { newPriceId } = requestBody;
     if (!newPriceId) throw new Error("New price ID is required");
     logStep("Request data parsed", { newPriceId });
 

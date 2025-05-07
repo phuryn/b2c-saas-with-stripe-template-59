@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -327,20 +326,8 @@ const PlanSettings: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Downgrade to Free Plan?</AlertDialogTitle>
             <AlertDialogDescription>
-              <p className="mb-2">Are you sure you want to downgrade to the Free plan?</p>
-              <p className="mb-4">You'll lose access to premium features immediately:</p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Unlimited links</li>
-                <li>Custom domains</li>
-                <li>Advanced analytics</li>
-                {currentPlanId === 'premium' && (
-                  <>
-                    <li>City-level analytics</li>
-                    <li>API access</li>
-                    <li>Priority support</li>
-                  </>
-                )}
-              </ul>
+              Are you sure you want to downgrade to the Free plan?
+              <p className="mt-2">You'll lose access to premium features at the end of the current billing cycle.</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
