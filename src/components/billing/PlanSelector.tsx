@@ -4,12 +4,14 @@ import { Plan, getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
 import BillingCycleSwitch from './BillingCycleSwitch';
 import PlanCard from './PlanCard';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 interface PlanSelectorProps {
   currentPlan?: string | null;
   isLoading?: boolean;
   cycle?: 'monthly' | 'yearly';
-  onSelect: (planId: string, cycle: 'monthly' | 'yearly') => void;
+  onSelect?: (planId: string, cycle: 'monthly' | 'yearly') => void;
   priceData?: Record<string, {
     id: string;
     unit_amount: number;
@@ -18,6 +20,7 @@ interface PlanSelectorProps {
   }>;
   showDowngrade?: boolean;
   onDowngrade?: () => void;
+  isPublicPage?: boolean;
 }
 
 const PlanSelector: React.FC<PlanSelectorProps> = ({ 
@@ -27,12 +30,33 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   onSelect,
   priceData = {},
   showDowngrade = false,
-  onDowngrade
+  onDowngrade,
+  isPublicPage = false
 }) => {
   const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly');
   const plans = getPlans(selectedCycle);
+  const { user } = useAuth();
 
   const handlePlanSelection = (plan: Plan) => {
+    // On public page, redirect to appropriate location based on user and plan
+    if (isPublicPage) {
+      if (plan.id === 'enterprise') {
+        window.location.href = 'mailto:contact@trusty.com?subject=Enterprise Plan Inquiry';
+        return;
+      }
+      
+      if (user) {
+        // If user is logged in on public page, redirect to billing settings
+        window.location.href = '/app/settings/billing';
+        return;
+      } else {
+        // If not logged in on public page, redirect to signup
+        window.location.href = '/signup';
+        return;
+      }
+    }
+    
+    // Normal app flow below
     if (plan.id === 'enterprise') {
       window.location.href = 'mailto:contact@trusty.com?subject=Enterprise Plan Inquiry';
       return;
@@ -43,17 +67,31 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       return;
     }
     
-    onSelect(plan.priceId, selectedCycle);
+    onSelect && onSelect(plan.priceId, selectedCycle);
   };
 
   const renderPlans = () => {
     return plans.map((plan) => {
       // Check if this is the current plan by comparing price IDs directly
-      const isActive = currentPlan === plan.priceId || 
-                      (plan.id !== 'free' && currentPlan?.includes(plan.id));
+      // Only show active state if not on public page
+      const isActive = !isPublicPage && (
+        currentPlan === plan.priceId || 
+        (plan.id !== 'free' && currentPlan?.includes(plan.id))
+      );
       
       let buttonText = plan.buttonText || 'Select Plan';
-      if (isActive) {
+      
+      if (isPublicPage) {
+        // Custom button text for public page
+        if (plan.id === 'free') {
+          buttonText = user ? 'Manage Your Plan' : 'Sign Up Free';
+        } else if (user) {
+          buttonText = 'Manage Your Plan';
+        } else {
+          buttonText = 'Try Now';
+        }
+      } else if (isActive) {
+        // For app settings page
         buttonText = 'Current Plan';
       }
       
@@ -91,7 +129,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         {renderPlans()}
       </div>
       
-      {showDowngrade && (
+      {showDowngrade && !isPublicPage && (
         <div className="mt-10 text-center">
           <button
             onClick={onDowngrade}

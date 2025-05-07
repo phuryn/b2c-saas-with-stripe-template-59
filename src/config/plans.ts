@@ -19,6 +19,23 @@ export interface Plan {
 export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
   return [
     {
+      id: 'free',
+      name: 'Free',
+      priceId: 'free',
+      description: 'Basic functionality for personal use.',
+      limits: [
+        '20 links / month',
+        '1 QR code / month',
+      ],
+      features: [
+        'Includes:',
+        '30-days of click history',
+        'Email support',
+      ],
+      buttonText: 'Sign Up Free',
+      free: true,
+    },
+    {
       id: 'standard',
       name: 'Standard',
       priceId: cycle === 'monthly' ? STRIPE_CONFIG.prices.standard.monthly : STRIPE_CONFIG.prices.standard.yearly,
@@ -56,9 +73,10 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
       id: 'enterprise',
       name: 'Enterprise',
       priceId: 'enterprise',
-      description: 'For large organizations and complex needs.',
+      description: 'For large organizations with special needs.',
       limits: [
-        'Custom number of QR codes and links',
+        'Custom number of links',
+        'Custom number of QR codes',
       ],
       features: [
         'Everything in Premium, plus:',

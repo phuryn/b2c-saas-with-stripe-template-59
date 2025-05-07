@@ -12,7 +12,7 @@ export const formatPrice = (
     interval?: string;
   }> = {}
 ): string => {
-  if (priceId === 'free') return 'Free';
+  if (priceId === 'free') return '$0/month';
   if (priceId === 'enterprise') return 'Custom';
   
   const price = priceData[priceId];
