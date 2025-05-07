@@ -25,7 +25,7 @@ const AppSidebar: React.FC = () => {
         {/* App Logo - conditional based on sidebar state */}
         <div className="flex items-center px-2 py-3">
           <Link to="/app">
-            {state === 'collapsed' ? <img src="/lovable-uploads/dfe9a235-bb0a-46f7-83e6-7b96aa0b49bd.png" alt="TRUSTY" width={28} height={28} className="h-5 w-auto object-contain" /> : <img src="/primary-logo.svg" alt="TRUSTY" width={120} height={28} className="h-5 w-auto" />}
+            {state === 'collapsed' ? <img src="/small-logo.svg" alt="TRUSTY" width={28} height={28} className="h-5 w-auto object-contain" /> : <img src="/primary-logo.svg" alt="TRUSTY" width={120} height={28} className="h-5 w-auto" />}
           </Link>
         </div>
         <TooltipProvider>
