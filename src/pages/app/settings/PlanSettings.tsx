@@ -1,11 +1,14 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { toast } from "sonner";
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
 import PlanSelector from '@/components/billing/PlanSelector';
+import { Button } from '@/components/ui/button';
 
 interface StripePrice {
   id: string;
@@ -18,10 +21,11 @@ const PlanSettings: React.FC = () => {
   const { user, session } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [pricesLoading, setPricesLoading] = useState(true);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [subscription, setSubscription] = useState<{
     subscribed: boolean;
     subscription_tier: string | null;
@@ -49,17 +53,14 @@ const PlanSettings: React.FC = () => {
   useEffect(() => {
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
-      toast({
-        title: 'Subscription Updated',
+      toast.success('Subscription Updated', {
         description: 'Your subscription has been updated successfully.',
       });
       checkSubscriptionStatus();
     } else if (searchParams.get('canceled') === 'true') {
-      toast({
-        description: 'Subscription update canceled.',
-      });
+      toast('Subscription update canceled');
     }
-  }, [searchParams, toast]);
+  }, [searchParams]);
 
   const fetchStripePrices = async () => {
     try {
@@ -87,11 +88,7 @@ const PlanSettings: React.FC = () => {
       setStripePrices(priceMap);
     } catch (err) {
       console.error('Error fetching prices from Stripe:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch pricing information from Stripe.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to fetch pricing information from Stripe.');
     } finally {
       setPricesLoading(false);
     }
@@ -109,24 +106,65 @@ const PlanSettings: React.FC = () => {
       setSubscription(data);
     } catch (err) {
       console.error('Error checking subscription status:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to retrieve subscription information.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to retrieve subscription information.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const refreshSubscriptionData = async () => {
+    if (refreshing) return;
+    
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) throw new Error(error.message);
+      
+      setSubscription(data);
+      toast.success('Subscription info refreshed');
+    } catch (err) {
+      console.error('Error refreshing subscription data:', err);
+      toast.error('Could not refresh subscription information');
+    } finally {
+      setRefreshing(false);
     }
   };
 
   const handleSubscribe = async (planId: string) => {
-    // Redirect all subscription actions to Stripe portal
-    openCustomerPortal();
+    try {
+      setSubscriptionLoading(true);
+      const { data, error } = await supabase.functions.invoke('update-subscription', {
+        body: { newPriceId: planId }
+      });
+      
+      if (error) throw new Error(error.message);
+      
+      // If we got client_secret back, the user needs to complete payment setup
+      if (data?.subscription?.client_secret) {
+        // For now, we'll handle by redirecting to customer portal
+        // In the future, we could implement Stripe Elements to collect payment
+        openCustomerPortal();
+        return;
+      }
+
+      // If no client_secret, the update was successful
+      if (data?.success) {
+        toast.success('Subscription created successfully!');
+        await checkSubscriptionStatus();
+      }
+    } catch (err) {
+      console.error('Error creating subscription:', err);
+      toast.error('Could not create subscription');
+    } finally {
+      setSubscriptionLoading(false);
+    }
   };
 
   const handleUpdateSubscription = async (planId: string) => {
-    // Redirect all subscription updates to Stripe portal
-    openCustomerPortal();
+    // This is handled directly in the PlanSelector component
+    // with the confirmation dialog and update-subscription function call
   };
 
   const openCustomerPortal = async () => {
@@ -140,11 +178,7 @@ const PlanSettings: React.FC = () => {
       }
     } catch (err) {
       console.error('Error opening customer portal:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to open customer portal.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to open customer portal');
     } finally {
       setSubscriptionLoading(false);
     }
@@ -160,7 +194,18 @@ const PlanSettings: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-medium mb-4">Select Your Plan</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-medium">Select Your Plan</h2>
+        <Button
+          variant="ghost" 
+          size="sm" 
+          onClick={refreshSubscriptionData}
+          disabled={refreshing}
+          className="transition-all hover:bg-primary/10"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
       
       {/* Plans Selection Section */}
       <div className="overflow-x-auto -mx-6 md:mx-0">
@@ -171,6 +216,7 @@ const PlanSettings: React.FC = () => {
             loading={subscriptionLoading}
             onSubscribe={handleSubscribe}
             onUpdateSubscription={handleUpdateSubscription}
+            onRefreshSubscription={checkSubscriptionStatus}
           />
         </div>
       </div>

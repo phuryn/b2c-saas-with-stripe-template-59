@@ -6,6 +6,18 @@ import { Check, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { STRIPE_CONFIG } from '@/config/stripe';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
 
 interface PlanOption {
   id: string;
@@ -45,6 +57,7 @@ interface PlanSelectorProps {
   loading: boolean;
   onSubscribe: (planId: string) => void;
   onUpdateSubscription: (planId: string) => void;
+  onRefreshSubscription?: () => void;
 }
 
 const PlanSelector: React.FC<PlanSelectorProps> = ({
@@ -52,11 +65,16 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   stripePrices,
   loading,
   onSubscribe,
-  onUpdateSubscription
+  onUpdateSubscription,
+  onRefreshSubscription
 }) => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>(
     subscription?.current_plan?.includes('yearly') ? 'yearly' : 'monthly'
   );
+  
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [changingPlan, setChangingPlan] = useState(false);
   
   const plans: PlanOption[] = [
     {
@@ -150,8 +168,22 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       return;
     }
 
-    // For all other plan actions, redirect to Stripe portal
-    openCustomerPortal();
+    const priceId = billingPeriod === 'monthly' ? plan.monthlyPriceId : plan.yearlyPriceId;
+    
+    // If user is not subscribed, use the onSubscribe method to start a subscription
+    if (!subscription?.subscribed) {
+      onSubscribe(priceId);
+      return;
+    }
+    
+    // If this is the active plan, no action needed
+    if (isPlanActive(plan)) {
+      return;
+    }
+    
+    // For existing subscribers trying to change plans, let's open the confirmation dialog
+    setSelectedPlanId(priceId);
+    setConfirmDialogOpen(true);
   };
   
   const formatCardBrand = (brand?: string) => {
@@ -168,9 +200,76 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     });
   };
 
+  const handlePlanChange = async () => {
+    if (!selectedPlanId) return;
+    
+    try {
+      setChangingPlan(true);
+      
+      const { data, error } = await supabase.functions.invoke('update-subscription', {
+        body: { newPriceId: selectedPlanId }
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data.success) {
+        toast.success("Subscription updated successfully!");
+        
+        // If the action was updating the subscription, or if there was no change needed
+        if (data.subscription.action === "updated_subscription" || data.subscription.action === "no_change") {
+          if (onRefreshSubscription) {
+            onRefreshSubscription();
+          }
+        } 
+        // If a new subscription was created and we need to collect payment details
+        else if (data.subscription.action === "new_subscription" && data.subscription.client_secret) {
+          // For now, we'll handle this by redirecting to the customer portal
+          // In a future version, we could implement Stripe Elements to collect payment details directly
+          window.location.href = STRIPE_CONFIG.customerPortalUrl;
+          return;
+        }
+      } else {
+        throw new Error("Failed to update subscription");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error updating subscription:", err);
+      toast.error(`Failed to update subscription: ${errorMessage}`);
+    } finally {
+      setChangingPlan(false);
+      setConfirmDialogOpen(false);
+    }
+  };
+
   const openCustomerPortal = () => {
     window.location.href = STRIPE_CONFIG.customerPortalUrl;
   };
+
+  const getConfirmationPlanDetails = () => {
+    if (!selectedPlanId) return { name: "", price: "" };
+    
+    // Find the plan that matches the selected price ID
+    const selectedPlan = plans.find(plan => 
+      plan.monthlyPriceId === selectedPlanId || plan.yearlyPriceId === selectedPlanId
+    );
+    
+    if (!selectedPlan) return { name: "", price: "" };
+    
+    const price = stripePrices[selectedPlanId]?.unit_amount 
+      ? formatCurrency(stripePrices[selectedPlanId].unit_amount) 
+      : "Price not available";
+    
+    const period = selectedPlanId.includes("yearly") ? "yearly" : "monthly";
+    
+    return {
+      name: selectedPlan.name,
+      price: `${price}/${period === "yearly" ? "year" : "month"}`
+    };
+  };
+
+  const planDetails = getConfirmationPlanDetails();
 
   return (
     <div className="space-y-6">
@@ -251,10 +350,10 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
                     <Button
                       className="w-full"
                       variant={isActive ? "outline" : "default"}
-                      disabled={isActive || loading}
+                      disabled={isActive || loading || changingPlan}
                       onClick={() => handlePlanAction(plan)}
                     >
-                      {loading ? (
+                      {loading || changingPlan ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait</>
                       ) : isActive ? (
                         'Current Plan'
@@ -322,6 +421,34 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Subscription Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You're about to switch to the {planDetails.name} plan at {planDetails.price}.
+              {subscription?.subscribed ? 
+                " Your subscription will be updated immediately with a prorated charge." : 
+                " You'll be asked to enter your payment details to complete this subscription."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={changingPlan}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handlePlanChange}
+              disabled={changingPlan}
+            >
+              {changingPlan ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
+              ) : (
+                'Confirm Change'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
