@@ -15,6 +15,13 @@ type AuthContextType = {
     full_name?: string;
     name?: string;
   } | null;
+  profile: {
+    id: string;
+    display_name: string | null;
+    updated_at: string | null;
+  } | null;
+  updateProfile: (data: { display_name: string }) => Promise<void>;
+  authProvider: 'email' | 'google' | 'linkedin' | null;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +31,9 @@ const AuthContext = createContext<AuthContextType>({
   userRole: null,
   isLoading: true,
   userMetadata: null,
+  profile: null,
+  updateProfile: async () => {},
+  authProvider: null,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -38,6 +48,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     full_name?: string;
     name?: string;
   } | null>(null);
+  const [profile, setProfile] = useState<{
+    id: string;
+    display_name: string | null;
+    updated_at: string | null;
+  } | null>(null);
+  const [authProvider, setAuthProvider] = useState<'email' | 'google' | 'linkedin' | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Set user metadata from Google auth
+        // Set user metadata from auth provider
         if (session?.user) {
           const metadata = {
             avatar_url: session.user.user_metadata.avatar_url,
@@ -56,9 +72,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           setUserMetadata(metadata);
           
+          // Determine auth provider
+          if (session.user.app_metadata?.provider) {
+            setAuthProvider(
+              session.user.app_metadata.provider === 'google' ? 'google' : 
+              session.user.app_metadata.provider === 'linkedin_oidc' ? 'linkedin' : 'email'
+            );
+          } else {
+            setAuthProvider('email');
+          }
+          
           // Fetch user role if we have a user
           setTimeout(() => {
             fetchUserRole(session.user.id);
+            fetchUserProfile(session.user.id);
           }, 0);
 
           // Only redirect on explicit sign-in events with directLogin/directSignup parameters
@@ -74,6 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           setUserRole(null);
           setUserMetadata(null);
+          setProfile(null);
+          setAuthProvider(null);
           
           // If signed out, redirect to home
           if (event === 'SIGNED_OUT') {
@@ -114,7 +143,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: session.user.user_metadata.name
         };
         setUserMetadata(metadata);
+        
+        // Determine auth provider
+        if (session.user.app_metadata?.provider) {
+          setAuthProvider(
+            session.user.app_metadata.provider === 'google' ? 'google' : 
+            session.user.app_metadata.provider === 'linkedin_oidc' ? 'linkedin' : 'email'
+          );
+        } else {
+          setAuthProvider('email');
+        }
+        
         fetchUserRole(session.user.id);
+        fetchUserProfile(session.user.id);
       }
       setIsLoading(false);
     });
@@ -123,6 +164,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription.unsubscribe();
     };
   }, [toast]);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+      
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    }
+  };
+
+  const updateProfile = async (data: { display_name: string }) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', user.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Refresh profile data
+      await fetchUserProfile(user.id);
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Update failed",
+        description: error.message || "There was a problem updating your profile.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchUserRole = async (userId: string) => {
     try {
@@ -168,6 +260,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userRole,
         isLoading,
         userMetadata,
+        profile,
+        updateProfile,
+        authProvider,
       }}
     >
       {children}
