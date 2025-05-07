@@ -41,7 +41,7 @@ const AppSidebar: React.FC = () => {
   }, [location.pathname]);
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="bg-white">
       <SidebarRail />
       <SidebarHeader className="flex items-center justify-between">
         {/* App Logo - conditional based on sidebar state */}
@@ -80,7 +80,7 @@ const AppSidebar: React.FC = () => {
         </TooltipProvider>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="bg-white">
         {/* Create New Button - shows icon only when collapsed */}
         <div className="px-2 mb-2">
           <Button className={cn(
@@ -105,13 +105,15 @@ const AppSidebar: React.FC = () => {
                   isActive={isActive('/app')}
                 >
                   <Link to="/app" className={cn(
-                    "text-gray-800 hover:bg-gray-100",
-                    isActive('/app') && "text-primary-blue"
+                    "text-gray-800 hover:bg-[rgb(247_247_247)]",
+                    isActive('/app') && "text-primary-blue bg-primary-blue/10"
                   )}>
                     <Home className={cn(
                       isActive('/app') ? "text-primary-blue" : "text-gray-800"
                     )} />
-                    <span>Home</span>
+                    <span className={cn(
+                      isActive('/app') && "text-primary-blue"
+                    )}>Home</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -122,13 +124,15 @@ const AppSidebar: React.FC = () => {
                   isActive={isActive('/app/links')}
                 >
                   <Link to="/app/links" className={cn(
-                    "text-gray-800 hover:bg-gray-100",
-                    isActive('/app/links') && "text-primary-blue"
+                    "text-gray-800 hover:bg-[rgb(247_247_247)]",
+                    isActive('/app/links') && "text-primary-blue bg-primary-blue/10"
                   )}>
                     <Link2 className={cn(
                       isActive('/app/links') ? "text-primary-blue" : "text-gray-800"
                     )} />
-                    <span>Links</span>
+                    <span className={cn(
+                      isActive('/app/links') && "text-primary-blue"
+                    )}>Links</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -149,13 +153,15 @@ const AppSidebar: React.FC = () => {
                   isActive={isActive('/app/settings')}
                 >
                   <Link to="/app/settings" className={cn(
-                    "text-gray-800 hover:bg-gray-100",
-                    isActive('/app/settings') && "text-primary-blue"
+                    "text-gray-800 hover:bg-[rgb(247_247_247)]",
+                    isActive('/app/settings') && "text-primary-blue bg-primary-blue/10"
                   )}>
                     <Settings className={cn(
                       isActive('/app/settings') ? "text-primary-blue" : "text-gray-800"
                     )} />
-                    <span>Settings</span>
+                    <span className={cn(
+                      isActive('/app/settings') && "text-primary-blue"
+                    )}>Settings</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
