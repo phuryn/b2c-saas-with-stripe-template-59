@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Sidebar, 
@@ -33,12 +33,7 @@ const AppSidebar: React.FC = () => {
     return location.pathname.startsWith(path);
   };
   
-  useEffect(() => {
-    // Collapse sidebar when navigating to settings if it's expanded
-    if (location.pathname.startsWith('/app/settings') && state === 'expanded') {
-      toggleSidebar();
-    }
-  }, [location.pathname]);
+  // Removed the useEffect that collapsed sidebar when navigating to settings
 
   return (
     <Sidebar collapsible="icon" className="bg-white">
