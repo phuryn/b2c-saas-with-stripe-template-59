@@ -2,11 +2,11 @@
 import React, { useState, useEffect, forwardRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Invoice {
   id: string;
@@ -144,12 +144,20 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
                   <p className="text-xs text-gray-500">{invoice.description}</p>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={invoice.invoice_pdf} target="_blank" rel="noopener noreferrer">
-                      <img src="/pdf.svg" alt="PDF" className="h-4 w-4" />
-                      <span className="sr-only">Download Invoice</span>
-                    </a>
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" asChild>
+                          <a href={invoice.invoice_pdf} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Download invoice</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TableCell>
               </TableRow>
             ))}
