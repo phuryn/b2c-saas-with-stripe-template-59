@@ -2,16 +2,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[UPDATE-SUBSCRIPTION] ${step}${detailsStr}`);
-};
+import { corsHeaders, logStep } from "./utils.ts";
+import { getStripeCustomer, getActiveSubscription, createNewSubscription } from "./customer.ts";
+import { 
+  cancelSubscription, 
+  renewSubscription, 
+  updateSubscriptionPrice, 
+  checkIfPriceChanged 
+} from "./subscription.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -45,54 +43,23 @@ serve(async (req) => {
     const requestBody = await req.json();
     logStep("Request data parsed", requestBody);
     
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    
     // Handle cancellation case
     if (requestBody.cancel === true) {
       logStep("Processing cancellation request");
-      const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+      const customerId = await getStripeCustomer(stripe, user.email);
+      const subscription = await getActiveSubscription(stripe, customerId);
       
-      // Get customer
-      logStep("Searching for customer");
-      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-      if (customers.data.length === 0) {
-        throw new Error("No Stripe customer found for this user");
-      }
-      const customerId = customers.data[0].id;
-      logStep("Customer found", { customerId });
-
-      // Get current subscription
-      logStep("Searching for active subscription");
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customerId,
-        status: "active",
-        limit: 1,
-      });
-
-      if (subscriptions.data.length === 0) {
+      if (!subscription) {
         throw new Error("No active subscription found to cancel");
       }
-
-      const subscriptionId = subscriptions.data[0].id;
-      logStep("Active subscription found", { subscriptionId });
       
-      // Cancel subscription at period end
-      const canceledSubscription = await stripe.subscriptions.update(subscriptionId, {
-        cancel_at_period_end: true,
-      });
-      
-      logStep("Subscription scheduled for cancellation at period end", {
-        subscriptionId,
-        cancel_at_period_end: canceledSubscription.cancel_at_period_end,
-        current_period_end: new Date(canceledSubscription.current_period_end * 1000)
-      });
+      const result = await cancelSubscription(stripe, subscription.id);
       
       return new Response(JSON.stringify({ 
         success: true, 
-        subscription: {
-          id: canceledSubscription.id,
-          current_period_end: new Date(canceledSubscription.current_period_end * 1000),
-          cancel_at_period_end: canceledSubscription.cancel_at_period_end,
-          action: "canceled_subscription"
-        }
+        subscription: result
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -102,121 +69,46 @@ serve(async (req) => {
     // Handle subscription renewal
     if (requestBody.renew === true) {
       logStep("Processing renewal request");
-      const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+      const customerId = await getStripeCustomer(stripe, user.email);
+      const subscription = await getActiveSubscription(stripe, customerId);
       
-      // Get customer
-      logStep("Searching for customer");
-      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-      if (customers.data.length === 0) {
-        throw new Error("No Stripe customer found for this user");
-      }
-      const customerId = customers.data[0].id;
-      logStep("Customer found", { customerId });
-
-      // Get current subscription
-      logStep("Searching for active subscription");
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customerId,
-        status: "active",
-        limit: 1,
-      });
-
-      if (subscriptions.data.length === 0) {
+      if (!subscription) {
         throw new Error("No active subscription found to renew");
       }
-
-      const subscriptionId = subscriptions.data[0].id;
-      logStep("Active subscription found", { subscriptionId });
       
-      // Update subscription to continue at period end
-      const renewedSubscription = await stripe.subscriptions.update(subscriptionId, {
-        cancel_at_period_end: false,
-      });
-      
-      logStep("Subscription renewed", {
-        subscriptionId,
-        cancel_at_period_end: renewedSubscription.cancel_at_period_end,
-        current_period_end: new Date(renewedSubscription.current_period_end * 1000)
-      });
+      const result = await renewSubscription(stripe, subscription.id);
       
       return new Response(JSON.stringify({ 
         success: true, 
-        subscription: {
-          id: renewedSubscription.id,
-          current_period_end: new Date(renewedSubscription.current_period_end * 1000),
-          cancel_at_period_end: renewedSubscription.cancel_at_period_end,
-          action: "renewed_subscription"
-        }
+        subscription: result
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
     
+    // Handle price update case
     const { newPriceId } = requestBody;
     if (!newPriceId) throw new Error("New price ID is required");
     logStep("Request data parsed", { newPriceId });
-
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
-    // Get customer
-    logStep("Searching for customer");
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    if (customers.data.length === 0) {
-      throw new Error("No Stripe customer found for this user");
-    }
-    const customerId = customers.data[0].id;
-    logStep("Customer found", { customerId });
+    const customerId = await getStripeCustomer(stripe, user.email);
+    const subscription = await getActiveSubscription(stripe, customerId);
 
-    // Get current subscription
-    logStep("Searching for active subscription");
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
-    });
-
-    if (subscriptions.data.length === 0) {
-      logStep("No active subscription, creating new subscription");
-      // Create a new subscription for the customer
-      const newSubscription = await stripe.subscriptions.create({
-        customer: customerId,
-        items: [{ price: newPriceId }],
-        payment_behavior: "default_incomplete",
-        payment_settings: { save_default_payment_method: "on_subscription" },
-        expand: ["latest_invoice.payment_intent"],
-      });
-
-      const invoice = newSubscription.latest_invoice;
-      let clientSecret = null;
-
-      if (typeof invoice !== 'string' && 
-          invoice?.payment_intent && 
-          typeof invoice.payment_intent !== 'string') {
-        clientSecret = invoice.payment_intent.client_secret;
-      }
-
+    if (!subscription) {
+      const result = await createNewSubscription(stripe, customerId, newPriceId);
+      
       return new Response(JSON.stringify({ 
         success: true, 
-        subscription: {
-          id: newSubscription.id,
-          status: newSubscription.status,
-          client_secret: clientSecret,
-          action: "new_subscription"
-        }
+        subscription: result
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    const subscription = subscriptions.data[0];
-    const subscriptionId = subscription.id;
-    const subscriptionItemId = subscription.items.data[0].id;
-    logStep("Active subscription found", { subscriptionId, currentPrice: subscription.items.data[0].price.id });
-
     // Check if the new price is the same as the current one
-    if (subscription.items.data[0].price.id === newPriceId) {
+    if (!checkIfPriceChanged(subscription, newPriceId)) {
       logStep("No change needed, new price is the same as current price");
       return new Response(JSON.stringify({ 
         success: true, 
@@ -233,24 +125,17 @@ serve(async (req) => {
     }
 
     // Update subscription with new price
-    logStep("Updating subscription with new price", { newPriceId });
-    const updatedSubscription = await stripe.subscriptions.update(subscriptionId, {
-      items: [{
-        id: subscriptionItemId,
-        price: newPriceId,
-      }],
-      proration_behavior: "create_prorations",
-    });
-    logStep("Subscription updated successfully");
+    const subscriptionItemId = subscription.items.data[0].id;
+    const result = await updateSubscriptionPrice(
+      stripe, 
+      subscription.id, 
+      subscriptionItemId, 
+      newPriceId
+    );
 
     return new Response(JSON.stringify({ 
       success: true, 
-      subscription: {
-        id: updatedSubscription.id,
-        current_period_end: new Date(updatedSubscription.current_period_end * 1000),
-        plan: updatedSubscription.items.data[0].price.id,
-        action: "updated_subscription"
-      }
+      subscription: result
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
