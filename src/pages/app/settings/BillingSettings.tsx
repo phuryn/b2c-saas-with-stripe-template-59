@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,6 +34,7 @@ const BillingSettings: React.FC = () => {
     subscription_tier: string | null;
     subscription_end: string | null;
     current_plan: string | null;
+    cancel_at_period_end?: boolean;
     payment_method?: {
       brand?: string;
       last4?: string;
@@ -210,6 +210,7 @@ const BillingSettings: React.FC = () => {
   }
 
   const planDetails = getPlanDetails();
+  const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
 
   return (
     <div className="space-y-8">
@@ -245,7 +246,9 @@ const BillingSettings: React.FC = () => {
               <p className="text-2xl font-bold">{planDetails.price}</p>
               <p className="text-gray-500 text-sm mt-1">
                 {subscription?.subscription_end && subscription.subscribed ? 
-                  `Next billing date: ${new Date(subscription.subscription_end).toLocaleDateString()}` : 
+                  isSubscriptionCanceling ?
+                    `Cancels on ${new Date(subscription.subscription_end).toLocaleDateString()}` :
+                    `Next billing date: ${new Date(subscription.subscription_end).toLocaleDateString()}` : 
                   'No active subscription'}
               </p>
             </div>

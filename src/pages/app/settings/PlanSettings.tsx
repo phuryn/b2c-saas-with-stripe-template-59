@@ -41,6 +41,7 @@ const PlanSettings: React.FC = () => {
     subscription_tier: string | null;
     subscription_end: string | null;
     current_plan: string | null;
+    cancel_at_period_end?: boolean;
     payment_method?: {
       brand?: string;
       last4?: string;
@@ -251,6 +252,7 @@ const PlanSettings: React.FC = () => {
   const cardInfo = getFormattedCardInfo();
   const currentPlanId = getCurrentPlanId();
   const currentCycle = getCurrentCycle();
+  const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
   
   return (
     <div className="space-y-8">
@@ -272,16 +274,27 @@ const PlanSettings: React.FC = () => {
         <div className="bg-muted/50 rounded-lg p-4 border border-muted-foreground/20">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Your subscription will auto-renew on {new Date(subscription.subscription_end || '').toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}.</p>
-              
-              {cardInfo && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                  <CreditCard className="h-3 w-3" />
-                  On that date, the {cardInfo.name} card (ending in {cardInfo.last4}) will be charged.
+              {isSubscriptionCanceling ? (
+                <p className="text-sm text-muted-foreground">
+                  Your subscription cancels on {new Date(subscription.subscription_end || '').toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Your subscription will auto-renew on {new Date(subscription.subscription_end || '').toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}.
+                  
+                  {cardInfo && (
+                    <span className="block mt-1">
+                      On that date, the {cardInfo.name} card (ending in {cardInfo.last4}) will be charged.
+                    </span>
+                  )}
                 </p>
               )}
             </div>
