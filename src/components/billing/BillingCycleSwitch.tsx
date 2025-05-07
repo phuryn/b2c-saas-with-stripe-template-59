@@ -3,16 +3,22 @@ import React from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { BillingCycle } from '@/types/subscription';
 
 interface BillingCycleSwitchProps {
-  selectedCycle: 'monthly' | 'yearly';
-  onChange: (cycle: 'monthly' | 'yearly') => void;
+  selectedCycle?: 'monthly' | 'yearly';
+  cycle?: BillingCycle;
+  onChange: (cycle: 'monthly' | 'yearly' | BillingCycle) => void;
 }
 
 const BillingCycleSwitch: React.FC<BillingCycleSwitchProps> = ({ 
   selectedCycle, 
+  cycle,
   onChange 
 }) => {
+  // Use either selectedCycle or cycle prop (for backward compatibility)
+  const currentCycle = selectedCycle || cycle || 'monthly';
+  
   return (
     <div className="mb-12">
       <div className="relative">
@@ -21,23 +27,23 @@ const BillingCycleSwitch: React.FC<BillingCycleSwitchProps> = ({
             <Badge 
               className={cn(
                 "mr-2 text-xs font-medium pointer-events-none",
-                selectedCycle === 'yearly' 
+                currentCycle === 'yearly' 
                   ? "bg-[#F2FCE2] text-primary-green" 
                   : "bg-[#F7F7F7] text-gray-500"
               )}
             >
               Save up to 17%
             </Badge>
-            <span className={`font-medium text-sm mr-2 ${selectedCycle === 'yearly' ? 'text-gray-800' : 'text-gray-500'}`}>
+            <span className={`font-medium text-sm mr-2 ${currentCycle === 'yearly' ? 'text-gray-800' : 'text-gray-500'}`}>
               Annually
             </span>
           </div>
           <Switch
-            checked={selectedCycle === 'monthly'}
+            checked={currentCycle === 'monthly'}
             onCheckedChange={(checked) => onChange(checked ? 'monthly' : 'yearly')}
             className="mx-2"
           />
-          <span className={`font-medium text-sm ml-2 ${selectedCycle === 'monthly' ? 'text-gray-800' : 'text-gray-500'}`}>
+          <span className={`font-medium text-sm ml-2 ${currentCycle === 'monthly' ? 'text-gray-800' : 'text-gray-500'}`}>
             Monthly
           </span>
         </div>

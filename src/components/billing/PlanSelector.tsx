@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import BillingCycleSwitch from './BillingCycleSwitch';
 import PlanCard from './PlanCard';
@@ -9,44 +9,59 @@ import { BillingCycle } from '@/types/subscription';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PlanSelectorProps {
-  currentPlan: string | null;
-  isLoading: boolean;
-  priceData: Record<string, any>;
-  cycle: BillingCycle;
+  currentPlan?: string | null;
+  isLoading?: boolean;
+  priceData?: Record<string, any>;
+  cycle?: BillingCycle;
   onCycleChange?: (cycle: BillingCycle) => void;
-  onSelect: (plan: string, price: string) => void;
+  onSelect?: (plan: string, price: string) => void;
   showDowngrade?: boolean;
   onDowngrade?: () => void;
-  activePlanIndex?: number; // New prop for mobile view
+  activePlanIndex?: number;
+  isPublicPage?: boolean;
 }
 
 const PlanSelector: React.FC<PlanSelectorProps> = ({
-  currentPlan,
-  isLoading,
-  priceData,
+  currentPlan = null,
+  isLoading = false,
+  priceData = {},
   cycle = 'monthly',
   onCycleChange,
   onSelect,
   showDowngrade = false,
   onDowngrade,
-  activePlanIndex
+  activePlanIndex,
+  isPublicPage = false
 }) => {
   const isMobile = useIsMobile();
+  const [selectedCycle, setSelectedCycle] = useState<BillingCycle>(cycle);
   
   // Get plans from our config
-  const plans = getPlans(cycle);
+  const plans = getPlans(isPublicPage ? selectedCycle : cycle);
 
   // Only show the plan at activePlanIndex on mobile if specified
   const displayedPlans = activePlanIndex !== undefined && isMobile
     ? [plans[activePlanIndex]]
     : plans;
 
+  // For public pages, we need to handle cycle changes internally
+  const handleCycleChange = (newCycle: BillingCycle) => {
+    if (isPublicPage) {
+      setSelectedCycle(newCycle);
+    } else if (onCycleChange) {
+      onCycleChange(newCycle);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Billing Cycle Toggle */}
-      {onCycleChange && (
+      {(onCycleChange || isPublicPage) && (
         <div className="flex justify-center mb-8">
-          <BillingCycleSwitch cycle={cycle} onChange={onCycleChange} />
+          <BillingCycleSwitch 
+            cycle={isPublicPage ? selectedCycle : cycle} 
+            onChange={handleCycleChange}
+          />
         </div>
       )}
       
@@ -57,11 +72,17 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
           
           // Determine button text
           let buttonText = "Select Plan";
-          if (isActivePlan) buttonText = "Current Plan";
+          if (isPublicPage) buttonText = "Get Started";
+          else if (isActivePlan) buttonText = "Current Plan";
           if (plan.id === 'standard' && isActivePlan && showDowngrade) buttonText = "Downgrade";
           
           // Set price display using formatter
-          const price = plan.free ? 'Free' : formatPrice(plan.priceId, cycle, priceData, plans);
+          const price = plan.free ? 'Free' : formatPrice(
+            plan.priceId, 
+            isPublicPage ? selectedCycle : cycle, 
+            priceData, 
+            plans
+          );
           
           return (
             <PlanCard
@@ -75,14 +96,18 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
               isRecommended={plan.recommended}
               buttonText={buttonText}
               onSelect={() => {
+                // Only call onSelect if it's provided
+                if (!onSelect) return;
+                
                 // Handle downgrades differently
                 if (isActivePlan && plan.id === 'standard' && showDowngrade && onDowngrade) {
                   onDowngrade();
-                } else if (!isActivePlan) {
+                } else if (!isActivePlan || isPublicPage) {
                   onSelect(plan.id, plan.priceId);
                 }
               }}
               isLoading={isLoading}
+              inBillingPage={false}
             />
           );
         })}
