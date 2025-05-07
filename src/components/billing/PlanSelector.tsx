@@ -201,7 +201,8 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   };
 
   const renderPlans = () => {
-    return plans.filter(p => p.id !== 'free' || (p.id === 'free' && !showDowngrade)).map((plan) => {
+    // Filter out free plan completely
+    return plans.filter(p => p.id !== 'free').map((plan) => {
       // Check if this is the current plan by comparing price IDs directly
       const isActive = currentPlan === plan.priceId || 
                       (plan.id !== 'free' && currentPlan?.includes(plan.id));
@@ -251,7 +252,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   };
 
   return (
-    <div>
+    <div className="pt-4"> {/* Added 1rem padding-top (pt-4) */}
       <div className="mb-8">
         <div className="relative">
           <div className="absolute inset-0 bottom-1/2 h-6 bg-gray-100 rounded-full blur-lg opacity-30"></div>
@@ -267,6 +268,11 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
                   {tab.label}
                 </Button>
               ))}
+              {selectedCycle === 'yearly' && (
+                <span className="absolute -top-7 right-0 text-xs font-medium text-primary-green">
+                  Up to 17% cheaper
+                </span>
+              )}
             </div>
           </div>
         </div>
