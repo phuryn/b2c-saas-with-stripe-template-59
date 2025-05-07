@@ -44,7 +44,7 @@ const AppLayout: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-[rgb(247_247_247)]">
         <AppSidebar />
         <div className="flex-1 min-h-screen relative">
           {/* User Profile Dropdown */}

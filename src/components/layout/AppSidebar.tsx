@@ -26,7 +26,11 @@ const AppSidebar: React.FC = () => {
   const { state, toggleSidebar } = useSidebar();
 
   const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    if (path === '/app') {
+      return location.pathname === '/app' || location.pathname === '/app/home';
+    }
+    
+    return location.pathname.startsWith(path);
   };
   
   useEffect(() => {
@@ -89,7 +93,7 @@ const AppSidebar: React.FC = () => {
         </div>
         
         {/* Separator instead of label */}
-        <SidebarSeparator className="my-2" />
+        <SidebarSeparator className="my-2 bg-gray-300" />
         
         {/* Main Navigation */}
         <SidebarGroup>
@@ -101,11 +105,11 @@ const AppSidebar: React.FC = () => {
                   isActive={isActive('/app')}
                 >
                   <Link to="/app" className={cn(
-                    "text-gray-800",
-                    isActive('/app') && "text-blue-600"
+                    "text-gray-800 hover:bg-gray-100",
+                    isActive('/app') && "text-primary-blue"
                   )}>
                     <Home className={cn(
-                      isActive('/app') && "text-blue-600"
+                      isActive('/app') ? "text-primary-blue" : "text-gray-800"
                     )} />
                     <span>Home</span>
                   </Link>
@@ -118,11 +122,11 @@ const AppSidebar: React.FC = () => {
                   isActive={isActive('/app/links')}
                 >
                   <Link to="/app/links" className={cn(
-                    "text-gray-800",
-                    isActive('/app/links') && "text-blue-600"
+                    "text-gray-800 hover:bg-gray-100",
+                    isActive('/app/links') && "text-primary-blue"
                   )}>
                     <Link2 className={cn(
-                      isActive('/app/links') && "text-blue-600"
+                      isActive('/app/links') ? "text-primary-blue" : "text-gray-800"
                     )} />
                     <span>Links</span>
                   </Link>
@@ -133,7 +137,7 @@ const AppSidebar: React.FC = () => {
         </SidebarGroup>
         
         {/* Separator instead of label */}
-        <SidebarSeparator className="my-2" />
+        <SidebarSeparator className="my-2 bg-gray-300" />
         
         {/* Settings Navigation */}
         <SidebarGroup>
@@ -145,11 +149,11 @@ const AppSidebar: React.FC = () => {
                   isActive={isActive('/app/settings')}
                 >
                   <Link to="/app/settings" className={cn(
-                    "text-gray-800",
-                    isActive('/app/settings') && "text-blue-600"
+                    "text-gray-800 hover:bg-gray-100",
+                    isActive('/app/settings') && "text-primary-blue"
                   )}>
                     <Settings className={cn(
-                      isActive('/app/settings') && "text-blue-600"
+                      isActive('/app/settings') ? "text-primary-blue" : "text-gray-800"
                     )} />
                     <span>Settings</span>
                   </Link>
