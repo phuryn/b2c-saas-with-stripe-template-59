@@ -1,4 +1,6 @@
 
+import { Plan } from "@/config/plans";
+
 /**
  * Formats a price for display based on price data and cycle
  */
@@ -10,18 +12,35 @@ export const formatPrice = (
     unit_amount: number;
     currency: string;
     interval?: string;
-  }> = {}
+  }> = {},
+  plansData?: Plan[]
 ): string => {
   if (priceId === 'free') return '$0/month';
   if (priceId === 'enterprise') return 'Custom';
   
+  // First try to get price from the plans configuration
+  if (plansData) {
+    const plan = plansData.find(p => p.priceId === priceId);
+    if (plan?.price) {
+      const amount = cycle === 'monthly' ? plan.price.monthly : plan.price.yearly;
+      const currency = plan.price.currency || 'USD';
+      const interval = cycle === 'monthly' ? 'month' : 'year';
+
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount) + `/${interval}`;
+    }
+  }
+  
+  // Fallback to Stripe price data
   const price = priceData[priceId];
   if (!price) {
     // Fallback prices if Stripe data isn't loaded
     if (priceId.includes('standard')) {
-      return cycle === 'monthly' ? '$29/month' : '$290/year';
+      return cycle === 'monthly' ? '$10/month' : '$100/year';
     } else if (priceId.includes('premium')) {
-      return cycle === 'monthly' ? '$79/month' : '$790/year';
+      return cycle === 'monthly' ? '$20/month' : '$200/year';
     }
     return 'Contact us';
   }

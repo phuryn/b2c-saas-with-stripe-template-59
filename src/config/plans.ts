@@ -11,6 +11,11 @@ export interface Plan {
   recommended?: boolean;
   buttonText?: string;
   free?: boolean;
+  price?: {
+    monthly: number;
+    yearly: number;
+    currency: string;
+  };
 }
 
 /**
@@ -33,6 +38,11 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
       ],
       buttonText: 'Sign Up Free',
       free: true,
+      price: {
+        monthly: 0,
+        yearly: 0,
+        currency: 'USD'
+      }
     },
     {
       id: 'standard',
@@ -49,6 +59,11 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
         'Bulk link & QR Code creation',
         'Priority support',
       ],
+      price: {
+        monthly: 10,
+        yearly: 100,
+        currency: 'USD'
+      }
     },
     {
       id: 'premium',
@@ -67,6 +82,11 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
       ],
       // Only recommend Premium annual plan
       recommended: cycle === 'yearly',
+      price: {
+        monthly: 20,
+        yearly: 200,
+        currency: 'USD'
+      }
     },
     {
       id: 'enterprise',
