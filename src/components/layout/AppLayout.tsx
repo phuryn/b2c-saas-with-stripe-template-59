@@ -53,20 +53,8 @@ const AppLayout: React.FC = () => {
       <div className="min-h-screen flex w-full bg-[rgb(247_247_247)]">
         <AppSidebar />
         <div className="flex-1 min-h-screen relative">
-          {/* Header with logo and user profile */}
-          <div className="flex items-center justify-between p-4">
-            {/* Logo - Left aligned, 1rem height */}
-            <Link to="/app">
-              <img 
-                src="/lovable-uploads/3fff3c36-d39f-4c4e-8e3f-56a242c5ac6f.png" 
-                alt="TRUSTY" 
-                className="h-4 w-auto" 
-                width={120} 
-                height={16}
-              />
-            </Link>
-            
-            {/* User Profile Dropdown - Right aligned */}
+          {/* User Profile Dropdown */}
+          <div className="absolute top-4 right-4 z-10">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="focus:outline-none">
