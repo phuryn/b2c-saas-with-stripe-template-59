@@ -71,7 +71,10 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   };
 
   const renderPlans = () => {
-    return plans.map((plan) => {
+    // Filter out the free plan if not on the public page
+    const filteredPlans = isPublicPage ? plans : plans.filter(plan => !plan.free);
+    
+    return filteredPlans.map((plan) => {
       // Check if this is the current plan by comparing price IDs directly
       // Only show active state if not on public page
       const isActive = !isPublicPage && (

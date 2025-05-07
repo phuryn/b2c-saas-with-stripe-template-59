@@ -28,7 +28,6 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
         '1 QR code / month',
       ],
       features: [
-        'Includes:',
         '30-days of click history',
         'Email support',
       ],

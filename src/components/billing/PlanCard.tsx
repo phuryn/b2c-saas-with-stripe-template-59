@@ -49,7 +49,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   const renderFeatures = (featuresList: string[]) => (
     <ul className="list-none pl-0 space-y-2">
       {featuresList.map((feature, index) => {
-        if (index === 0 && feature.startsWith('Everything in')) {
+        if (feature.endsWith('plus:')) {
           return <li key={feature} className="text-sm font-medium mt-4">{feature}</li>;
         }
         return renderFeature(feature);
