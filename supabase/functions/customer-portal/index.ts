@@ -68,20 +68,23 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
     
-    // Set up portal configuration based on flow
+    // Set up portal configuration
     const portalOptions: any = {
       customer: customerId,
       return_url: `${origin}/app/settings/billing`,
     };
     
-    // If a specific flow is requested, configure the session for that flow
+    // If specific flow was requested, configure session accordingly
     if (flow === 'payment_method_update') {
       logStep("Setting up payment method update flow");
       portalOptions.flow_data = {
         type: 'payment_method_update',
       };
     } else if (flow === 'billing_address_update') {
-      logStep("Setting up billing address update flow");
+      // For billing address updates, we use a different approach
+      // Stripe doesn't support billing_address_update directly as a flow_data type
+      // Instead we use the customer_update flow type
+      logStep("Setting up customer update flow for billing address");
       portalOptions.flow_data = {
         type: 'customer_update',
         after_completion: {
