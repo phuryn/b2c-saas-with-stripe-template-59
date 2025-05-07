@@ -128,7 +128,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       />
       
       {/* Added 1rem margin-top (mt-4) between switcher and plans */}
-      <div className="grid gap-6 md:grid-cols-3 mt-4">
+      <div className={`grid gap-6 ${isPublicPage ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} mt-4`}>
         {renderPlans()}
       </div>
       
