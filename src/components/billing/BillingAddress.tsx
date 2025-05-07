@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, MapPin, AlertTriangle } from 'lucide-react';
@@ -21,7 +21,7 @@ interface BillingAddressProps {
   } | null;
 }
 
-const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSubscription }) => {
+const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscription: initialSubscription }, ref) => {
   const [subscription, setSubscription] = useState(initialSubscription);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +61,7 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={ref}>
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Billing Address</h3>
       </div>
@@ -119,6 +119,8 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
       </Card>
     </div>
   );
-};
+});
+
+BillingAddress.displayName = 'BillingAddress';
 
 export default BillingAddress;

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -279,13 +278,11 @@ const BillingSettings: React.FC = () => {
       {/* Billing Address Section */}
       <BillingAddress 
         subscription={subscription}
-        ref={billingAddressRef}
       />
       
       {/* Billing History Section */}
       <BillingInvoices 
         subscription={subscription}
-        ref={billingHistoryRef}
       />
     </div>
   );

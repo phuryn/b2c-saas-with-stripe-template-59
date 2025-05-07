@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, AlertTriangle, RefreshCw } from 'lucide-react';
+import { FileText, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,11 +26,12 @@ interface BillingInvoicesProps {
   } | null;
 }
 
-const BillingInvoices: React.FC<BillingInvoicesProps> = ({ subscription }) => {
+const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subscription }, ref) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fetchAttempted, setFetchAttempted] = useState(false);
+  const [visibleInvoices, setVisibleInvoices] = useState<number>(10);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -86,6 +87,10 @@ const BillingInvoices: React.FC<BillingInvoicesProps> = ({ subscription }) => {
     return formatter.format(amount / 100);
   };
 
+  const showMoreInvoices = () => {
+    setVisibleInvoices(prev => prev + 10);
+  };
+
   const renderError = () => {
     return (
       <div className="text-center py-8">
@@ -100,7 +105,6 @@ const BillingInvoices: React.FC<BillingInvoicesProps> = ({ subscription }) => {
           className="mt-4"
           onClick={() => fetchInvoices()}
         >
-          <RefreshCw className="h-4 w-4 mr-2" />
           Try again
         </Button>
       </div>
@@ -116,6 +120,9 @@ const BillingInvoices: React.FC<BillingInvoicesProps> = ({ subscription }) => {
   };
 
   const renderInvoiceTable = () => {
+    const displayedInvoices = invoices.slice(0, visibleInvoices);
+    const hasMoreInvoices = invoices.length > visibleInvoices;
+    
     return (
       <>
         <Table>
@@ -128,7 +135,7 @@ const BillingInvoices: React.FC<BillingInvoicesProps> = ({ subscription }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoices.map((invoice) => (
+            {displayedInvoices.map((invoice) => (
               <TableRow key={invoice.id}>
                 <TableCell>{formatDate(invoice.created)}</TableCell>
                 <TableCell>{invoice.number || '-'}</TableCell>
@@ -149,21 +156,17 @@ const BillingInvoices: React.FC<BillingInvoicesProps> = ({ subscription }) => {
           </TableBody>
         </Table>
         
-        <div className="flex justify-end mt-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={fetchInvoices}
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-1" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-1" />
-            )}
-            Refresh
-          </Button>
-        </div>
+        {hasMoreInvoices && (
+          <div className="flex justify-center mt-4">
+            <Button 
+              variant="outline" 
+              onClick={showMoreInvoices}
+              className="text-sm"
+            >
+              Show More
+            </Button>
+          </div>
+        )}
       </>
     );
   };
@@ -175,19 +178,9 @@ const BillingInvoices: React.FC<BillingInvoicesProps> = ({ subscription }) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={ref}>
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Billing History</h3>
-        {!loading && invoices.length > 0 && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={fetchInvoices}
-            disabled={loading}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        )}
       </div>
       
       <Card>
@@ -203,6 +196,8 @@ const BillingInvoices: React.FC<BillingInvoicesProps> = ({ subscription }) => {
       </Card>
     </div>
   );
-}
+});
+
+BillingInvoices.displayName = 'BillingInvoices';
 
 export default BillingInvoices;
