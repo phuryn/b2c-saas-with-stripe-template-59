@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect, forwardRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, Download, Loader2 } from 'lucide-react';
+import { AlertTriangle, Download, Loader2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Invoice {
   id: string;
@@ -33,6 +33,7 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
   const [fetchAttempted, setFetchAttempted] = useState(false);
   const [visibleInvoices, setVisibleInvoices] = useState<number>(10);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (subscription?.subscribed) {
@@ -119,50 +120,98 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
     );
   };
 
-  const renderInvoiceTable = () => {
+  const renderMobileInvoiceList = () => {
+    const displayedInvoices = invoices.slice(0, visibleInvoices);
+    const hasMoreInvoices = invoices.length > visibleInvoices;
+    
+    return (
+      <div className="space-y-3">
+        {displayedInvoices.map((invoice) => (
+          <Card key={invoice.id} className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <p className="font-medium">{formatDate(invoice.created)}</p>
+                  <p className="text-sm text-muted-foreground">{invoice.number || '-'}</p>
+                  <p className="font-medium">{formatCurrency(invoice.amount_paid, invoice.currency)}</p>
+                  {invoice.description && (
+                    <p className="text-xs text-gray-500">{invoice.description}</p>
+                  )}
+                </div>
+                <a 
+                  href={invoice.invoice_pdf} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80"
+                >
+                  <Download className="h-5 w-5" />
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {hasMoreInvoices && (
+          <div className="flex justify-center mt-4">
+            <Button 
+              variant="outline" 
+              onClick={showMoreInvoices}
+              className="text-sm w-full"
+            >
+              Show More
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderDesktopInvoiceTable = () => {
     const displayedInvoices = invoices.slice(0, visibleInvoices);
     const hasMoreInvoices = invoices.length > visibleInvoices;
     
     return (
       <>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Invoice Number</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {displayedInvoices.map((invoice) => (
-              <TableRow key={invoice.id}>
-                <TableCell>{formatDate(invoice.created)}</TableCell>
-                <TableCell>{invoice.number || '-'}</TableCell>
-                <TableCell>
-                  {formatCurrency(invoice.amount_paid, invoice.currency)}
-                  <p className="text-xs text-gray-500">{invoice.description}</p>
-                </TableCell>
-                <TableCell className="text-right">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href={invoice.invoice_pdf} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Download invoice</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Invoice Number</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {displayedInvoices.map((invoice) => (
+                <TableRow key={invoice.id}>
+                  <TableCell>{formatDate(invoice.created)}</TableCell>
+                  <TableCell>{invoice.number || '-'}</TableCell>
+                  <TableCell>
+                    {formatCurrency(invoice.amount_paid, invoice.currency)}
+                    <p className="text-xs text-gray-500">{invoice.description}</p>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={invoice.invoice_pdf} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Download invoice</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
         
         {hasMoreInvoices && (
           <div className="flex justify-center mt-4">
@@ -186,7 +235,7 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
   }
 
   return (
-    <div className="space-y-4" ref={ref}>
+    <div className="space-y-4 w-full" ref={ref}>
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Billing History</h3>
       </div>
@@ -195,7 +244,7 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
         <CardContent className="pt-6">
           {loading ? renderLoading() : 
            error ? renderError() : 
-           invoices.length > 0 ? renderInvoiceTable() : 
+           invoices.length > 0 ? (isMobile ? renderMobileInvoiceList() : renderDesktopInvoiceTable()) : 
            <div className="text-center py-8 text-gray-500">
              No invoice history available
            </div>

@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import PlanSelector from '@/components/billing/PlanSelector';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -12,12 +12,16 @@ import SubscriptionHeader from '@/components/billing/SubscriptionHeader';
 import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
 import DowngradeDialog from '@/components/billing/DowngradeDialog';
 import { BillingCycle } from '@/types/subscription';
+import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const PlanSettings: React.FC = () => {
   const { user, session } = useAuth();
   const [searchParams] = useSearchParams();
   const { toast: uiToast } = useToast();
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
+  const [activePlanIndex, setActivePlanIndex] = useState<number>(0);
+  const isMobile = useIsMobile();
   
   // Use our custom hooks
   const {
@@ -81,6 +85,14 @@ const PlanSettings: React.FC = () => {
     return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
   };
 
+  const navigateNext = () => {
+    setActivePlanIndex(prev => Math.min(prev + 1, 2)); // Assuming 3 plans (Free, Standard, Premium)
+  };
+
+  const navigatePrev = () => {
+    setActivePlanIndex(prev => Math.max(prev - 1, 0));
+  };
+
   if (subscriptionLoading || pricesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -114,9 +126,32 @@ const PlanSettings: React.FC = () => {
         </div>
       )}
       
+      {/* Mobile Navigation Controls */}
+      {isMobile && (
+        <div className="flex justify-between items-center mb-4">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={navigatePrev}
+            disabled={activePlanIndex === 0}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium">Plan {activePlanIndex + 1} of 3</span>
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={navigateNext}
+            disabled={activePlanIndex === 2}
+          >
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      
       {/* Plans Selection Section */}
-      <div className="overflow-x-auto -mx-6 md:mx-0">
-        <div className="min-w-[800px] md:min-w-0 px-6 md:px-0">
+      <div className={isMobile ? "" : "overflow-x-auto -mx-6 md:mx-0"}>
+        <div className={isMobile ? "w-full" : "min-w-[800px] md:min-w-0 px-6 md:px-0"}>
           <PlanSelector
             currentPlan={subscription?.current_plan}
             isLoading={actionLoading || isSubscriptionCanceling}
@@ -125,6 +160,7 @@ const PlanSettings: React.FC = () => {
             priceData={stripePrices}
             showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling}
             onDowngrade={handleDowngradeClick}
+            activePlanIndex={isMobile ? activePlanIndex : undefined}
           />
         </div>
       </div>
