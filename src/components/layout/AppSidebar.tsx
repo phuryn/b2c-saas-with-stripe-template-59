@@ -1,12 +1,11 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Sidebar, 
   SidebarContent, 
   SidebarGroup, 
   SidebarGroupContent, 
-  SidebarGroupLabel,
   SidebarHeader, 
   SidebarMenu, 
   SidebarMenuItem, 
@@ -20,14 +19,22 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const AppSidebar: React.FC = () => {
   const location = useLocation();
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
+  
+  useEffect(() => {
+    // Collapse sidebar when navigating to settings if it's expanded
+    if (location.pathname.startsWith('/app/settings') && state === 'expanded') {
+      toggleSidebar();
+    }
+  }, [location.pathname]);
 
   return (
     <Sidebar collapsible="icon">
@@ -55,9 +62,18 @@ const AppSidebar: React.FC = () => {
             )}
           </Link>
         </div>
-        <SidebarTrigger className="ml-auto">
-          {state === 'collapsed' ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
-        </SidebarTrigger>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SidebarTrigger className="ml-auto">
+                {state === 'collapsed' ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+              </SidebarTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {state === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </SidebarHeader>
       
       <SidebarContent>
@@ -72,19 +88,25 @@ const AppSidebar: React.FC = () => {
           </Button>
         </div>
         
+        {/* Separator instead of label */}
+        <SidebarSeparator className="my-2" />
+        
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild 
                   isActive={isActive('/app')}
-                  tooltip="Home"
                 >
-                  <Link to="/app">
-                    <Home />
+                  <Link to="/app" className={cn(
+                    "text-gray-800",
+                    isActive('/app') && "text-blue-600"
+                  )}>
+                    <Home className={cn(
+                      isActive('/app') && "text-blue-600"
+                    )} />
                     <span>Home</span>
                   </Link>
                 </SidebarMenuButton>
@@ -94,10 +116,14 @@ const AppSidebar: React.FC = () => {
                 <SidebarMenuButton 
                   asChild 
                   isActive={isActive('/app/links')}
-                  tooltip="Links"
                 >
-                  <Link to="/app/links">
-                    <Link2 />
+                  <Link to="/app/links" className={cn(
+                    "text-gray-800",
+                    isActive('/app/links') && "text-blue-600"
+                  )}>
+                    <Link2 className={cn(
+                      isActive('/app/links') && "text-blue-600"
+                    )} />
                     <span>Links</span>
                   </Link>
                 </SidebarMenuButton>
@@ -106,21 +132,25 @@ const AppSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        <SidebarSeparator />
+        {/* Separator instead of label */}
+        <SidebarSeparator className="my-2" />
         
         {/* Settings Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild 
                   isActive={isActive('/app/settings')}
-                  tooltip="Settings"
                 >
-                  <Link to="/app/settings">
-                    <Settings />
+                  <Link to="/app/settings" className={cn(
+                    "text-gray-800",
+                    isActive('/app/settings') && "text-blue-600"
+                  )}>
+                    <Settings className={cn(
+                      isActive('/app/settings') && "text-blue-600"
+                    )} />
                     <span>Settings</span>
                   </Link>
                 </SidebarMenuButton>
