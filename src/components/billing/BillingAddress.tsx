@@ -1,5 +1,5 @@
 
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, MapPin, AlertTriangle } from 'lucide-react';
@@ -26,6 +26,13 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Debug logging for tax ID
+  useEffect(() => {
+    if (subscription?.billing_address) {
+      console.log('Tax ID in billing address:', subscription.billing_address.tax_id);
+    }
+  }, [subscription]);
 
   const openCustomerPortal = async () => {
     try {

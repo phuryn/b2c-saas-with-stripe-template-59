@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -90,11 +91,13 @@ serve(async (req) => {
       logStep("Found payment method", { brand: paymentMethod.brand, last4: paymentMethod.last4 });
     }
 
-    // Get customer details to access billing address
-    const customer = await stripe.customers.retrieve(customerId, { expand: ['address'] });
+    // Get customer details to access billing address and tax ID
+    const customer = await stripe.customers.retrieve(customerId, { expand: ['tax_ids'] });
     let billingAddress = null;
+    let taxId = null;
     
     if (typeof customer !== 'string') {
+      // Process billing address
       billingAddress = customer.address ? {
         line1: customer.address.line1 || null,
         line2: customer.address.line2 || null,
@@ -104,10 +107,28 @@ serve(async (req) => {
         country: customer.address.country || null
       } : null;
       
+      // Get Tax ID if available
+      if (customer.tax_ids && customer.tax_ids.data && customer.tax_ids.data.length > 0) {
+        taxId = customer.tax_ids.data[0].value;
+        logStep("Found tax ID", { taxId });
+      } else {
+        // Try to get tax ID directly from the customer metadata or tax info
+        taxId = customer.tax_id || null;
+        if (taxId) {
+          logStep("Found tax ID from customer object", { taxId });
+        }
+      }
+      
+      // Add tax ID to billing address if we found it
+      if (billingAddress && taxId) {
+        billingAddress.tax_id = taxId;
+      }
+      
       if (billingAddress) {
         logStep("Found billing address", { 
           city: billingAddress.city, 
-          country: billingAddress.country 
+          country: billingAddress.country,
+          tax_id: taxId || 'none'
         });
       }
     }
