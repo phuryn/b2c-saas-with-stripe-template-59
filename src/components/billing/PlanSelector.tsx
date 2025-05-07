@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,7 @@ interface PlanSelectorProps {
   currentPlan?: string | null;
   isLoading?: boolean;
   cycle?: 'monthly' | 'yearly';
-  onSelect: (planId: string, cycle: string) => void;
+  onSelect: (planId: string, cycle: 'monthly' | 'yearly') => void;
   priceData?: Record<string, {
     id: string;
     unit_amount: number;
@@ -43,7 +44,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   onSelect,
   priceData = {}
 }) => {
-  const [selectedCycle, setSelectedCycle] = useState(cycle);
+  const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>(cycle);
 
   const billingCycles: BillingCycle[] = [
     {
@@ -166,7 +167,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
                   key={tab.id}
                   variant={selectedCycle === tab.id ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => setSelectedCycle(tab.id)}
+                  onClick={() => setSelectedCycle(tab.id as 'monthly' | 'yearly')}
                 >
                   {tab.label}
                 </Button>

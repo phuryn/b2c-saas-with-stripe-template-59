@@ -132,11 +132,11 @@ const PlanSettings: React.FC = () => {
     }
   };
 
-  const handleSubscribe = async (planId: string) => {
+  const handleSelectPlan = async (planId: string, cycle: 'monthly' | 'yearly') => {
     try {
       setSubscriptionLoading(true);
       const { data, error } = await supabase.functions.invoke('update-subscription', {
-        body: { newPriceId: planId }
+        body: { newPriceId: planId, cycle }
       });
       
       if (error) throw new Error(error.message);
@@ -160,11 +160,6 @@ const PlanSettings: React.FC = () => {
     } finally {
       setSubscriptionLoading(false);
     }
-  };
-
-  const handleUpdateSubscription = async (planId: string) => {
-    // This is handled directly in the PlanSelector component
-    // with the confirmation dialog and update-subscription function call
   };
 
   const openCustomerPortal = async () => {
@@ -211,12 +206,11 @@ const PlanSettings: React.FC = () => {
       <div className="overflow-x-auto -mx-6 md:mx-0">
         <div className="min-w-[800px] md:min-w-0 px-6 md:px-0">
           <PlanSelector
-            subscription={subscription}
-            stripePrices={stripePrices}
-            loading={subscriptionLoading}
-            onSubscribe={handleSubscribe}
-            onUpdateSubscription={handleUpdateSubscription}
-            onRefreshSubscription={checkSubscriptionStatus}
+            currentPlan={subscription?.current_plan}
+            isLoading={subscriptionLoading}
+            cycle={subscription?.current_plan?.includes('yearly') ? 'yearly' : 'monthly'}
+            onSelect={handleSelectPlan}
+            priceData={stripePrices}
           />
         </div>
       </div>
