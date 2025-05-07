@@ -1,60 +1,42 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { toast } from "sonner";
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { STRIPE_CONFIG } from '@/config/stripe';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import PlanSelector from '@/components/billing/PlanSelector';
-import { Button } from '@/components/ui/button';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
-interface StripePrice {
-  id: string;
-  unit_amount: number;
-  currency: string;
-  interval?: string;
-}
+import { useSubscription } from '@/hooks/useSubscription';
+import { useStripePrices } from '@/hooks/useStripePrices';
+import SubscriptionHeader from '@/components/billing/SubscriptionHeader';
+import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
+import DowngradeDialog from '@/components/billing/DowngradeDialog';
+import { BillingCycle } from '@/types/subscription';
 
 const PlanSettings: React.FC = () => {
   const { user, session } = useAuth();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { toast: uiToast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [pricesLoading, setPricesLoading] = useState(true);
-  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
-  const [subscription, setSubscription] = useState<{
-    subscribed: boolean;
-    subscription_tier: string | null;
-    subscription_end: string | null;
-    current_plan: string | null;
-    cancel_at_period_end?: boolean;
-    payment_method?: {
-      brand?: string;
-      last4?: string;
-      exp_month?: number;
-      exp_year?: number;
-    } | null;
-  } | null>(null);
-  const [stripePrices, setStripePrices] = useState<Record<string, StripePrice>>({});
-
-  useEffect(() => {
-    fetchStripePrices();
-  }, []);
   
+  // Use our custom hooks
+  const {
+    subscription,
+    loading: subscriptionLoading,
+    refreshing,
+    subscriptionLoading: actionLoading,
+    checkSubscriptionStatus,
+    refreshSubscriptionData,
+    handleSelectPlan,
+    openCustomerPortal,
+    handleDowngrade
+  } = useSubscription();
+  
+  const {
+    stripePrices,
+    loading: pricesLoading,
+  } = useStripePrices();
+
   useEffect(() => {
     if (session) {
       checkSubscriptionStatus();
@@ -73,158 +55,15 @@ const PlanSettings: React.FC = () => {
     }
   }, [searchParams]);
 
-  const fetchStripePrices = async () => {
-    try {
-      setPricesLoading(true);
-      // Collect all price IDs
-      const priceIds = [
-        STRIPE_CONFIG.prices.standard.monthly,
-        STRIPE_CONFIG.prices.standard.yearly,
-        STRIPE_CONFIG.prices.premium.monthly,
-        STRIPE_CONFIG.prices.premium.yearly
-      ];
-      
-      const { data, error } = await supabase.functions.invoke('get-prices', {
-        body: { priceIds: priceIds.join(',') }
-      });
-      
-      if (error) throw new Error(error.message);
-      
-      // Create a map of price IDs to price data
-      const priceMap: Record<string, StripePrice> = {};
-      data.prices.forEach((price: StripePrice) => {
-        priceMap[price.id] = price;
-      });
-      
-      setStripePrices(priceMap);
-    } catch (err) {
-      console.error('Error fetching prices from Stripe:', err);
-      toast.error('Failed to fetch pricing information from Stripe.');
-    } finally {
-      setPricesLoading(false);
-    }
-  };
-
-  const checkSubscriptionStatus = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      setSubscription(data);
-    } catch (err) {
-      console.error('Error checking subscription status:', err);
-      toast.error('Failed to retrieve subscription information.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const refreshSubscriptionData = async () => {
-    if (refreshing) return;
-    
-    setRefreshing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      
-      if (error) throw new Error(error.message);
-      
-      setSubscription(data);
-      toast.success('Subscription info refreshed');
-    } catch (err) {
-      console.error('Error refreshing subscription data:', err);
-      toast.error('Could not refresh subscription information');
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handleSelectPlan = async (planId: string, cycle: 'monthly' | 'yearly') => {
-    try {
-      setSubscriptionLoading(true);
-      const { data, error } = await supabase.functions.invoke('update-subscription', {
-        body: { newPriceId: planId, cycle }
-      });
-      
-      if (error) throw new Error(error.message);
-      
-      // If we got client_secret back, the user needs to complete payment setup
-      if (data?.subscription?.client_secret) {
-        // For now, we'll handle by redirecting to customer portal
-        // In the future, we could implement Stripe Elements to collect payment
-        openCustomerPortal();
-        return;
-      }
-
-      // If no client_secret, the update was successful
-      if (data?.success) {
-        toast.success('Subscription created successfully!');
-        await checkSubscriptionStatus();
-      }
-    } catch (err) {
-      console.error('Error creating subscription:', err);
-      toast.error('Could not create subscription');
-    } finally {
-      setSubscriptionLoading(false);
-    }
-  };
-
-  const openCustomerPortal = async () => {
-    try {
-      setSubscriptionLoading(true);
-      const { data, error } = await supabase.functions.invoke('customer-portal');
-      
-      if (error) throw new Error(error.message);
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error('Error opening customer portal:', err);
-      toast.error('Failed to open customer portal');
-    } finally {
-      setSubscriptionLoading(false);
-    }
-  };
-
-  const handleDowngrade = () => {
+  const handleDowngradeClick = () => {
     setShowDowngradeDialog(true);
   };
 
   const confirmDowngrade = async () => {
-    try {
-      setSubscriptionLoading(true);
-      const { data, error } = await supabase.functions.invoke('update-subscription', {
-        body: { cancel: true }
-      });
-      
-      if (error) throw new Error(error.message);
-      
-      toast.success('Your subscription has been cancelled');
-      await checkSubscriptionStatus();
-    } catch (err) {
-      console.error('Error cancelling subscription:', err);
-      toast.error('Could not cancel subscription');
-    } finally {
-      setSubscriptionLoading(false);
+    const success = await handleDowngrade();
+    if (success) {
       setShowDowngradeDialog(false);
     }
-  };
-
-  const getFormattedCardInfo = () => {
-    if (!subscription?.payment_method) return null;
-    
-    const { brand, last4, exp_month, exp_year } = subscription.payment_method;
-    if (!brand || !last4) return null;
-    
-    return {
-      name: brand.charAt(0).toUpperCase() + brand.slice(1),
-      last4,
-      exp: exp_month && exp_year ? `${exp_month.toString().padStart(2, '0')}/${exp_year % 100}` : null
-    };
   };
 
   const getCurrentPlanId = () => {
@@ -236,21 +75,12 @@ const PlanSettings: React.FC = () => {
     return null;
   };
   
-  const getCurrentCycle = () => {
+  const getCurrentCycle = (): BillingCycle => {
     if (!subscription?.current_plan) return 'monthly';
     return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
   };
 
-  const formatDate = (dateString?: string | null): string => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  if (loading || pricesLoading) {
+  if (subscriptionLoading || pricesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -258,59 +88,23 @@ const PlanSettings: React.FC = () => {
     );
   }
 
-  const cardInfo = getFormattedCardInfo();
-  const currentPlanId = getCurrentPlanId();
   const currentCycle = getCurrentCycle();
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
   
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-medium">Select Your Plan</h2>
-        <Button
-          variant="ghost" 
-          size="sm" 
-          onClick={refreshSubscriptionData}
-          disabled={refreshing}
-          className="transition-all hover:bg-primary/10"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-        </Button>
-      </div>
+      <SubscriptionHeader 
+        onRefresh={refreshSubscriptionData}
+        refreshing={refreshing}
+      />
       
       {/* Subscription Info */}
       {subscription?.subscribed && (
-        <div className="bg-muted/50 rounded-lg p-4 border border-muted-foreground/20">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              {isSubscriptionCanceling ? (
-                <p className="text-sm text-muted-foreground">
-                  Your subscription cancels on {formatDate(subscription.subscription_end)}.
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Your subscription will auto-renew on {formatDate(subscription.subscription_end)}.
-                  
-                  {cardInfo && (
-                    <span className="block mt-1">
-                      On that date, the {cardInfo.name} card (ending in {cardInfo.last4}) will be charged.
-                    </span>
-                  )}
-                </p>
-              )}
-            </div>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={openCustomerPortal}
-              disabled={subscriptionLoading}
-              className="shrink-0"
-            >
-              Manage in Customer Portal
-            </Button>
-          </div>
-        </div>
+        <SubscriptionInfo
+          subscription={subscription}
+          onManageSubscription={openCustomerPortal}
+          subscriptionLoading={actionLoading}
+        />
       )}
       
       {!subscription?.subscribed && (
@@ -324,37 +118,23 @@ const PlanSettings: React.FC = () => {
         <div className="min-w-[800px] md:min-w-0 px-6 md:px-0">
           <PlanSelector
             currentPlan={subscription?.current_plan}
-            isLoading={subscriptionLoading || isSubscriptionCanceling}
+            isLoading={actionLoading || isSubscriptionCanceling}
             cycle={currentCycle}
             onSelect={handleSelectPlan}
             priceData={stripePrices}
             showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling}
-            onDowngrade={handleDowngrade}
+            onDowngrade={handleDowngradeClick}
           />
         </div>
       </div>
       
       {/* Downgrade Dialog */}
-      <AlertDialog open={showDowngradeDialog} onOpenChange={setShowDowngradeDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Downgrade to Free Plan?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to downgrade to the Free plan?
-              <p className="mt-2">You'll lose access to premium features at the end of the current billing cycle.</p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDowngrade}>
-              {subscriptionLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
-              Confirm Downgrade
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DowngradeDialog
+        open={showDowngradeDialog}
+        onOpenChange={setShowDowngradeDialog}
+        onConfirm={confirmDowngrade}
+        loading={actionLoading}
+      />
     </div>
   );
 };
