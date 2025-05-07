@@ -202,9 +202,9 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
 
   const renderPlans = () => {
     return plans.filter(p => p.id !== 'free' || (p.id === 'free' && !showDowngrade)).map((plan) => {
-      const isActive = currentPlan === plan.id || 
-                      (currentPlan?.includes('standard') && plan.id === 'standard') || 
-                      (currentPlan?.includes('premium') && plan.id === 'premium');
+      // Check if this is the current plan by comparing price IDs directly
+      const isActive = currentPlan === plan.priceId || 
+                      (plan.id !== 'free' && currentPlan?.includes(plan.id));
       
       let buttonText = plan.buttonText || 'Select Plan';
       if (isActive) {

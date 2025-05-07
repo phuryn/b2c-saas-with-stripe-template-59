@@ -145,19 +145,22 @@ serve(async (req) => {
     let subscriptionTier = null;
     let subscriptionEnd = null;
     let currentPlan = null;
+    let cancelAtPeriodEnd = false;
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
       currentPlan = subscription.items.data[0].price.id;
       subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      cancelAtPeriodEnd = subscription.cancel_at_period_end;
+      
       logStep("Active subscription found", { 
         subscriptionId: subscription.id, 
         endDate: subscriptionEnd,
-        currentPlan
+        currentPlan,
+        cancelAtPeriodEnd
       });
 
       // Determine the subscription tier based on the price ID
-      // This is a simplified example - adjust to match your actual price IDs and tiers
       if (currentPlan.includes('standard')) {
         subscriptionTier = 'Standard';
       } else if (currentPlan.includes('premium')) {
@@ -189,6 +192,7 @@ serve(async (req) => {
       subscription_tier: subscriptionTier,
       subscription_end: subscriptionEnd,
       current_plan: currentPlan,
+      cancel_at_period_end: cancelAtPeriodEnd,
       payment_method: paymentMethod,
       billing_address: billingAddress
     }), {
