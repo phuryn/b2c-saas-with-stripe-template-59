@@ -81,10 +81,7 @@ const BillingPaymentMethod = ({ subscription }: BillingPaymentMethodProps) => {
       <h3 className="text-lg font-medium">Payment Method</h3>
       
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-md">Your Payment Method</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {subscription?.payment_method ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
