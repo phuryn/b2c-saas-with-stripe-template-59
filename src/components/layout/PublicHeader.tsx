@@ -26,11 +26,17 @@ import {
 const PublicHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { user, signOut, userMetadata } = useAuth();
+  const { user, signOut, userMetadata, profile } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
     // Redirection will be handled by AuthContext
+  };
+
+  // Get user initials for avatar
+  const getInitials = () => {
+    const name = profile?.display_name || userMetadata?.name || userMetadata?.full_name || user?.email?.split('@')[0] || 'U';
+    return name.substring(0, 2).toUpperCase();
   };
 
   const menuItems = [
@@ -80,9 +86,9 @@ const PublicHeader: React.FC = () => {
                 <DropdownMenuTrigger asChild>
                   <button className="focus:outline-none">
                     <Avatar className="h-9 w-9 cursor-pointer">
-                      <AvatarImage src={userMetadata?.avatar_url} alt={userMetadata?.name || user?.email?.split('@')[0] || 'User'} />
+                      <AvatarImage src={userMetadata?.avatar_url} alt={profile?.display_name || user?.email?.split('@')[0] || 'User'} />
                       <AvatarFallback>
-                        {(userMetadata?.name || user?.email?.split('@')[0] || 'U')[0].toUpperCase()}
+                        {getInitials()}
                       </AvatarFallback>
                     </Avatar>
                   </button>
