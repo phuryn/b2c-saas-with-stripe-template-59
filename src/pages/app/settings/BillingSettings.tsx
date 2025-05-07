@@ -13,22 +13,22 @@ import UsageStats from '@/components/billing/UsageStats';
 import BillingAddress from '@/components/billing/BillingAddress';
 import BillingPaymentMethod from '@/components/billing/BillingPaymentMethod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
+import PlanCard from '@/components/billing/PlanCard';
+import { getPlans } from '@/config/plans';
+
 interface StripePrice {
   id: string;
   unit_amount: number;
   currency: string;
   interval?: string;
 }
+
 const BillingSettings: React.FC = () => {
-  const {
-    user,
-    session
-  } = useAuth();
+  const { user, session } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [pricesLoading, setPricesLoading] = useState(true);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
@@ -56,14 +56,17 @@ const BillingSettings: React.FC = () => {
     } | null;
   } | null>(null);
   const [stripePrices, setStripePrices] = useState<Record<string, StripePrice>>({});
+
   useEffect(() => {
     fetchStripePrices();
   }, []);
+
   useEffect(() => {
     if (session) {
       checkSubscriptionStatus();
     }
   }, [session]);
+
   useEffect(() => {
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
@@ -78,6 +81,7 @@ const BillingSettings: React.FC = () => {
       });
     }
   }, [searchParams, toast]);
+
   const fetchStripePrices = async () => {
     try {
       setPricesLoading(true);
@@ -110,6 +114,7 @@ const BillingSettings: React.FC = () => {
       setPricesLoading(false);
     }
   };
+
   const checkSubscriptionStatus = async () => {
     try {
       setLoading(true);
@@ -135,6 +140,7 @@ const BillingSettings: React.FC = () => {
       setRefreshing(false);
     }
   };
+
   const openCustomerPortal = async () => {
     try {
       setSubscriptionLoading(true);
@@ -157,9 +163,11 @@ const BillingSettings: React.FC = () => {
       setSubscriptionLoading(false);
     }
   };
+
   const handleManagePlan = () => {
     navigate('/app/settings/plan');
   };
+
   const formatPriceDisplay = (price: number | undefined, currency: string = 'usd'): string => {
     if (price === undefined) return '$0';
 
@@ -171,6 +179,7 @@ const BillingSettings: React.FC = () => {
       minimumFractionDigits: dollars % 1 === 0 ? 0 : 2
     }).format(dollars);
   };
+
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -179,6 +188,7 @@ const BillingSettings: React.FC = () => {
       day: 'numeric'
     });
   };
+
   const getPlanDetails = () => {
     if (!subscription) return {
       name: 'Free',
@@ -203,13 +213,35 @@ const BillingSettings: React.FC = () => {
       price: formattedPrice
     };
   };
+
+  const getCurrentPlanId = () => {
+    if (!subscription?.subscription_tier) return 'free';
+    
+    const tier = subscription.subscription_tier.toLowerCase();
+    if (tier.includes('standard')) return 'standard';
+    if (tier.includes('premium')) return 'premium';
+    if (tier.includes('enterprise')) return 'enterprise';
+    return 'free';
+  };
+
+  const getCurrentCycle = () => {
+    if (!subscription?.current_plan) return 'monthly';
+    return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
+  };
+
   if (loading || pricesLoading) {
     return <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
   }
+
   const planDetails = getPlanDetails();
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
+  const currentPlanId = getCurrentPlanId();
+  const currentCycle = getCurrentCycle();
+  const plans = getPlans(currentCycle as 'monthly' | 'yearly');
+  const currentPlan = plans.find(plan => plan.id === currentPlanId);
+
   return <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-medium">Billing and Usage</h2>
@@ -219,32 +251,43 @@ const BillingSettings: React.FC = () => {
           </Button>}
       </div>
       
-      {/* Current Plan Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Your Plan</h3>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-md">{planDetails.name} Plan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <p className="text-2xl font-bold">{planDetails.price}</p>
-              <p className="text-gray-500 text-sm mt-1">
-                {subscription?.subscription_end && subscription.subscribed ? isSubscriptionCanceling ? `Cancels on ${formatDate(subscription.subscription_end)}` : `Next billing date: ${formatDate(subscription.subscription_end)}` : 'No active subscription'}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <Button onClick={handleManagePlan} className="w-full md:w-auto" variant="default">
-                {subscription?.subscribed ? "Manage Plan" : "Upgrade"}
-              </Button>
-              {subscription?.subscribed}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Responsive grid layout for Your Plan and Usage Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Your Plan Section */}
+        <div className="min-w-[360px] space-y-4">
+          <h3 className="text-lg font-medium">Your Plan</h3>
+          
+          {/* Subscription Info Component */}
+          {subscription?.subscribed && (
+            <SubscriptionInfo
+              subscription={subscription}
+              onManageSubscription={openCustomerPortal}
+              onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined}
+              subscriptionLoading={subscriptionLoading}
+            />
+          )}
+          
+          {/* Plan Card */}
+          {currentPlan && (
+            <PlanCard
+              name={currentPlan.name}
+              description={currentPlan.description}
+              price={currentPlan.free ? 'Free' : `${formatPriceDisplay(currentPlan.price?.monthly || 0)}/${currentCycle}`}
+              limits={currentPlan.limits}
+              features={currentPlan.features}
+              isActive={true}
+              buttonText="Manage Plan"
+              onSelect={handleManagePlan}
+              isLoading={subscriptionLoading}
+            />
+          )}
+        </div>
+        
+        {/* Monthly Usage Section */}
+        <div className="min-w-[360px]">
+          <UsageStats subscription={subscription} />
+        </div>
       </div>
-      
-      {/* Monthly Usage Section */}
-      <UsageStats subscription={subscription} />
       
       {/* Payment Method Section - New component */}
       <BillingPaymentMethod subscription={subscription} />
@@ -256,4 +299,5 @@ const BillingSettings: React.FC = () => {
       <BillingInvoices subscription={subscription} />
     </div>;
 };
+
 export default BillingSettings;
