@@ -70,8 +70,8 @@ const PlanCard: React.FC<PlanCardProps> = ({
         <CardHeader>
           <CardTitle className="text-2xl font-bold">{name}</CardTitle>
           <div className="flex items-baseline">
-            <span className="text-2xl font-bold text-[#1EAEDB]">{priceAmount}</span>
-            <span className="text-gray-text">{priceInterval}</span>
+            <span className="text-2xl font-bold text-primary-blue">{priceAmount}</span>
+            <span className="text-gray-text text-sm">{priceInterval}</span>
           </div>
           <p className="text-gray-500 mt-2">{description}</p>
         </CardHeader>

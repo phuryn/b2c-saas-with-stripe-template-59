@@ -29,7 +29,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   showDowngrade = false,
   onDowngrade
 }) => {
-  const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>(cycle);
+  const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly');
   const plans = getPlans(selectedCycle);
 
   const handlePlanSelection = (plan: Plan) => {

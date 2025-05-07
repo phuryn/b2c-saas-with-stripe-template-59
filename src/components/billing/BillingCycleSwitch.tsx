@@ -23,7 +23,7 @@ const BillingCycleSwitch: React.FC<BillingCycleSwitchProps> = ({
                 "mr-2 text-xs font-medium",
                 selectedCycle === 'yearly' 
                   ? "bg-[#F2FCE2] text-primary-green" 
-                  : "bg-[#F1F0FB] text-gray-500"
+                  : "bg-[#F7F7F7] text-gray-500"
               )}
             >
               Save up to 17%
