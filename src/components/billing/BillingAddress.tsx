@@ -40,9 +40,9 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
   const openCustomerPortal = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('customer-portal', {
-        body: { flow: 'billing_address_update' }
-      });
+      // Simply call the customer portal without specifying a flow
+      // The default portal gives access to all billing information settings
+      const { data, error } = await supabase.functions.invoke('customer-portal');
       
       if (error) {
         console.error('Error opening customer portal:', error);
