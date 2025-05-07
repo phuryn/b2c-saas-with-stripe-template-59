@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
 
 interface Tab {
@@ -252,7 +252,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   };
 
   return (
-    <div className="pt-4"> {/* Added 1rem padding-top (pt-4) */}
+    <div>
       <div className="mb-8">
         <div className="relative">
           <div className="absolute inset-0 bottom-1/2 h-6 bg-gray-100 rounded-full blur-lg opacity-30"></div>
@@ -264,20 +264,22 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
                   variant={selectedCycle === tab.id ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setSelectedCycle(tab.id as 'monthly' | 'yearly')}
+                  className="relative"
                 >
                   {tab.label}
+                  {selectedCycle === 'yearly' && tab.id === 'yearly' && (
+                    <span className="absolute -top-5 left-0 right-0 text-xs font-medium text-primary-green whitespace-nowrap">
+                      Up to 17% cheaper
+                    </span>
+                  )}
                 </Button>
               ))}
-              {selectedCycle === 'yearly' && (
-                <span className="absolute -top-7 right-0 text-xs font-medium text-primary-green">
-                  Up to 17% cheaper
-                </span>
-              )}
             </div>
           </div>
         </div>
       </div>
-      <div className="grid gap-6 md:grid-cols-3">
+      {/* Added 1rem margin-top (mt-8) between switcher and plans */}
+      <div className="grid gap-6 md:grid-cols-3 mt-8">
         {renderPlans()}
       </div>
       
