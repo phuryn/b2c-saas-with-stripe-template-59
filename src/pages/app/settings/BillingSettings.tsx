@@ -124,6 +124,7 @@ const BillingSettings: React.FC = () => {
         throw new Error(error.message);
       }
       
+      console.log('Subscription data from API:', data); // Log the subscription data
       setSubscription(data);
     } catch (err) {
       console.error('Error checking subscription status:', err);

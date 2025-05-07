@@ -60,6 +60,9 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
     return null;
   }
 
+  // Log the billing address to see what we're getting from Supabase
+  console.log('Billing address data:', subscription?.billing_address);
+
   return (
     <div className="space-y-4" ref={ref}>
       <div className="flex justify-between items-center">
