@@ -127,8 +127,13 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         onChange={handleCycleChange}
       />
       
-      {/* Added 1rem margin-top (mt-4) between switcher and plans */}
-      <div className={`grid gap-6 ${isPublicPage ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} mt-4`}>
+      {/* Updated grid with min-width of 210px for each card using auto-fit */}
+      <div 
+        className="mt-4 grid gap-6" 
+        style={{
+          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+        }}
+      >
         {renderPlans()}
       </div>
       

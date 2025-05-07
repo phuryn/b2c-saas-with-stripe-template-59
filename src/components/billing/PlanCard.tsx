@@ -42,7 +42,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   const renderFeature = (feature: string) => (
     <li key={feature} className="flex items-start gap-2">
       <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-      <span>{feature}</span>
+      <span className="break-words">{feature}</span>
     </li>
   );
 
@@ -59,7 +59,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   );
 
   return (
-    <div className="relative">
+    <div className="relative min-w-[210px]">
       {isRecommended && (
         <div className="absolute inset-x-0 -top-8 flex justify-center">
           <div className="bg-primary-blue text-white px-4 py-1 text-[12pt] font-medium rounded-t-md leading-6">
@@ -68,8 +68,8 @@ const PlanCard: React.FC<PlanCardProps> = ({
         </div>
       )}
       <Card className={`flex h-full flex-col overflow-hidden ${isRecommended ? 'border-primary-blue ring-1 ring-primary-blue' : ''}`}>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">{name}</CardTitle>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold break-words">{name}</CardTitle>
           <div className="flex items-baseline">
             {priceMatch ? (
               <>
@@ -80,7 +80,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
               <span className="text-2xl font-bold text-primary-blue">{price}</span>
             )}
           </div>
-          <p className="text-gray-500 mt-2">{description}</p>
+          <p className="text-gray-500 mt-2 break-words">{description}</p>
         </CardHeader>
         <CardContent className="grow space-y-6">
           <div>
