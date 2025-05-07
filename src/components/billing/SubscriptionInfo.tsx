@@ -6,6 +6,7 @@ import { Subscription, PaymentMethod } from '@/types/subscription';
 interface SubscriptionInfoProps {
   subscription: Subscription | null;
   onManageSubscription: () => void;
+  onRenewSubscription?: () => void;
   subscriptionLoading: boolean;
 }
 
@@ -34,6 +35,7 @@ const getFormattedCardInfo = (paymentMethod?: PaymentMethod | null) => {
 const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
   subscription,
   onManageSubscription,
+  onRenewSubscription,
   subscriptionLoading
 }) => {
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
@@ -62,15 +64,29 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
           )}
         </div>
         
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onManageSubscription}
-          disabled={subscriptionLoading}
-          className="shrink-0"
-        >
-          Manage in Customer Portal
-        </Button>
+        <div className="flex gap-2">
+          {isSubscriptionCanceling && onRenewSubscription && (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={onRenewSubscription}
+              disabled={subscriptionLoading}
+              className="shrink-0"
+            >
+              Renew Subscription
+            </Button>
+          )}
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onManageSubscription}
+            disabled={subscriptionLoading}
+            className="shrink-0"
+          >
+            Manage in Customer Portal
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -29,7 +29,8 @@ const PlanSettings: React.FC = () => {
     refreshSubscriptionData,
     handleSelectPlan,
     openCustomerPortal,
-    handleDowngrade
+    handleDowngrade,
+    handleRenewSubscription
   } = useSubscription();
   
   const {
@@ -103,6 +104,7 @@ const PlanSettings: React.FC = () => {
         <SubscriptionInfo
           subscription={subscription}
           onManageSubscription={openCustomerPortal}
+          onRenewSubscription={isSubscriptionCanceling ? handleRenewSubscription : undefined}
           subscriptionLoading={actionLoading}
         />
       )}

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -115,6 +114,30 @@ export function useSubscription() {
     }
   };
 
+  const handleRenewSubscription = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const { data, error } = await supabase.functions.invoke('update-subscription', {
+        body: { renew: true }
+      });
+      
+      if (error) throw new Error(error.message);
+      
+      if (data?.success) {
+        toast.success('Your subscription has been renewed');
+        await checkSubscriptionStatus();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Error renewing subscription:', err);
+      toast.error('Could not renew subscription');
+      return false;
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
   return {
     subscription,
     loading,
@@ -124,6 +147,7 @@ export function useSubscription() {
     refreshSubscriptionData,
     handleSelectPlan,
     openCustomerPortal,
-    handleDowngrade
+    handleDowngrade,
+    handleRenewSubscription
   };
 }

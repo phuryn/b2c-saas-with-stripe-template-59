@@ -99,6 +99,60 @@ serve(async (req) => {
       });
     }
     
+    // Handle subscription renewal
+    if (requestBody.renew === true) {
+      logStep("Processing renewal request");
+      const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+      
+      // Get customer
+      logStep("Searching for customer");
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length === 0) {
+        throw new Error("No Stripe customer found for this user");
+      }
+      const customerId = customers.data[0].id;
+      logStep("Customer found", { customerId });
+
+      // Get current subscription
+      logStep("Searching for active subscription");
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
+
+      if (subscriptions.data.length === 0) {
+        throw new Error("No active subscription found to renew");
+      }
+
+      const subscriptionId = subscriptions.data[0].id;
+      logStep("Active subscription found", { subscriptionId });
+      
+      // Update subscription to continue at period end
+      const renewedSubscription = await stripe.subscriptions.update(subscriptionId, {
+        cancel_at_period_end: false,
+      });
+      
+      logStep("Subscription renewed", {
+        subscriptionId,
+        cancel_at_period_end: renewedSubscription.cancel_at_period_end,
+        current_period_end: new Date(renewedSubscription.current_period_end * 1000)
+      });
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        subscription: {
+          id: renewedSubscription.id,
+          current_period_end: new Date(renewedSubscription.current_period_end * 1000),
+          cancel_at_period_end: renewedSubscription.cancel_at_period_end,
+          action: "renewed_subscription"
+        }
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+    
     const { newPriceId } = requestBody;
     if (!newPriceId) throw new Error("New price ID is required");
     logStep("Request data parsed", { newPriceId });
