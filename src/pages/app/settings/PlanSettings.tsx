@@ -5,10 +5,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { toast } from "sonner";
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, CreditCard, Calendar } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
 import PlanSelector from '@/components/billing/PlanSelector';
 import { Button } from '@/components/ui/button';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface StripePrice {
   id: string;
@@ -26,6 +36,7 @@ const PlanSettings: React.FC = () => {
   const [pricesLoading, setPricesLoading] = useState(true);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
   const [subscription, setSubscription] = useState<{
     subscribed: boolean;
     subscription_tier: string | null;
@@ -179,6 +190,57 @@ const PlanSettings: React.FC = () => {
     }
   };
 
+  const handleDowngrade = () => {
+    setShowDowngradeDialog(true);
+  };
+
+  const confirmDowngrade = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const { data, error } = await supabase.functions.invoke('update-subscription', {
+        body: { cancel: true }
+      });
+      
+      if (error) throw new Error(error.message);
+      
+      toast.success('Your subscription has been cancelled');
+      await checkSubscriptionStatus();
+    } catch (err) {
+      console.error('Error cancelling subscription:', err);
+      toast.error('Could not cancel subscription');
+    } finally {
+      setSubscriptionLoading(false);
+      setShowDowngradeDialog(false);
+    }
+  };
+
+  const getFormattedCardInfo = () => {
+    if (!subscription?.payment_method) return null;
+    
+    const { brand, last4, exp_month, exp_year } = subscription.payment_method;
+    if (!brand || !last4) return null;
+    
+    return {
+      name: brand.charAt(0).toUpperCase() + brand.slice(1),
+      last4,
+      exp: exp_month && exp_year ? `${exp_month.toString().padStart(2, '0')}/${exp_year % 100}` : null
+    };
+  };
+
+  const getCurrentPlanId = () => {
+    if (!subscription?.current_plan) return null;
+    
+    if (subscription.current_plan.includes('standard')) return 'standard';
+    if (subscription.current_plan.includes('premium')) return 'premium';
+    if (subscription.current_plan.includes('enterprise')) return 'enterprise';
+    return null;
+  };
+  
+  const getCurrentCycle = () => {
+    if (!subscription?.current_plan) return 'monthly';
+    return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
+  };
+
   if (loading || pricesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -187,6 +249,10 @@ const PlanSettings: React.FC = () => {
     );
   }
 
+  const cardInfo = getFormattedCardInfo();
+  const currentPlanId = getCurrentPlanId();
+  const currentCycle = getCurrentCycle();
+  
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-4">
@@ -202,18 +268,92 @@ const PlanSettings: React.FC = () => {
         </Button>
       </div>
       
+      {/* Subscription Info */}
+      {subscription?.subscribed && (
+        <div className="bg-muted/50 rounded-lg p-4 border border-muted-foreground/20">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Your subscription will auto-renew on {new Date(subscription.subscription_end || '').toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}.</p>
+              
+              {cardInfo && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                  <CreditCard className="h-3 w-3" />
+                  On that date, the {cardInfo.name} card (ending in {cardInfo.last4}) will be charged.
+                </p>
+              )}
+            </div>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={openCustomerPortal}
+              disabled={subscriptionLoading}
+              className="shrink-0"
+            >
+              Manage Payment
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {!subscription?.subscribed && (
+        <div className="bg-muted/50 rounded-lg p-4 border border-muted-foreground/20">
+          <p className="text-sm text-muted-foreground">You are a free subscriber.</p>
+        </div>
+      )}
+      
       {/* Plans Selection Section */}
       <div className="overflow-x-auto -mx-6 md:mx-0">
         <div className="min-w-[800px] md:min-w-0 px-6 md:px-0">
           <PlanSelector
-            currentPlan={subscription?.current_plan}
+            currentPlan={currentPlanId}
             isLoading={subscriptionLoading}
-            cycle={subscription?.current_plan?.includes('yearly') ? 'yearly' : 'monthly'}
+            cycle={currentCycle}
             onSelect={handleSelectPlan}
             priceData={stripePrices}
+            showDowngrade={Boolean(subscription?.subscribed)}
+            onDowngrade={handleDowngrade}
           />
         </div>
       </div>
+      
+      {/* Downgrade Dialog */}
+      <AlertDialog open={showDowngradeDialog} onOpenChange={setShowDowngradeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Downgrade to Free Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <p className="mb-2">Are you sure you want to downgrade to the Free plan?</p>
+              <p className="mb-4">You'll lose access to premium features immediately:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Unlimited links</li>
+                <li>Custom domains</li>
+                <li>Advanced analytics</li>
+                {currentPlanId === 'premium' && (
+                  <>
+                    <li>City-level analytics</li>
+                    <li>API access</li>
+                    <li>Priority support</li>
+                  </>
+                )}
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDowngrade}>
+              {subscriptionLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Confirm Downgrade
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
