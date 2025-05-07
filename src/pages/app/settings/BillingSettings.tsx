@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -29,8 +30,6 @@ const BillingSettings: React.FC = () => {
   const [pricesLoading, setPricesLoading] = useState(true);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const billingAddressRef = useRef<any>(null);
-  const billingHistoryRef = useRef<any>(null);
   const [subscription, setSubscription] = useState<{
     subscribed: boolean;
     subscription_tier: string | null;
@@ -217,10 +216,11 @@ const BillingSettings: React.FC = () => {
         <h2 className="text-xl font-medium">Billing and Usage</h2>
         {subscription?.subscribed && (
           <Button 
-            variant="outline"
-            size="sm"
+            variant="ghost" 
+            size="sm" 
             onClick={checkSubscriptionStatus}
             disabled={refreshing}
+            className="transition-all hover:bg-primary/10"
           >
             {refreshing ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
