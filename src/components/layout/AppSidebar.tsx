@@ -24,27 +24,19 @@ const AppSidebar: React.FC = () => {
   return (
     <Sidebar collapsible="icon" className="bg-white" style={{
       '--sidebar-width': '13rem',
-      '--sidebar-width-icon': '2.75rem'
+      '--sidebar-width-icon': '3rem'
     } as React.CSSProperties}>
       <SidebarHeader className="flex items-center justify-between">
-        {/* App Logo - conditional based on sidebar state */}
+        {/* App Logo - hide completely when collapsed */}
         <div className="flex items-center px-2 py-3">
           <Link to="/app">
-            {state === 'collapsed' ? (
-              <img 
-                src="/lovable-uploads/dfe9a235-bb0a-46f7-83e6-7b96aa0b49bd.png" 
-                alt="TRUSTY" 
-                className="h-7 w-auto object-contain" 
-                width={28} 
-                height={28} 
-              />
-            ) : (
+            {state !== 'collapsed' && (
               <img 
                 src="/lovable-uploads/3fff3c36-d39f-4c4e-8e3f-56a242c5ac6f.png" 
                 alt="TRUSTY" 
-                className="h-7 w-auto" 
+                className="h-4 w-auto" 
                 width={120} 
-                height={28} 
+                height={16} 
               />
             )}
           </Link>
