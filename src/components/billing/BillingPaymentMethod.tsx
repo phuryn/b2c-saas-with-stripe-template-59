@@ -37,11 +37,11 @@ const BillingPaymentMethod = ({ subscription }: BillingPaymentMethodProps) => {
   // Get card icon based on brand
   const getCardIcon = (brand?: string) => {
     if (brand === 'visa') {
-      return <img src="/visa.svg" alt="Visa" className="h-6 w-auto" />;
+      return <img src="/visa.svg" alt="Visa" className="h-12 w-auto" />;
     } else if (brand === 'mastercard') {
-      return <img src="/mastercard.svg" alt="Mastercard" className="h-6 w-auto" />;
+      return <img src="/mastercard.svg" alt="Mastercard" className="h-12 w-auto" />;
     } else {
-      return <CreditCard className="h-6 w-6 text-gray-500" />;
+      return <CreditCard className="h-12 w-12 text-gray-500" />;
     }
   };
 
