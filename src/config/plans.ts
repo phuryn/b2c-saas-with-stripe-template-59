@@ -49,7 +49,8 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
         'City-level & device analytics',
         'API access',
       ],
-      recommended: true,
+      // Only recommend Premium annual plan
+      recommended: cycle === 'yearly',
     },
     {
       id: 'enterprise',

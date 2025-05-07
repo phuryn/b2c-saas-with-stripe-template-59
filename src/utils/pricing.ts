@@ -28,7 +28,7 @@ export const formatPrice = (
 
   const amount = price.unit_amount / 100;
   const currency = price.currency.toUpperCase();
-  const interval = cycle;
+  const interval = cycle === 'monthly' ? 'month' : 'year';
 
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

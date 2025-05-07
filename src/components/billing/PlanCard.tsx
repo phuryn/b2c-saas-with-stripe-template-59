@@ -34,6 +34,11 @@ const PlanCard: React.FC<PlanCardProps> = ({
   onSelect,
   isLoading = false,
 }) => {
+  // Split the price string to separate the amount and interval
+  const priceMatch = price.match(/^(\$[\d,]+)(\/\w+)$/);
+  const priceAmount = priceMatch ? priceMatch[1] : price;
+  const priceInterval = priceMatch ? priceMatch[2] : '';
+  
   const renderFeature = (feature: string) => (
     <li key={feature} className="flex items-start gap-2">
       <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -64,7 +69,10 @@ const PlanCard: React.FC<PlanCardProps> = ({
       <Card className={`flex h-full flex-col overflow-hidden ${isRecommended ? 'border-primary-blue ring-1 ring-primary-blue' : ''}`}>
         <CardHeader>
           <CardTitle className="text-2xl font-bold">{name}</CardTitle>
-          <div className="text-2xl font-bold">{price}</div>
+          <div className="flex items-baseline">
+            <span className="text-2xl font-bold text-[#1EAEDB]">{priceAmount}</span>
+            <span className="text-gray-text">{priceInterval}</span>
+          </div>
           <p className="text-gray-500 mt-2">{description}</p>
         </CardHeader>
         <CardContent className="grow space-y-6">
