@@ -267,14 +267,14 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
                   className="relative"
                 >
                   {tab.label}
-                  {selectedCycle === 'yearly' && tab.id === 'yearly' && (
-                    <span className="absolute -top-5 left-0 right-0 text-xs font-medium text-primary-green whitespace-nowrap">
-                      Up to 17% cheaper
-                    </span>
-                  )}
                 </Button>
               ))}
             </div>
+            {selectedCycle === 'yearly' && (
+              <span className="text-xs font-medium text-primary-green ml-2 whitespace-nowrap">
+                Up to 17% cheaper
+              </span>
+            )}
           </div>
         </div>
       </div>
