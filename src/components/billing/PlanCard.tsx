@@ -94,7 +94,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
             {renderFeatures(features)}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col items-center">
+        <CardFooter className={`${inBillingPage ? "flex justify-start" : "flex flex-col items-center"}`}>
           <Button 
             onClick={onSelect}
             disabled={isLoading || (isActive && !inBillingPage)} // Enable button in BillingSettings even for active plan
