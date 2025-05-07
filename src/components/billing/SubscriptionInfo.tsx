@@ -5,7 +5,6 @@ import { Subscription, PaymentMethod } from '@/types/subscription';
 
 interface SubscriptionInfoProps {
   subscription: Subscription | null;
-  onManageSubscription: () => void;
   onRenewSubscription?: () => void;
   subscriptionLoading: boolean;
 }
@@ -37,7 +36,6 @@ const getFormattedCardInfo = (paymentMethod?: PaymentMethod | null) => {
 
 const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
   subscription,
-  onManageSubscription,
   onRenewSubscription,
   subscriptionLoading
 }) => {
@@ -79,16 +77,6 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
               Renew Subscription
             </Button>
           )}
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onManageSubscription} 
-            disabled={subscriptionLoading}
-            className="shrink-0"
-          >
-            Manage Subscription
-          </Button>
         </div>
       </div>
     </div>

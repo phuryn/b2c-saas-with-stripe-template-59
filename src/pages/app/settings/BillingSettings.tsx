@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
 import PlanCard from '@/components/billing/PlanCard';
 import { getPlans } from '@/config/plans';
+import { formatPrice } from '@/utils/pricing';
 
 interface StripePrice {
   id: string;
@@ -207,7 +209,7 @@ const BillingSettings: React.FC = () => {
     const planType = tier.toLowerCase() as 'standard' | 'premium';
     const priceId = isYearly ? STRIPE_CONFIG.prices[planType]?.yearly : STRIPE_CONFIG.prices[planType]?.monthly;
     const price = stripePrices[priceId];
-    const formattedPrice = price ? `${formatPriceDisplay(price.unit_amount, price.currency)}/${isYearly ? 'year' : 'month'}` : `${'$' + (tier === 'Standard' ? '29' : '79')}/${isYearly ? 'year' : 'month'}`;
+    const formattedPrice = price ? `${formatPriceDisplay(price.unit_amount, price.currency)}/${isYearly ? 'year' : 'month'}` : `${'$' + (tier === 'Standard' ? '10' : '20')}/${isYearly ? 'year' : 'month'}`;
     return {
       name: tier,
       price: formattedPrice
@@ -259,7 +261,6 @@ const BillingSettings: React.FC = () => {
         {subscription?.subscribed && (
           <SubscriptionInfo
             subscription={subscription}
-            onManageSubscription={openCustomerPortal}
             onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined}
             subscriptionLoading={subscriptionLoading}
           />
@@ -270,11 +271,11 @@ const BillingSettings: React.FC = () => {
           <PlanCard
             name={currentPlan.name}
             description={currentPlan.description}
-            price={currentPlan.free ? 'Free' : `${formatPriceDisplay(currentPlan.price?.monthly || 0)}/${currentCycle}`}
+            price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)}
             limits={currentPlan.limits}
             features={currentPlan.features}
-            isActive={true}
-            buttonText="Manage Plan"
+            isActive={false}
+            buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"}
             onSelect={handleManagePlan}
             isLoading={subscriptionLoading}
           />
