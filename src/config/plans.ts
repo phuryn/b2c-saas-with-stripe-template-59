@@ -1,0 +1,71 @@
+
+import { STRIPE_CONFIG } from '@/config/stripe';
+
+export interface Plan {
+  id: string;
+  name: string;
+  priceId: string;
+  description: string;
+  limits: string[];
+  features: string[];
+  recommended?: boolean;
+  buttonText?: string;
+  free?: boolean;
+}
+
+/**
+ * Gets the plans configuration based on the selected billing cycle
+ */
+export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
+  return [
+    {
+      id: 'standard',
+      name: 'Standard',
+      priceId: cycle === 'monthly' ? STRIPE_CONFIG.prices.standard.monthly : STRIPE_CONFIG.prices.standard.yearly,
+      description: 'Great for professionals and small teams.',
+      limits: [
+        '200 links / month',
+        '20 QR codes / month',
+      ],
+      features: [
+        'Everything in Free, plus:',
+        '6-months of click history',
+        'Bulk link & QR Code creation',
+        'Priority support',
+      ],
+    },
+    {
+      id: 'premium',
+      name: 'Premium',
+      priceId: cycle === 'monthly' ? STRIPE_CONFIG.prices.premium.monthly : STRIPE_CONFIG.prices.premium.yearly,
+      description: 'For growing teams with advanced needs.',
+      limits: [
+        '5000 links / month',
+        '500 QR codes / month',
+      ],
+      features: [
+        'Everything in Standard, plus:',
+        '2 years of click history',
+        'City-level & device analytics',
+        'API access',
+      ],
+      recommended: true,
+    },
+    {
+      id: 'enterprise',
+      name: 'Enterprise',
+      priceId: 'enterprise',
+      description: 'For large organizations and complex needs.',
+      limits: [
+        'Custom number of QR codes and links',
+      ],
+      features: [
+        'Everything in Premium, plus:',
+        '99.9% SLA uptime',
+        'Dedicated customer success manager',
+        'Customized onboarding & priority support',
+      ],
+      buttonText: 'Get a Quote',
+    }
+  ];
+};

@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { toast } from "sonner";
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2, RefreshCw, CreditCard, Calendar } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
 import PlanSelector from '@/components/billing/PlanSelector';
 import { Button } from '@/components/ui/button';
