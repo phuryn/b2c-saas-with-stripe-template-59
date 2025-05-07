@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import BillingInvoices from '@/components/billing/BillingInvoices';
 import UsageStats from '@/components/billing/UsageStats';
 import BillingAddress from '@/components/billing/BillingAddress';
+import BillingPaymentMethod from '@/components/billing/BillingPaymentMethod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface StripePrice {
@@ -288,15 +290,14 @@ const BillingSettings: React.FC = () => {
       {/* Monthly Usage Section */}
       <UsageStats subscription={subscription} />
       
+      {/* Payment Method Section - New component */}
+      <BillingPaymentMethod subscription={subscription} />
+      
       {/* Billing Address Section */}
-      <BillingAddress 
-        subscription={subscription}
-      />
+      <BillingAddress subscription={subscription} />
       
       {/* Billing History Section */}
-      <BillingInvoices 
-        subscription={subscription}
-      />
+      <BillingInvoices subscription={subscription} />
     </div>
   );
 };

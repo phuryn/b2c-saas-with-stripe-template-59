@@ -51,11 +51,38 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
+    // Parse request body if present
+    let requestBody = {};
+    let flow = null;
+    
+    if (req.body) {
+      try {
+        const body = await req.json();
+        requestBody = body;
+        flow = body?.flow;
+        logStep("Request body parsed", { flow });
+      } catch (e) {
+        logStep("No valid JSON body or empty body");
+      }
+    }
+
     const origin = req.headers.get("origin") || "http://localhost:3000";
-    const portalSession = await stripe.billingPortal.sessions.create({
+    
+    // Set up portal configuration based on flow
+    const portalOptions: any = {
       customer: customerId,
       return_url: `${origin}/app/settings/billing`,
-    });
+    };
+    
+    // If a specific flow is requested, configure the session for that flow
+    if (flow === 'payment_method_update') {
+      logStep("Setting up payment method update flow");
+      portalOptions.flow_data = {
+        type: 'payment_method_update',
+      };
+    }
+    
+    const portalSession = await stripe.billingPortal.sessions.create(portalOptions);
     logStep("Customer portal session created", { sessionId: portalSession.id });
 
     return new Response(JSON.stringify({ url: portalSession.url }), {

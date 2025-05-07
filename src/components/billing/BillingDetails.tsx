@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,7 +98,7 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({
               onClick={onOpenCustomerPortal}
               disabled={loading}
             >
-              Update Payment Method
+              Manage Subscription
             </Button>
           </div>
         </div>
