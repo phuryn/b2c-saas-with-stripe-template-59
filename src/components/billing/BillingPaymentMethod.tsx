@@ -34,6 +34,17 @@ const BillingPaymentMethod = ({ subscription }: BillingPaymentMethodProps) => {
     return `${month.toString().padStart(2, '0')}/${year % 100}`;
   };
 
+  // Get card icon based on brand
+  const getCardIcon = (brand?: string) => {
+    if (brand === 'visa') {
+      return <img src="/visa.svg" alt="Visa" className="h-6 w-auto" />;
+    } else if (brand === 'mastercard') {
+      return <img src="/mastercard.svg" alt="Mastercard" className="h-6 w-auto" />;
+    } else {
+      return <CreditCard className="h-6 w-6 text-gray-500" />;
+    }
+  };
+
   const openPaymentMethodPortal = async () => {
     try {
       setLoading(true);
@@ -77,7 +88,7 @@ const BillingPaymentMethod = ({ subscription }: BillingPaymentMethodProps) => {
           {subscription?.payment_method ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <CreditCard className="h-6 w-6 text-gray-500" />
+                {getCardIcon(subscription.payment_method.brand)}
                 <div>
                   <p className="font-medium">
                     {formatCardBrand(subscription.payment_method.brand)} •••• {subscription.payment_method.last4}
