@@ -95,8 +95,13 @@ serve(async (req) => {
     const customer = await stripe.customers.retrieve(customerId, { expand: ['tax_ids'] });
     let billingAddress = null;
     let taxId = null;
+    let customerName = null;
     
     if (typeof customer !== 'string') {
+      // Get customer name
+      customerName = customer.name || null;
+      logStep("Customer name", { name: customerName });
+      
       // Process billing address
       billingAddress = customer.address ? {
         line1: customer.address.line1 || null,
@@ -104,7 +109,8 @@ serve(async (req) => {
         city: customer.address.city || null,
         state: customer.address.state || null,
         postal_code: customer.address.postal_code || null,
-        country: customer.address.country || null
+        country: customer.address.country || null,
+        name: customerName // Add the customer name to billing address
       } : null;
       
       // Get Tax ID if available
@@ -126,6 +132,7 @@ serve(async (req) => {
       
       if (billingAddress) {
         logStep("Found billing address", { 
+          name: customerName,
           city: billingAddress.city, 
           country: billingAddress.country,
           tax_id: taxId || 'none'

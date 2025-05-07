@@ -2,7 +2,7 @@
 import React, { useState, forwardRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, User, MapPin, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -94,23 +94,13 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
             </div>
           ) : subscription?.billing_address ? (
             <div className="space-y-4">
-              {/* Customer Name (if available) */}
+              {/* Display company/customer name prominently if available */}
               {subscription.billing_address.name && (
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <User className="h-5 w-5 mr-2 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-500">Customer</span>
-                  </div>
-                  <p className="font-medium">{subscription.billing_address.name}</p>
-                </div>
+                <p className="font-medium text-base">{subscription.billing_address.name}</p>
               )}
               
-              {/* Address Section */}
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <MapPin className="h-5 w-5 mr-2 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-500">Address</span>
-                </div>
+              {/* Address without label */}
+              <div>
                 <p>{subscription.billing_address.line1}</p>
                 {subscription.billing_address.line2 && <p>{subscription.billing_address.line2}</p>}
                 <p>
@@ -123,8 +113,8 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
               {subscription.billing_address.tax_id && (
                 <>
                   <Separator />
-                  <div className="space-y-1 pt-1">
-                    <p className="text-sm font-medium">Tax ID: <span className="font-normal">{subscription.billing_address.tax_id}</span></p>
+                  <div className="pt-1">
+                    <p>Tax ID: {subscription.billing_address.tax_id}</p>
                   </div>
                 </>
               )}
