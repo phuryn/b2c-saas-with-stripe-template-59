@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Check, ArrowRight } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
+import { Switch } from '@/components/ui/switch';
 
 interface Tab {
   id: string;
@@ -45,7 +46,7 @@ interface PlanSelectorProps {
 const PlanSelector: React.FC<PlanSelectorProps> = ({ 
   currentPlan, 
   isLoading, 
-  cycle = 'monthly', 
+  cycle = 'yearly', 
   onSelect,
   priceData = {},
   showDowngrade = false,
@@ -55,12 +56,12 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
 
   const billingCycles: BillingCycle[] = [
     {
-      id: 'monthly',
-      label: 'Monthly',
+      id: 'yearly',
+      label: 'Annually',
     },
     {
-      id: 'yearly',
-      label: 'Yearly',
+      id: 'monthly',
+      label: 'Monthly',
     },
   ];
 
@@ -70,22 +71,6 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   }));
 
   const plans: Plan[] = [
-    {
-      id: 'free',
-      name: 'Free',
-      priceId: 'free',
-      description: 'Basic functionality for personal use.',
-      limits: [
-        '20 links / month',
-        '1 QR code / month',
-      ],
-      features: [
-        '30-days of click history',
-        'Email support',
-      ],
-      free: true,
-      buttonText: 'Current Plan'
-    },
     {
       id: 'standard',
       name: 'Standard',
@@ -101,7 +86,6 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         'Bulk link & QR Code creation',
         'Priority support',
       ],
-      recommended: true,
     },
     {
       id: 'premium',
@@ -118,6 +102,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         'City-level & device analytics',
         'API access',
       ],
+      recommended: true,
     },
     {
       id: 'enterprise',
@@ -221,7 +206,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
               </div>
             </div>
           )}
-          <Card className={`flex h-full flex-col overflow-hidden ${isActive ? 'border-primary ring-1 ring-primary' : ''}`}>
+          <Card className={`flex h-full flex-col overflow-hidden ${plan.recommended ? 'border-primary-blue ring-1 ring-primary-blue' : ''}`}>
             <CardHeader>
               <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
               <div className="text-2xl font-bold">{formatPrice(plan.priceId)}</div>
@@ -255,31 +240,28 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     <div>
       <div className="mb-8">
         <div className="relative">
-          <div className="absolute inset-0 bottom-1/2 h-6 bg-gray-100 rounded-full blur-lg opacity-30"></div>
-          <div className="relative z-10">
-            <div className="inline-flex items-center justify-center rounded-full bg-muted p-1 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-              {tabs.map((tab) => (
-                <Button
-                  key={tab.id}
-                  variant={selectedCycle === tab.id ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setSelectedCycle(tab.id as 'monthly' | 'yearly')}
-                  className="relative"
-                >
-                  {tab.label}
-                </Button>
-              ))}
-            </div>
-            {selectedCycle === 'yearly' && (
-              <span className="text-xs font-medium text-primary-green ml-2 whitespace-nowrap">
-                Up to 17% cheaper
+          <div className="flex items-center justify-center bg-gray-100 rounded-full p-2">
+            <div className="flex items-center">
+              <span className="text-xs font-medium text-primary-green mr-2">
+                Save up to 17%
               </span>
-            )}
+              <span className={`font-medium text-sm mr-2 ${selectedCycle === 'yearly' ? 'text-gray-800' : 'text-gray-500'}`}>
+                {tabs[0].label}
+              </span>
+            </div>
+            <Switch
+              checked={selectedCycle === 'monthly'}
+              onCheckedChange={(checked) => setSelectedCycle(checked ? 'monthly' : 'yearly')}
+              className="mx-2"
+            />
+            <span className={`font-medium text-sm ml-2 ${selectedCycle === 'monthly' ? 'text-gray-800' : 'text-gray-500'}`}>
+              {tabs[1].label}
+            </span>
           </div>
         </div>
       </div>
-      {/* Added 1rem margin-top (mt-8) between switcher and plans */}
-      <div className="grid gap-6 md:grid-cols-3 mt-8">
+      {/* Added 1rem margin-top (mt-4) between switcher and plans */}
+      <div className="grid gap-6 md:grid-cols-3 mt-4">
         {renderPlans()}
       </div>
       
