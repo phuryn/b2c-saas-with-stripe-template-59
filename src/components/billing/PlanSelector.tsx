@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -315,7 +314,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
           return (
           <div key={plan.id} className="relative">
             {plan.recommended && (
-              <div className="absolute inset-x-0 -top-10 flex justify-center">
+              <div className="absolute inset-x-0 -top-8 flex justify-center">
                 <div className="bg-primary-blue text-white px-4 py-1 text-[12pt] font-medium rounded-t-md leading-6">
                   RECOMMENDED
                 </div>

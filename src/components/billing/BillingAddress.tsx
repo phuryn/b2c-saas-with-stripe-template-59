@@ -95,7 +95,7 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
               </p>
               <p>{subscription.billing_address.country}</p>
               
-              {/* Show Tax ID if available */}
+              {/* Show Tax ID if available - Making it more visible */}
               {subscription.billing_address.tax_id && (
                 <div className="pt-2 mt-4 border-t border-gray-100">
                   <p className="text-sm font-medium">Tax ID: <span className="font-normal">{subscription.billing_address.tax_id}</span></p>
