@@ -12,6 +12,7 @@ interface BillingDetailsProps {
     subscription_tier: string | null;
     subscription_end: string | null;
     current_plan: string | null;
+    cancel_at_period_end?: boolean;
     payment_method?: {
       brand?: string;
       last4?: string;
@@ -37,6 +38,17 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({
     if (!month || !year) return '';
     return `${month.toString().padStart(2, '0')}/${year % 100}`;
   };
+
+  const formatDate = (dateString?: string | null): string => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
 
   const renderActiveSubscription = () => (
     <Card>
@@ -70,10 +82,10 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({
             {subscription?.subscription_end && (
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" /> Next Renewal
+                  <Calendar className="h-4 w-4 mr-1" /> {isSubscriptionCanceling ? 'Cancellation Date' : 'Next Renewal'}
                 </h4>
                 <p className="font-medium">
-                  {new Date(subscription.subscription_end).toLocaleDateString()}
+                  {formatDate(subscription.subscription_end)}
                 </p>
               </div>
             )}

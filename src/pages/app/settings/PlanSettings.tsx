@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -241,6 +242,15 @@ const PlanSettings: React.FC = () => {
     return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
   };
 
+  const formatDate = (dateString?: string | null): string => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   if (loading || pricesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -276,19 +286,11 @@ const PlanSettings: React.FC = () => {
             <div>
               {isSubscriptionCanceling ? (
                 <p className="text-sm text-muted-foreground">
-                  Your subscription cancels on {new Date(subscription.subscription_end || '').toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}.
+                  Your subscription cancels on {formatDate(subscription.subscription_end)}.
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Your subscription will auto-renew on {new Date(subscription.subscription_end || '').toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}.
+                  Your subscription will auto-renew on {formatDate(subscription.subscription_end)}.
                   
                   {cardInfo && (
                     <span className="block mt-1">
@@ -306,7 +308,7 @@ const PlanSettings: React.FC = () => {
               disabled={subscriptionLoading}
               className="shrink-0"
             >
-              Manage Payment
+              Manage in Customer Portal
             </Button>
           </div>
         </div>
@@ -322,12 +324,12 @@ const PlanSettings: React.FC = () => {
       <div className="overflow-x-auto -mx-6 md:mx-0">
         <div className="min-w-[800px] md:min-w-0 px-6 md:px-0">
           <PlanSelector
-            currentPlan={currentPlanId}
-            isLoading={subscriptionLoading}
+            currentPlan={subscription?.current_plan}
+            isLoading={subscriptionLoading || isSubscriptionCanceling}
             cycle={currentCycle}
             onSelect={handleSelectPlan}
             priceData={stripePrices}
-            showDowngrade={Boolean(subscription?.subscribed)}
+            showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling}
             onDowngrade={handleDowngrade}
           />
         </div>

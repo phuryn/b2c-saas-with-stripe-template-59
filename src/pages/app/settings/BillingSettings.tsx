@@ -177,6 +177,15 @@ const BillingSettings: React.FC = () => {
     }).format(dollars);
   };
 
+  const formatDate = (dateString?: string | null): string => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   const getPlanDetails = () => {
     if (!subscription) return { name: 'Free', price: '$0/month' };
     
@@ -247,8 +256,8 @@ const BillingSettings: React.FC = () => {
               <p className="text-gray-500 text-sm mt-1">
                 {subscription?.subscription_end && subscription.subscribed ? 
                   isSubscriptionCanceling ?
-                    `Cancels on ${new Date(subscription.subscription_end).toLocaleDateString()}` :
-                    `Next billing date: ${new Date(subscription.subscription_end).toLocaleDateString()}` : 
+                    `Cancels on ${formatDate(subscription.subscription_end)}` :
+                    `Next billing date: ${formatDate(subscription.subscription_end)}` : 
                   'No active subscription'}
               </p>
             </div>
