@@ -269,7 +269,7 @@ const BillingSettings: React.FC = () => {
                 className="w-full md:w-auto"
                 variant="default"
               >
-                Manage Plan
+                {subscription?.subscribed ? "Manage Plan" : "Upgrade"}
               </Button>
               {subscription?.subscribed && (
                 <Button 
