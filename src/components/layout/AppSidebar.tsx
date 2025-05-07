@@ -23,7 +23,7 @@ const AppSidebar: React.FC = () => {
   } as React.CSSProperties}>
       <SidebarHeader className="flex items-center justify-between">
         {/* App Logo - conditional based on sidebar state */}
-        <div className="flex items-center px-2 py-3">
+        <div className="flex items-center py-3">
           <Link to="/app">
             {state === 'collapsed' ? <img src="/small-logo.svg" alt="TRUSTY" width={28} height={28} className="h-5 w-auto object-contain" /> : <img src="/primary-logo.svg" alt="TRUSTY" width={120} height={28} className="h-5 w-auto" />}
           </Link>
