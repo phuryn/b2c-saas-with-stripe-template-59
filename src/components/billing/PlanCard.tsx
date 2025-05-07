@@ -49,7 +49,8 @@ const PlanCard: React.FC<PlanCardProps> = ({
   const renderFeatures = (featuresList: string[]) => (
     <ul className="list-none pl-0 space-y-2">
       {featuresList.map((feature) => {
-        if (feature.endsWith('plus:')) {
+        // Check if this feature is a header (like "Includes:" or "Everything in X, plus:")
+        if (feature === "Includes:" || feature.toLowerCase().includes("plus:") || feature.toLowerCase().includes("everything in")) {
           return <li key={feature} className="text-sm font-medium mt-4">{feature}</li>;
         }
         return renderFeature(feature);
