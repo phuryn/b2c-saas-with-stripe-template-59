@@ -17,12 +17,14 @@ import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
 import PlanCard from '@/components/billing/PlanCard';
 import { getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
+
 interface StripePrice {
   id: string;
   unit_amount: number;
   currency: string;
   interval?: string;
 }
+
 const BillingSettings: React.FC = () => {
   const {
     user,
@@ -247,13 +249,24 @@ const BillingSettings: React.FC = () => {
         {subscription?.subscribed && <SubscriptionInfo subscription={subscription} onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined} subscriptionLoading={subscriptionLoading} />}
         
         {/* Plan Card */}
-        {currentPlan && <PlanCard name={currentPlan.name} description={currentPlan.description} price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} limits={currentPlan.limits} features={currentPlan.features} isActive={false} buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} onSelect={handleManagePlan} isLoading={subscriptionLoading} />}
+        {currentPlan && <PlanCard 
+          name={currentPlan.name} 
+          description={currentPlan.description} 
+          price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} 
+          limits={currentPlan.limits} 
+          features={currentPlan.features} 
+          isActive={false} 
+          buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} 
+          onSelect={handleManagePlan} 
+          isLoading={subscriptionLoading} 
+          inBillingPage={true} 
+        />}
       </div>
       
       {/* Monthly Usage Section */}
       <UsageStats subscription={subscription} />
       
-      {/* Payment Method Section - New component */}
+      {/* Payment Method Section */}
       <BillingPaymentMethod subscription={subscription} />
       
       {/* Billing Address Section */}
@@ -263,4 +276,5 @@ const BillingSettings: React.FC = () => {
       <BillingInvoices subscription={subscription} />
     </div>;
 };
+
 export default BillingSettings;

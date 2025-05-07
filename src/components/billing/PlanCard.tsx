@@ -20,6 +20,7 @@ interface PlanCardProps {
   buttonText: string;
   onSelect: () => void;
   isLoading?: boolean;
+  inBillingPage?: boolean; // New prop to determine if the component is used in BillingSettings
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({
@@ -33,6 +34,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   buttonText,
   onSelect,
   isLoading = false,
+  inBillingPage = false,
 }) => {
   // Split the price string to separate the amount and interval
   const priceMatch = price.match(/^(\$[\d,\.]+)(\/\w+)$/);
@@ -95,8 +97,8 @@ const PlanCard: React.FC<PlanCardProps> = ({
         <CardFooter className="flex flex-col items-center">
           <Button 
             onClick={onSelect}
-            disabled={isLoading || isActive}
-            className="w-full"
+            disabled={isLoading || (isActive && !inBillingPage)} // Enable button in BillingSettings even for active plan
+            className={inBillingPage ? "" : "w-full"} // Remove full width for BillingSettings
             variant={isActive ? "outline" : "default"}
           >
             {buttonText}

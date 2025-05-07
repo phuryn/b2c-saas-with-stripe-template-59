@@ -103,7 +103,6 @@ const PlanSettings: React.FC = () => {
       {subscription?.subscribed && (
         <SubscriptionInfo
           subscription={subscription}
-          onManageSubscription={openCustomerPortal}
           onRenewSubscription={isSubscriptionCanceling ? handleRenewSubscription : undefined}
           subscriptionLoading={actionLoading}
         />
