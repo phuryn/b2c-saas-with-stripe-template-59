@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, MapPin, AlertTriangle } from 'lucide-react';
+import { Loader2, MapPin, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -16,6 +16,7 @@ interface BillingAddressProps {
       state?: string;
       postal_code?: string;
       country?: string;
+      tax_id?: string;
     } | null;
   } | null;
 }
@@ -25,37 +26,6 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const refreshSubscriptionData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('Refreshing billing address information...');
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      
-      if (error) {
-        console.error('Error refreshing subscription data:', error);
-        throw new Error(error.message);
-      }
-      
-      console.log('Billing address data received:', data);
-      setSubscription(data);
-      toast({
-        description: "Billing address information updated.",
-      });
-    } catch (err) {
-      console.error('Error refreshing subscription data:', err);
-      setError('Failed to refresh billing information');
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not update billing address information',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const openCustomerPortal = async () => {
     try {
@@ -94,16 +64,6 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Billing Address</h3>
-        {!loading && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={refreshSubscriptionData}
-            className="transition-all hover:bg-primary/10"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        )}
       </div>
       
       <Card>
@@ -118,10 +78,6 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
                 <AlertTriangle className="h-8 w-8 text-amber-500" />
               </div>
               <p className="text-red-500 mb-4">{error}</p>
-              <Button variant="outline" onClick={refreshSubscriptionData}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Try again
-              </Button>
             </div>
           ) : subscription?.billing_address ? (
             <div className="space-y-2">
@@ -135,6 +91,13 @@ const BillingAddress: React.FC<BillingAddressProps> = ({ subscription: initialSu
                 {subscription.billing_address.city}, {subscription.billing_address.state} {subscription.billing_address.postal_code}
               </p>
               <p>{subscription.billing_address.country}</p>
+              
+              {/* Show Tax ID if available */}
+              {subscription.billing_address.tax_id && (
+                <div className="pt-2 mt-4 border-t border-gray-100">
+                  <p className="text-sm font-medium">Tax ID: <span className="font-normal">{subscription.billing_address.tax_id}</span></p>
+                </div>
+              )}
               
               <div className="mt-4 pt-2 border-t border-gray-100">
                 <Button variant="outline" onClick={openCustomerPortal} disabled={loading}>

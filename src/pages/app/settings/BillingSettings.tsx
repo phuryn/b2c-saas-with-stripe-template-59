@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -29,6 +29,9 @@ const BillingSettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [pricesLoading, setPricesLoading] = useState(true);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const billingAddressRef = useRef<any>(null);
+  const billingHistoryRef = useRef<any>(null);
   const [subscription, setSubscription] = useState<{
     subscribed: boolean;
     subscription_tier: string | null;
@@ -47,6 +50,7 @@ const BillingSettings: React.FC = () => {
       state?: string;
       postal_code?: string;
       country?: string;
+      tax_id?: string;
     } | null;
   } | null>(null);
   const [stripePrices, setStripePrices] = useState<Record<string, StripePrice>>({});
@@ -115,6 +119,7 @@ const BillingSettings: React.FC = () => {
   const checkSubscriptionStatus = async () => {
     try {
       setLoading(true);
+      setRefreshing(true);
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
@@ -131,6 +136,7 @@ const BillingSettings: React.FC = () => {
       });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -215,9 +221,13 @@ const BillingSettings: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={checkSubscriptionStatus}
-            disabled={loading}
+            disabled={refreshing}
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
+            {refreshing ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
             Refresh
           </Button>
         )}
@@ -267,10 +277,16 @@ const BillingSettings: React.FC = () => {
       <UsageStats subscription={subscription} />
       
       {/* Billing Address Section */}
-      <BillingAddress subscription={subscription} />
+      <BillingAddress 
+        subscription={subscription}
+        ref={billingAddressRef}
+      />
       
       {/* Billing History Section */}
-      <BillingInvoices subscription={subscription} />
+      <BillingInvoices 
+        subscription={subscription}
+        ref={billingHistoryRef}
+      />
     </div>
   );
 };

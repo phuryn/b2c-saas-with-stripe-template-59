@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, AlertTriangle, RefreshCw } from 'lucide-react';
+import { FileText, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +31,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
   const [loading, setLoading] = useState(false);
   const [fetchAttempted, setFetchAttempted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [visibleInvoices, setVisibleInvoices] = useState<number>(10);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -90,6 +91,10 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
     }).format(dollars);
   };
 
+  const showMoreInvoices = () => {
+    setVisibleInvoices(prev => prev + 10);
+  };
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -105,15 +110,6 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
           <AlertTriangle className="mx-auto h-8 w-8 text-amber-500 mb-2" />
           <p className="text-gray-500">Failed to load invoice history</p>
           <p className="text-sm text-gray-400 mt-1">{error}</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-4"
-            onClick={() => fetchInvoices()}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Try again
-          </Button>
         </div>
       );
     }
@@ -126,40 +122,57 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscription }) => {
       );
     }
 
+    const displayedInvoices = invoices.slice(0, visibleInvoices);
+    const hasMoreInvoices = invoices.length > visibleInvoices;
+
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead className="text-right">Download</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {invoices.map((invoice) => (
-            <TableRow key={invoice.id}>
-              <TableCell>{new Date(invoice.created * 1000).toLocaleDateString()}</TableCell>
-              <TableCell>
-                {invoice.description || `Invoice ${invoice.number}`}
-              </TableCell>
-              <TableCell>{formatCurrency(invoice.amount_paid, invoice.currency)}</TableCell>
-              <TableCell className="text-right">
-                {invoice.invoice_pdf && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => window.open(invoice.invoice_pdf, '_blank')}
-                  >
-                    <FileText className="h-4 w-4" />
-                    <span className="sr-only">Download PDF</span>
-                  </Button>
-                )}
-              </TableCell>
+      <div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead className="text-right">Download</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {displayedInvoices.map((invoice) => (
+              <TableRow key={invoice.id}>
+                <TableCell>{new Date(invoice.created * 1000).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {invoice.description || `Invoice ${invoice.number}`}
+                </TableCell>
+                <TableCell>{formatCurrency(invoice.amount_paid, invoice.currency)}</TableCell>
+                <TableCell className="text-right">
+                  {invoice.invoice_pdf && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(invoice.invoice_pdf, '_blank')}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span className="sr-only">Download PDF</span>
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        
+        {hasMoreInvoices && (
+          <div className="flex justify-center mt-4">
+            <Button 
+              variant="outline" 
+              onClick={showMoreInvoices}
+              className="text-sm"
+            >
+              Show More
+            </Button>
+          </div>
+        )}
+      </div>
     );
   };
 

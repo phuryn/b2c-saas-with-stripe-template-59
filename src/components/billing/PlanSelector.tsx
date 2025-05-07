@@ -316,13 +316,13 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
           <div key={plan.id} className="relative">
             {plan.recommended && (
               <div className="absolute inset-x-0 -top-6 flex justify-center">
-                <div className="bg-primary text-white px-3 py-1 text-xs font-medium rounded-t-md">
+                <div className="bg-primary-blue text-white px-4 py-1 text-xs font-medium rounded-t-md text-[12pt] leading-6">
                   RECOMMENDED
                 </div>
               </div>
             )}
             <Card 
-              className={`overflow-hidden ${isActive ? 'border-primary border-2' : ''} ${plan.recommended ? 'ring-1 ring-blue-500' : ''}`}
+              className={`overflow-hidden ${plan.recommended ? 'border-primary-blue border-2' : ''}`}
             >
               <CardHeader className={plan.recommended ? '' : ''}>
                 <CardTitle>{plan.name}</CardTitle>
