@@ -17,6 +17,7 @@ interface BillingAddressProps {
       postal_code?: string;
       country?: string;
       tax_id?: string;
+      name?: string;
     } | null;
   } | null;
 }
@@ -31,6 +32,7 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
   useEffect(() => {
     if (subscription?.billing_address) {
       console.log('Tax ID in billing address:', subscription.billing_address.tax_id);
+      console.log('Name in billing address:', subscription.billing_address.name);
     }
   }, [subscription]);
 
@@ -73,7 +75,7 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
   return (
     <div className="space-y-4" ref={ref}>
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Billing Address</h3>
+        <h3 className="text-lg font-medium">Billing Information</h3>
       </div>
       
       <Card>
@@ -93,14 +95,23 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
             <div className="space-y-2">
               <div className="flex items-center mb-3">
                 <MapPin className="h-5 w-5 mr-2 text-gray-400" />
-                <span className="text-sm font-medium text-gray-500">Billing Address</span>
+                <span className="text-sm font-medium text-gray-500">Billing Information</span>
               </div>
-              <p>{subscription.billing_address.line1}</p>
-              {subscription.billing_address.line2 && <p>{subscription.billing_address.line2}</p>}
-              <p>
-                {subscription.billing_address.city}, {subscription.billing_address.state} {subscription.billing_address.postal_code}
-              </p>
-              <p>{subscription.billing_address.country}</p>
+
+              {/* Display customer name if available */}
+              {subscription.billing_address.name && (
+                <p className="font-medium">{subscription.billing_address.name}</p>
+              )}
+
+              {/* Billing Address Section */}
+              <div className={subscription.billing_address.name ? "mt-4" : ""}>
+                <p>{subscription.billing_address.line1}</p>
+                {subscription.billing_address.line2 && <p>{subscription.billing_address.line2}</p>}
+                <p>
+                  {subscription.billing_address.city}, {subscription.billing_address.state} {subscription.billing_address.postal_code}
+                </p>
+                <p>{subscription.billing_address.country}</p>
+              </div>
               
               {/* Show Tax ID if available - Making it more visible */}
               {subscription.billing_address.tax_id && (
@@ -112,16 +123,16 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({ subscr
               <div className="mt-4 pt-2 border-t border-gray-100">
                 <Button variant="outline" onClick={openCustomerPortal} disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Edit Billing Address
+                  Edit Billing Information
                 </Button>
               </div>
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-gray-500 mb-4">No billing address on file.</p>
+              <p className="text-gray-500 mb-4">No billing information on file.</p>
               <Button variant="outline" onClick={openCustomerPortal} disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Add Billing Address
+                Add Billing Information
               </Button>
             </div>
           )}

@@ -22,7 +22,7 @@ const Settings: React.FC = () => {
                 to="/app/settings/profile" 
                 className={cn(
                   "px-4 py-2 rounded-md hover:bg-gray-100 transition-colors",
-                  isActive('/app/settings/profile') && "bg-gray-100 font-medium"
+                  isActive('/app/settings/profile') && "bg-blue-50 border-l-4 border-l-primary-blue text-blue-600 pl-3"
                 )}
               >
                 Profile
@@ -31,10 +31,19 @@ const Settings: React.FC = () => {
                 to="/app/settings/billing" 
                 className={cn(
                   "px-4 py-2 rounded-md hover:bg-gray-100 transition-colors",
-                  isActive('/app/settings/billing') && "bg-gray-100 font-medium"
+                  isActive('/app/settings/billing') && "bg-blue-50 border-l-4 border-l-primary-blue text-blue-600 pl-3"
                 )}
               >
                 Billing and Usage
+              </Link>
+              <Link 
+                to="/app/settings/plan" 
+                className={cn(
+                  "px-4 py-2 rounded-md hover:bg-gray-100 transition-colors",
+                  isActive('/app/settings/plan') && "bg-blue-50 border-l-4 border-l-primary-blue text-blue-600 pl-3"
+                )}
+              >
+                Plans
               </Link>
             </nav>
           </div>
