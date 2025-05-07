@@ -80,6 +80,17 @@ serve(async (req) => {
       portalOptions.flow_data = {
         type: 'payment_method_update',
       };
+    } else if (flow === 'billing_address_update') {
+      logStep("Setting up billing address update flow");
+      portalOptions.flow_data = {
+        type: 'customer_update',
+        after_completion: {
+          type: 'redirect',
+          redirect: {
+            return_url: `${origin}/app/settings/billing`,
+          }
+        }
+      };
     }
     
     const portalSession = await stripe.billingPortal.sessions.create(portalOptions);
