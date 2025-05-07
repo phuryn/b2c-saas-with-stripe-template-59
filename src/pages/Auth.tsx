@@ -1,17 +1,41 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
+import { FaLinkedin } from 'react-icons/fa';
 import { useToast } from '@/components/ui/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Separator } from '@/components/ui/separator';
+
+const loginFormSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   // Only redirect if user explicitly signed in through this page, not for existing sessions
   useEffect(() => {
@@ -24,6 +48,35 @@ const Auth: React.FC = () => {
       navigate('/app');
     }
   }, [user, navigate, isLoading]);
+
+  const handleEmailLogin = async (values: LoginFormValues) => {
+    try {
+      setIsSubmitting(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Add directLogin parameter to track explicit login attempts
+      const params = new URLSearchParams(window.location.search);
+      params.set('directLogin', 'true');
+      navigate(`/app?${params.toString()}`);
+      
+    } catch (error: any) {
+      console.error('Error with email login:', error);
+      toast({
+        title: "Authentication failed",
+        description: error.message || "Could not sign in with email and password. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -57,6 +110,36 @@ const Auth: React.FC = () => {
     }
   };
 
+  const handleLinkedInSignIn = async () => {
+    try {
+      const currentUrl = window.location.href;
+      const baseUrl = window.location.hostname.startsWith('app.')
+        ? currentUrl.split('/auth')[0]
+        : currentUrl.split('/auth')[0].replace('://', '://app.');
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'linkedin_oidc',
+        options: {
+          redirectTo: `${baseUrl}/app?directLogin=true`,
+          queryParams: {
+            prompt: 'select_account'
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error with LinkedIn sign in:', error);
+      toast({
+        title: "Authentication failed",
+        description: "Could not sign in with LinkedIn. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -72,10 +155,56 @@ const Auth: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Sign In</CardTitle>
-              <CardDescription>Continue with your Google account</CardDescription>
+              <CardDescription>Enter your credentials to access your account</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-4">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleEmailLogin)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" placeholder="name@example.com" {...field} />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="password">Password</Label>
+                          <Link to="/forgot-password" className="text-sm text-primary-blue hover:underline">
+                            Forgot password?
+                          </Link>
+                        </div>
+                        <Input id="password" type="password" {...field} />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-primary-blue hover:bg-primary-blue/90"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Signing In..." : "Sign In"}
+                  </Button>
+                </form>
+              </Form>
+
+              <div className="relative my-6">
+                <Separator />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="bg-white px-2 text-sm text-gray-500">or</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
                 <Button 
                   variant="outline" 
                   className="flex items-center gap-2 justify-center py-6"
@@ -83,6 +212,15 @@ const Auth: React.FC = () => {
                 >
                   <FcGoogle className="h-6 w-6" />
                   <span>Continue with Google</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 justify-center py-6"
+                  onClick={handleLinkedInSignIn}
+                >
+                  <FaLinkedin className="h-6 w-6 text-[#0A66C2]" />
+                  <span>Continue with LinkedIn</span>
                 </Button>
               </div>
             </CardContent>
