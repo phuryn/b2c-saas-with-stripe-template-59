@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,19 +17,22 @@ import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
 import PlanCard from '@/components/billing/PlanCard';
 import { getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
-
 interface StripePrice {
   id: string;
   unit_amount: number;
   currency: string;
   interval?: string;
 }
-
 const BillingSettings: React.FC = () => {
-  const { user, session } = useAuth();
+  const {
+    user,
+    session
+  } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [loading, setLoading] = useState(true);
   const [pricesLoading, setPricesLoading] = useState(true);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
@@ -58,17 +60,14 @@ const BillingSettings: React.FC = () => {
     } | null;
   } | null>(null);
   const [stripePrices, setStripePrices] = useState<Record<string, StripePrice>>({});
-
   useEffect(() => {
     fetchStripePrices();
   }, []);
-
   useEffect(() => {
     if (session) {
       checkSubscriptionStatus();
     }
   }, [session]);
-
   useEffect(() => {
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
@@ -83,7 +82,6 @@ const BillingSettings: React.FC = () => {
       });
     }
   }, [searchParams, toast]);
-
   const fetchStripePrices = async () => {
     try {
       setPricesLoading(true);
@@ -116,7 +114,6 @@ const BillingSettings: React.FC = () => {
       setPricesLoading(false);
     }
   };
-
   const checkSubscriptionStatus = async () => {
     try {
       setLoading(true);
@@ -142,7 +139,6 @@ const BillingSettings: React.FC = () => {
       setRefreshing(false);
     }
   };
-
   const openCustomerPortal = async () => {
     try {
       setSubscriptionLoading(true);
@@ -165,11 +161,9 @@ const BillingSettings: React.FC = () => {
       setSubscriptionLoading(false);
     }
   };
-
   const handleManagePlan = () => {
     navigate('/app/settings/plan');
   };
-
   const formatPriceDisplay = (price: number | undefined, currency: string = 'usd'): string => {
     if (price === undefined) return '$0';
 
@@ -181,7 +175,6 @@ const BillingSettings: React.FC = () => {
       minimumFractionDigits: dollars % 1 === 0 ? 0 : 2
     }).format(dollars);
   };
-
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -190,7 +183,6 @@ const BillingSettings: React.FC = () => {
       day: 'numeric'
     });
   };
-
   const getPlanDetails = () => {
     if (!subscription) return {
       name: 'Free',
@@ -215,35 +207,29 @@ const BillingSettings: React.FC = () => {
       price: formattedPrice
     };
   };
-
   const getCurrentPlanId = () => {
     if (!subscription?.subscription_tier) return 'free';
-    
     const tier = subscription.subscription_tier.toLowerCase();
     if (tier.includes('standard')) return 'standard';
     if (tier.includes('premium')) return 'premium';
     if (tier.includes('enterprise')) return 'enterprise';
     return 'free';
   };
-
   const getCurrentCycle = () => {
     if (!subscription?.current_plan) return 'monthly';
     return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
   };
-
   if (loading || pricesLoading) {
     return <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
   }
-
   const planDetails = getPlanDetails();
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
   const currentPlanId = getCurrentPlanId();
   const currentCycle = getCurrentCycle();
   const plans = getPlans(currentCycle as 'monthly' | 'yearly');
   const currentPlan = plans.find(plan => plan.id === currentPlanId);
-
   return <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-medium">Billing and Usage</h2>
@@ -255,31 +241,13 @@ const BillingSettings: React.FC = () => {
       
       {/* Your Plan Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Your Plan</h3>
+        <h3 className="text-lg font-medium">Your Current Plan</h3>
         
         {/* Subscription Info Component */}
-        {subscription?.subscribed && (
-          <SubscriptionInfo
-            subscription={subscription}
-            onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined}
-            subscriptionLoading={subscriptionLoading}
-          />
-        )}
+        {subscription?.subscribed && <SubscriptionInfo subscription={subscription} onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined} subscriptionLoading={subscriptionLoading} />}
         
         {/* Plan Card */}
-        {currentPlan && (
-          <PlanCard
-            name={currentPlan.name}
-            description={currentPlan.description}
-            price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)}
-            limits={currentPlan.limits}
-            features={currentPlan.features}
-            isActive={false}
-            buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"}
-            onSelect={handleManagePlan}
-            isLoading={subscriptionLoading}
-          />
-        )}
+        {currentPlan && <PlanCard name={currentPlan.name} description={currentPlan.description} price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} limits={currentPlan.limits} features={currentPlan.features} isActive={false} buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} onSelect={handleManagePlan} isLoading={subscriptionLoading} />}
       </div>
       
       {/* Monthly Usage Section */}
@@ -295,5 +263,4 @@ const BillingSettings: React.FC = () => {
       <BillingInvoices subscription={subscription} />
     </div>;
 };
-
 export default BillingSettings;
