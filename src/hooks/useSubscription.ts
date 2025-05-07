@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -50,6 +51,25 @@ export function useSubscription() {
   const handleSelectPlan = async (planId: string, cycle: 'monthly' | 'yearly') => {
     try {
       setSubscriptionLoading(true);
+      
+      // If there's no active subscription, use create-checkout to redirect to Stripe
+      if (!subscription?.subscribed) {
+        const { data, error } = await supabase.functions.invoke('create-checkout', {
+          body: { priceId: planId }
+        });
+        
+        if (error) throw new Error(error.message);
+        
+        if (data?.url) {
+          // Redirect to Stripe Checkout
+          window.location.href = data.url;
+          return;
+        }
+        
+        throw new Error('Failed to create checkout session');
+      }
+      
+      // For existing subscriptions, use update-subscription as before
       const { data, error } = await supabase.functions.invoke('update-subscription', {
         body: { newPriceId: planId, cycle }
       });

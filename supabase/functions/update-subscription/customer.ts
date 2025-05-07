@@ -5,12 +5,23 @@ import { logStep } from "./utils.ts";
 export async function getStripeCustomer(stripe: Stripe, email: string) {
   logStep("Searching for customer");
   const customers = await stripe.customers.list({ email, limit: 1 });
-  if (customers.data.length === 0) {
-    throw new Error("No Stripe customer found for this user");
+  
+  if (customers.data.length > 0) {
+    const customerId = customers.data[0].id;
+    logStep("Customer found", { customerId });
+    return customerId;
+  } else {
+    // Create a new customer if one doesn't exist
+    logStep("No customer found, creating new customer");
+    const newCustomer = await stripe.customers.create({
+      email,
+      metadata: {
+        created_by: "update-subscription-function"
+      }
+    });
+    logStep("New customer created", { customerId: newCustomer.id });
+    return newCustomer.id;
   }
-  const customerId = customers.data[0].id;
-  logStep("Customer found", { customerId });
-  return customerId;
 }
 
 export async function getActiveSubscription(stripe: Stripe, customerId: string) {

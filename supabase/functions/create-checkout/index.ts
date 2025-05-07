@@ -60,8 +60,8 @@ serve(async (req) => {
           quantity: 1
         }
       ],
-      success_url: `${req.headers.get("origin")}/app/settings/billing?success=true`,
-      cancel_url: `${req.headers.get("origin")}/app/settings/billing?canceled=true`,
+      success_url: `${req.headers.get("origin")}/app/settings/plan?success=true`,
+      cancel_url: `${req.headers.get("origin")}/app/settings/plan?canceled=true`,
       allow_promotion_codes: true
     });
 
