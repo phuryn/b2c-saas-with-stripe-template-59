@@ -2,7 +2,7 @@
 import React, { useState, useEffect, forwardRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -146,7 +146,7 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
                 <TableCell className="text-right">
                   <Button variant="ghost" size="sm" asChild>
                     <a href={invoice.invoice_pdf} target="_blank" rel="noopener noreferrer">
-                      <FileText className="h-4 w-4" />
+                      <img src="/pdf.svg" alt="PDF" className="h-4 w-4" />
                       <span className="sr-only">Download Invoice</span>
                     </a>
                   </Button>
