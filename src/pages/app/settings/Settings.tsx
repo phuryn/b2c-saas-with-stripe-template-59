@@ -15,14 +15,16 @@ const Settings: React.FC = () => {
       <h1 className="text-2xl font-semibold mb-6">Settings</h1>
       
       <div className="flex flex-col md:flex-row gap-6">
-        <div className="w-full md:w-64 shrink-0">
+        <div className="w-full md:w-52 shrink-0"> {/* Reduced width from 64 to 52 */}
           <div className="bg-white rounded-lg shadow p-4">
             <nav className="flex flex-col space-y-1">
               <Link 
                 to="/app/settings/profile" 
                 className={cn(
-                  "px-4 py-2 rounded-md hover:bg-gray-100 transition-colors",
-                  isActive('/app/settings/profile') ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600" : "text-gray-700"
+                  "px-4 py-2 rounded-md text-base hover:bg-gray-100 transition-colors", // 16px font size
+                  isActive('/app/settings/profile') 
+                    ? "bg-primary-blue/10 text-primary-blue" 
+                    : "text-gray-700"
                 )}
               >
                 Profile
@@ -30,8 +32,10 @@ const Settings: React.FC = () => {
               <Link 
                 to="/app/settings/billing" 
                 className={cn(
-                  "px-4 py-2 rounded-md hover:bg-gray-100 transition-colors",
-                  isActive('/app/settings/billing') ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600" : "text-gray-700"
+                  "px-4 py-2 rounded-md text-base hover:bg-gray-100 transition-colors", // 16px font size
+                  isActive('/app/settings/billing') 
+                    ? "bg-primary-blue/10 text-primary-blue" 
+                    : "text-gray-700"
                 )}
               >
                 Billing and Usage

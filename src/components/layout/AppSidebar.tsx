@@ -32,11 +32,12 @@ const AppSidebar: React.FC = () => {
     
     return location.pathname.startsWith(path);
   };
-  
-  // Removed the useEffect that collapsed sidebar when navigating to settings
 
   return (
-    <Sidebar collapsible="icon" className="bg-white">
+    <Sidebar collapsible="icon" className="bg-white" style={{
+      '--sidebar-width': '13rem',  // Reduced width (from 16rem)
+      '--sidebar-width-icon': '2.75rem', // Reduced icon width
+    } as React.CSSProperties}>
       <SidebarRail />
       <SidebarHeader className="flex items-center justify-between">
         {/* App Logo - conditional based on sidebar state */}
@@ -101,9 +102,11 @@ const AppSidebar: React.FC = () => {
                 >
                   <Link to="/app" className={cn(
                     "text-gray-800 hover:bg-[rgb(247_247_247)]",
-                    isActive('/app') && "text-primary-blue bg-primary-blue/10"
+                    isActive('/app') && "text-primary-blue bg-primary-blue/10",
+                    "text-base" // 16px font size
                   )}>
                     <Home className={cn(
+                      "h-5 w-5", // Slightly larger icons to match text
                       isActive('/app') ? "text-primary-blue" : "text-gray-800"
                     )} />
                     <span className={cn(
@@ -120,9 +123,11 @@ const AppSidebar: React.FC = () => {
                 >
                   <Link to="/app/links" className={cn(
                     "text-gray-800 hover:bg-[rgb(247_247_247)]",
-                    isActive('/app/links') && "text-primary-blue bg-primary-blue/10"
+                    isActive('/app/links') && "text-primary-blue bg-primary-blue/10",
+                    "text-base" // 16px font size
                   )}>
                     <Link2 className={cn(
+                      "h-5 w-5", // Slightly larger icons to match text
                       isActive('/app/links') ? "text-primary-blue" : "text-gray-800"
                     )} />
                     <span className={cn(
@@ -149,9 +154,11 @@ const AppSidebar: React.FC = () => {
                 >
                   <Link to="/app/settings" className={cn(
                     "text-gray-800 hover:bg-[rgb(247_247_247)]",
-                    isActive('/app/settings') && "text-primary-blue bg-primary-blue/10"
+                    isActive('/app/settings') && "text-primary-blue bg-primary-blue/10",
+                    "text-base" // 16px font size
                   )}>
                     <Settings className={cn(
+                      "h-5 w-5", // Slightly larger icons to match text
                       isActive('/app/settings') ? "text-primary-blue" : "text-gray-800"
                     )} />
                     <span className={cn(
