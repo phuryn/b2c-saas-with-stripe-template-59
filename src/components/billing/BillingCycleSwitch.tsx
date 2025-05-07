@@ -20,7 +20,7 @@ const BillingCycleSwitch: React.FC<BillingCycleSwitchProps> = ({
           <div className="flex items-center">
             <Badge 
               className={cn(
-                "mr-2 text-xs font-medium",
+                "mr-2 text-xs font-medium pointer-events-none",
                 selectedCycle === 'yearly' 
                   ? "bg-[#F2FCE2] text-primary-green" 
                   : "bg-[#F7F7F7] text-gray-500"

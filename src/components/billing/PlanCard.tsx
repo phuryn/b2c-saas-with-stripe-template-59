@@ -35,7 +35,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   isLoading = false,
 }) => {
   // Split the price string to separate the amount and interval
-  const priceMatch = price.match(/^(\$[\d,]+)(\/\w+)$/);
+  const priceMatch = price.match(/^(\$[\d,\.]+)(\/\w+)$/);
   const priceAmount = priceMatch ? priceMatch[1] : price;
   const priceInterval = priceMatch ? priceMatch[2] : '';
   
@@ -73,7 +73,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
             {priceMatch ? (
               <>
                 <span className="text-2xl font-bold text-primary-blue">{priceAmount}</span>
-                <span className="text-gray-text text-sm">{priceInterval}</span>
+                <span className="text-[#292929] text-sm ml-0.5">{priceInterval}</span>
               </>
             ) : (
               <span className="text-2xl font-bold text-primary-blue">{price}</span>
