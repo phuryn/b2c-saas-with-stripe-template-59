@@ -88,7 +88,7 @@ const AppLayout: React.FC = () => {
       <div className="px-2 py-1">
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500">
-            {subscription?.subscribed && subscription?.subscription_tier ? subscription.subscription_tier : 'Free Plan'}
+            {subscription?.subscribed && subscription?.subscription_tier ? `${subscription.subscription_tier} Plan` : 'Free Plan'}
           </span>
           {(!subscription?.subscribed || !subscription?.subscription_tier) && (
             <Link 
