@@ -1,129 +1,150 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Plan, getPlans } from '@/config/plans';
+import { formatPrice } from '@/utils/pricing';
 import BillingCycleSwitch from './BillingCycleSwitch';
 import PlanCard from './PlanCard';
-import { getPlans } from '@/config/plans';
-import { formatPrice } from '@/utils/pricing';
-import { BillingCycle } from '@/types/subscription';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 interface PlanSelectorProps {
   currentPlan?: string | null;
   isLoading?: boolean;
-  priceData?: Record<string, any>;
-  cycle?: BillingCycle;
-  onCycleChange?: (cycle: BillingCycle) => void;
-  onSelect?: (plan: string, price: string) => void;
+  cycle?: 'monthly' | 'yearly';
+  onSelect?: (planId: string, cycle: 'monthly' | 'yearly') => void;
+  priceData?: Record<string, {
+    id: string;
+    unit_amount: number;
+    currency: string;
+    interval?: string;
+  }>;
   showDowngrade?: boolean;
   onDowngrade?: () => void;
-  activePlanIndex?: number;
   isPublicPage?: boolean;
 }
 
-const PlanSelector: React.FC<PlanSelectorProps> = ({
-  currentPlan = null,
-  isLoading = false,
-  priceData = {},
-  cycle = 'monthly',
-  onCycleChange,
+const PlanSelector: React.FC<PlanSelectorProps> = ({ 
+  currentPlan, 
+  isLoading, 
+  cycle = 'yearly', 
   onSelect,
+  priceData = {},
   showDowngrade = false,
   onDowngrade,
-  activePlanIndex,
   isPublicPage = false
 }) => {
-  const isMobile = useIsMobile();
-  const [selectedCycle, setSelectedCycle] = useState<BillingCycle>(cycle);
-  
-  // Get plans from our config
-  const plans = getPlans(isPublicPage ? selectedCycle : cycle);
+  const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const plans = getPlans(selectedCycle);
+  const { user } = useAuth();
 
-  // Only show the plan at activePlanIndex on mobile if specified
-  const displayedPlans = activePlanIndex !== undefined && isMobile
-    ? [plans[activePlanIndex]]
-    : plans;
-
-  // For public pages, we need to handle cycle changes internally
-  const handleCycleChange = (newCycle: BillingCycle) => {
+  const handlePlanSelection = (plan: Plan) => {
+    // On public page, redirect to appropriate location based on user and plan
     if (isPublicPage) {
-      setSelectedCycle(newCycle);
-    } else if (onCycleChange) {
-      onCycleChange(newCycle);
+      if (plan.id === 'enterprise') {
+        window.location.href = 'mailto:contact@trusty.com?subject=Enterprise Plan Inquiry';
+        return;
+      }
+      
+      if (user) {
+        // If user is logged in on public page, redirect to billing settings
+        window.location.href = '/app/settings/billing';
+        return;
+      } else {
+        // If not logged in on public page, redirect to signup
+        window.location.href = '/signup';
+        return;
+      }
     }
+    
+    // Normal app flow below
+    if (plan.id === 'enterprise') {
+      window.location.href = 'mailto:contact@trusty.com?subject=Enterprise Plan Inquiry';
+      return;
+    }
+    
+    if (plan.free) {
+      onDowngrade && onDowngrade();
+      return;
+    }
+    
+    onSelect && onSelect(plan.priceId, selectedCycle);
+  };
+
+  const renderPlans = () => {
+    // Filter out the free plan if not on the public page
+    const filteredPlans = isPublicPage ? plans : plans.filter(plan => !plan.free);
+    
+    return filteredPlans.map((plan) => {
+      // Check if this is the current plan by comparing price IDs directly
+      // Only show active state if not on public page
+      const isActive = !isPublicPage && (
+        currentPlan === plan.priceId || 
+        (plan.id !== 'free' && currentPlan?.includes(plan.id))
+      );
+      
+      let buttonText = plan.buttonText || 'Select Plan';
+      
+      if (isPublicPage) {
+        // Custom button text for public page
+        if (plan.id === 'free') {
+          buttonText = user ? 'Manage Your Plan' : 'Sign Up Free';
+        } else if (user) {
+          buttonText = 'Manage Your Plan';
+        } else {
+          buttonText = 'Try Now';
+        }
+      } else if (isActive) {
+        // For app settings page
+        buttonText = 'Current Plan';
+      }
+      
+      return (
+        <PlanCard
+          key={plan.id}
+          name={plan.name}
+          description={plan.description}
+          price={formatPrice(plan.priceId, selectedCycle, priceData, plans)}
+          limits={plan.limits}
+          features={plan.features}
+          isActive={isActive}
+          isRecommended={plan.recommended}
+          buttonText={buttonText}
+          onSelect={() => handlePlanSelection(plan)}
+          isLoading={isLoading}
+        />
+      );
+    });
+  };
+
+  const handleCycleChange = (cycle: 'monthly' | 'yearly') => {
+    setSelectedCycle(cycle);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Billing Cycle Toggle */}
-      {(onCycleChange || isPublicPage) && (
-        <div className="flex justify-center mb-8">
-          <BillingCycleSwitch 
-            cycle={isPublicPage ? selectedCycle : cycle} 
-            onChange={handleCycleChange}
-          />
-        </div>
-      )}
+    <div>
+      <BillingCycleSwitch 
+        selectedCycle={selectedCycle}
+        onChange={handleCycleChange}
+      />
       
-      {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-        {displayedPlans.map((plan) => {
-          const isActivePlan = currentPlan?.includes(plan.id);
-          
-          // Determine button text
-          let buttonText = "Select Plan";
-          if (isPublicPage) buttonText = "Get Started";
-          else if (isActivePlan) buttonText = "Current Plan";
-          if (plan.id === 'standard' && isActivePlan && showDowngrade) buttonText = "Downgrade";
-          
-          // Set price display using formatter
-          const price = plan.free ? 'Free' : formatPrice(
-            plan.priceId, 
-            isPublicPage ? selectedCycle : cycle, 
-            priceData, 
-            plans
-          );
-          
-          return (
-            <PlanCard
-              key={plan.id}
-              name={plan.name}
-              description={plan.description}
-              price={price}
-              limits={plan.limits}
-              features={plan.features}
-              isActive={isActivePlan}
-              isRecommended={plan.recommended}
-              buttonText={buttonText}
-              onSelect={() => {
-                // Only call onSelect if it's provided
-                if (!onSelect) return;
-                
-                // Handle downgrades differently
-                if (isActivePlan && plan.id === 'standard' && showDowngrade && onDowngrade) {
-                  onDowngrade();
-                } else if (!isActivePlan || isPublicPage) {
-                  onSelect(plan.id, plan.priceId);
-                }
-              }}
-              isLoading={isLoading}
-              inBillingPage={false}
-            />
-          );
-        })}
+      {/* Updated grid with min-width of 210px for each card using auto-fit */}
+      <div 
+        className="mt-4 grid gap-6" 
+        style={{
+          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+        }}
+      >
+        {renderPlans()}
       </div>
       
-      {/* Downgrade button for Premium users */}
-      {currentPlan?.includes('premium') && showDowngrade && onDowngrade && (
-        <div className="flex justify-center mt-8">
-          <Button 
-            variant="outline" 
-            className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
+      {showDowngrade && !isPublicPage && (
+        <div className="mt-10 text-center">
+          <button
             onClick={onDowngrade}
-            disabled={isLoading}
+            className="text-destructive underline hover:text-destructive/80"
           >
-            Downgrade to Standard Plan
-          </Button>
+            Downgrade to free
+          </button>
         </div>
       )}
     </div>

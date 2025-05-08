@@ -1,24 +1,10 @@
-import React, { useState } from "react";
+
+import React from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import PlanSelector from "@/components/billing/PlanSelector";
-import { Button } from "@/components/ui/button"; 
-import { toast } from "sonner";
 
 const Pricing: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  
-  const handleSelectPlan = (planId: string, priceId: string) => {
-    // If user is logged in, navigate to the plan settings page
-    if (user) {
-      navigate("/app/settings/plan");
-    } else {
-      // Otherwise, navigate to signup
-      navigate("/signup?plan=" + planId);
-      toast("Please create an account to continue with your plan selection.");
-    }
-  };
   
   return (
     <section className="section-padding">
@@ -33,7 +19,6 @@ const Pricing: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <PlanSelector 
             isPublicPage={true}
-            onSelect={handleSelectPlan}
           />
         </div>
       </div>

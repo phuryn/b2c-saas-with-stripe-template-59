@@ -12,7 +12,7 @@ import BillingInvoices from '@/components/billing/BillingInvoices';
 import UsageStats from '@/components/billing/UsageStats';
 import BillingAddress from '@/components/billing/BillingAddress';
 import BillingPaymentMethod from '@/components/billing/BillingPaymentMethod';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
 import PlanCard from '@/components/billing/PlanCard';
 import { getPlans } from '@/config/plans';
@@ -226,87 +226,55 @@ const BillingSettings: React.FC = () => {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
   }
-  
   const planDetails = getPlanDetails();
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
   const currentPlanId = getCurrentPlanId();
   const currentCycle = getCurrentCycle();
   const plans = getPlans(currentCycle as 'monthly' | 'yearly');
   const currentPlan = plans.find(plan => plan.id === currentPlanId);
-  
-  return (
-    <div className="space-y-8 max-w-full">
+  return <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-medium">Billing and Usage</h2>
-        {subscription?.subscribed && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={checkSubscriptionStatus} 
-            disabled={refreshing} 
-            className="transition-all hover:bg-primary/10"
-          >
+        {subscription?.subscribed && <Button variant="ghost" size="sm" onClick={checkSubscriptionStatus} disabled={refreshing} className="transition-all hover:bg-primary/10">
             {refreshing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             Refresh
-          </Button>
-        )}
+          </Button>}
       </div>
       
       {/* Your Plan Section */}
-      <div className="space-y-4 max-w-full">
+      <div className="space-y-4">
         <h3 className="text-lg font-medium">Your Current Plan</h3>
         
         {/* Subscription Info Component */}
-        {subscription?.subscribed && (
-          <div className="max-w-full">
-            <SubscriptionInfo 
-              subscription={subscription}
-              onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined}
-              subscriptionLoading={subscriptionLoading} 
-            />
-          </div>
-        )}
+        {subscription?.subscribed && <SubscriptionInfo subscription={subscription} onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined} subscriptionLoading={subscriptionLoading} />}
         
         {/* Plan Card */}
-        {currentPlan && (
-          <div className="max-w-full overflow-hidden">
-            <PlanCard 
-              name={currentPlan.name} 
-              description={currentPlan.description} 
-              price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} 
-              limits={currentPlan.limits} 
-              features={currentPlan.features} 
-              isActive={false} 
-              buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} 
-              onSelect={handleManagePlan} 
-              isLoading={subscriptionLoading} 
-              inBillingPage={true}
-            />
-          </div>
-        )}
+        {currentPlan && <PlanCard 
+          name={currentPlan.name} 
+          description={currentPlan.description} 
+          price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} 
+          limits={currentPlan.limits} 
+          features={currentPlan.features} 
+          isActive={false} 
+          buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} 
+          onSelect={handleManagePlan} 
+          isLoading={subscriptionLoading} 
+          inBillingPage={true} 
+        />}
       </div>
       
       {/* Monthly Usage Section */}
-      <div className="max-w-full">
-        <UsageStats subscription={subscription} />
-      </div>
+      <UsageStats subscription={subscription} />
       
       {/* Payment Method Section */}
-      <div className="max-w-full">
-        <BillingPaymentMethod subscription={subscription} />
-      </div>
+      <BillingPaymentMethod subscription={subscription} />
       
       {/* Billing Address Section */}
-      <div className="max-w-full">
-        <BillingAddress subscription={subscription} />
-      </div>
+      <BillingAddress subscription={subscription} />
       
       {/* Billing History Section */}
-      <div className="max-w-full">
-        <BillingInvoices subscription={subscription} />
-      </div>
-    </div>
-  );
+      <BillingInvoices subscription={subscription} />
+    </div>;
 };
 
 export default BillingSettings;
