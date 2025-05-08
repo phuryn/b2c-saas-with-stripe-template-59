@@ -1,45 +1,50 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger } from '@/components/ui/sidebar';
-import { Home, Link2, Settings, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Home, Link2, Settings, ArrowLeft, ArrowRight, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 const AppSidebar: React.FC = () => {
   const location = useLocation();
-  const {
-    state,
-    toggleSidebar
-  } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
+  const isMobile = useIsMobile();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const isActive = (path: string) => {
     if (path === '/app') {
       return location.pathname === '/app' || location.pathname === '/app/home';
     }
     return location.pathname.startsWith(path);
   };
-  return <Sidebar collapsible="icon" className="bg-white" style={{
-    '--sidebar-width': '13rem',
-    '--sidebar-width-icon': '2.75rem'
-  } as React.CSSProperties}>
+
+  const renderSidebarContent = () => (
+    <>
+      {/* App Logo - conditional based on sidebar state */}
       <SidebarHeader className="flex items-center justify-between">
-        {/* App Logo - conditional based on sidebar state */}
         <div className="flex items-center py-3">
           <Link to="/app">
             {state === 'collapsed' ? <img src="/small-logo.svg" alt="TRUSTY" width={28} height={28} className="h-5 w-auto object-contain" /> : <img src="/primary-logo.svg" alt="TRUSTY" width={120} height={28} className="h-5 w-auto" />}
           </Link>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarTrigger className="ml-auto">
-                {state === 'collapsed' ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
-              </SidebarTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              {state === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {!isMobile && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SidebarTrigger className="ml-auto">
+                  {state === 'collapsed' ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                </SidebarTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                {state === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </SidebarHeader>
       
       <SidebarContent className="bg-white">
@@ -90,6 +95,35 @@ const AppSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-    </Sidebar>;
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <button
+          className="fixed top-4 left-4 z-40 p-2 rounded-md bg-white shadow-md flex items-center justify-center"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5 text-gray-700" />
+        </button>
+        
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetContent side="left" className="w-[250px] p-0 bg-white">
+            {renderSidebarContent()}
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  return <Sidebar collapsible="icon" className="bg-white" style={{
+    '--sidebar-width': '13rem',
+    '--sidebar-width-icon': '2.75rem'
+  } as React.CSSProperties}>
+    {renderSidebarContent()}
+  </Sidebar>;
 };
+
 export default AppSidebar;
