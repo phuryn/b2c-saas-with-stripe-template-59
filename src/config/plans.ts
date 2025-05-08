@@ -11,6 +11,7 @@ export interface Plan {
   recommended?: boolean;
   buttonText?: string;
   free?: boolean;
+  showUpgrade?: boolean;
   price?: {
     monthly: number;
     yearly: number;
@@ -39,6 +40,7 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
       ],
       buttonText: 'Sign Up Free',
       free: true,
+      showUpgrade: true,
       price: {
         monthly: 0,
         yearly: 0,
@@ -60,6 +62,7 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
         'Bulk link & QR Code creation',
         'Priority support',
       ],
+      showUpgrade: true,
       price: {
         monthly: 10,
         yearly: 100,
@@ -83,6 +86,7 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
       ],
       // Only recommend Premium annual plan
       recommended: cycle === 'yearly',
+      showUpgrade: true,
       price: {
         monthly: 20,
         yearly: 200,
@@ -105,6 +109,7 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
         'Customized onboarding & priority support',
       ],
       buttonText: 'Get a Quote',
+      showUpgrade: false,
     }
   ];
 };

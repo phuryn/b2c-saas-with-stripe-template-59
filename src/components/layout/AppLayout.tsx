@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { getPlans } from '@/config/plans';
 
 const AppLayout: React.FC = () => {
   const { user, isLoading, userMetadata, profile, signOut } = useAuth();
@@ -70,6 +71,26 @@ const AppLayout: React.FC = () => {
     }
     return 'Free Plan';
   };
+  
+  // Check if we should show upgrade button based on current plan
+  const shouldShowUpgradeButton = () => {
+    // Default to true if no subscription data
+    if (!subscription || !subscription.subscription_tier) return true;
+    
+    // Get all plans and find the current one
+    const allPlans = getPlans('monthly');
+    const currentPlanId = subscription.subscription_tier?.toLowerCase().includes('standard') 
+      ? 'standard' 
+      : subscription.subscription_tier?.toLowerCase().includes('premium')
+      ? 'premium'
+      : subscription.subscription_tier?.toLowerCase().includes('enterprise')
+      ? 'enterprise'
+      : 'free';
+    
+    const currentPlan = allPlans.find(plan => plan.id === currentPlanId);
+    // Show upgrade if the plan config says so (defaults to true if not specified)
+    return currentPlan?.showUpgrade !== false;
+  };
 
   const renderUserMenu = () => (
     <div className="w-64 p-2">
@@ -98,7 +119,7 @@ const AppLayout: React.FC = () => {
           <span className="text-sm text-gray-500">
             {getFormattedPlanName()}
           </span>
-          {(!subscription?.subscribed || !subscription?.subscription_tier) && (
+          {shouldShowUpgradeButton() && (
             <Link 
               to="/app/settings/plan"
               className="text-xs px-2 py-1 bg-primary-blue text-white rounded hover:bg-primary-blue/90 transition-colors"
