@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -94,10 +93,7 @@ const PlanSettings: React.FC = () => {
   
   return (
     <div className="space-y-8">
-      <SubscriptionHeader 
-        onRefresh={refreshSubscriptionData}
-        refreshing={refreshing}
-      />
+      <SubscriptionHeader />
       
       {/* Subscription Info */}
       {subscription?.subscribed && (
@@ -114,7 +110,7 @@ const PlanSettings: React.FC = () => {
         </div>
       )}
       
-      {/* Plans Selection Section - Removed overflow handling since PlanSelector will handle responsive display now */}
+      {/* Plans Selection Section */}
       <div>
         <PlanSelector
           currentPlan={subscription?.current_plan}
