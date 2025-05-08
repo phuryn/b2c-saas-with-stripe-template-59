@@ -87,21 +87,22 @@ const PlanCard: React.FC<PlanCardProps> = ({
           </div>
           <p className="text-gray-500 mt-2 break-words">{description}</p>
         </CardHeader>
-        <CardContent className="grow space-y-6">
-          {!inBillingPage && (
-            <>
-              <div>
-                <ul className="list-none pl-0 space-y-2">
-                  {limits.map(renderFeature)}
-                </ul>
-              </div>
-              <div>
-                {renderFeatures(features)}
-              </div>
-            </>
-          )}
-        </CardContent>
-        <CardFooter className={`${inBillingPage ? "flex justify-start" : "flex flex-col items-center"}`}>
+        
+        {/* Only render CardContent if not in billing page */}
+        {!inBillingPage && (
+          <CardContent className="grow space-y-6">
+            <div>
+              <ul className="list-none pl-0 space-y-2">
+                {limits.map(renderFeature)}
+              </ul>
+            </div>
+            <div>
+              {renderFeatures(features)}
+            </div>
+          </CardContent>
+        )}
+        
+        <CardFooter className={`${inBillingPage ? "flex justify-start" : "flex flex-col items-center"} ${!inBillingPage ? "mt-auto" : ""}`}>
           <Button 
             onClick={onSelect}
             disabled={isLoading || (isActive && !inBillingPage)} // Enable button in BillingSettings even for active plan
