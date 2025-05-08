@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -232,13 +231,18 @@ const Signup: React.FC = () => {
                 </Button>
               </div>
             </CardContent>
-            <CardFooter>
-              <div className="text-center w-full">
+            <CardFooter className="flex-col">
+              <div className="text-center w-full mb-4">
                 <p className="text-sm text-gray-500">
                   Already have an account?{" "}
                   <Link to="/auth" className="text-primary-blue hover:underline">
                     Sign in
                   </Link>
+                </p>
+              </div>
+              <div className="text-center w-full">
+                <p className="text-xs text-gray-500">
+                  Please read the <Link to="/terms" target="_blank" className="text-primary-blue hover:underline">Terms of Service</Link> and <Link to="/privacy_policy" target="_blank" className="text-primary-blue hover:underline">Privacy Policy</Link> carefully. By continuing, you are indicating your agreement.
                 </p>
               </div>
             </CardFooter>
