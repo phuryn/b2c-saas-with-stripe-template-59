@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Subscription } from '@/types/subscription';
@@ -9,21 +9,47 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [errorState, setErrorState] = useState(false);
+  
+  // Tracking for rate limiting
+  const lastAttemptRef = useRef<number>(0);
+  const retryCountRef = useRef<number>(0);
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 5000; // 5 seconds between retries
 
   const checkSubscriptionStatus = async () => {
+    // Rate limiting protection
+    const now = Date.now();
+    if (errorState && now - lastAttemptRef.current < RETRY_DELAY) {
+      console.log('Skipping subscription check due to recent error');
+      return null;
+    }
+
     try {
       setLoading(true);
+      lastAttemptRef.current = now;
+      
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
         throw new Error(error.message);
       }
       
+      // Reset error state and retry count on success
+      setErrorState(false);
+      retryCountRef.current = 0;
       setSubscription(data);
       return data;
     } catch (err) {
+      retryCountRef.current++;
       console.error('Error checking subscription status:', err);
-      toast.error('Failed to retrieve subscription information.');
+      
+      // Only show error toast on initial errors, not on every retry
+      if (!errorState) {
+        toast.error('Failed to retrieve subscription information.');
+        setErrorState(true);
+      }
+      
       return null;
     } finally {
       setLoading(false);
@@ -34,7 +60,10 @@ export function useSubscription() {
   const refreshSubscriptionData = async () => {
     if (refreshing) return;
     
+    // Reset error state when manually refreshing
+    setErrorState(false);
     setRefreshing(true);
+    
     try {
       const data = await checkSubscriptionStatus();
       if (data) {
@@ -48,6 +77,7 @@ export function useSubscription() {
     }
   };
 
+  // Update AppLayout to use this hook correctly
   const handleSelectPlan = async (planId: string, cycle: 'monthly' | 'yearly') => {
     try {
       setSubscriptionLoading(true);

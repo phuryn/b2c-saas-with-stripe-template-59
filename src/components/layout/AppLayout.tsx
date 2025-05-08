@@ -19,6 +19,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSubscription } from '@/hooks/useSubscription';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const AppLayout: React.FC = () => {
   const { user, isLoading, userMetadata, profile, signOut } = useAuth();
@@ -26,14 +27,15 @@ const AppLayout: React.FC = () => {
   const isMobile = useIsMobile();
   
   // Get subscription data with initialization
-  const { subscription, checkSubscriptionStatus } = useSubscription();
+  const { subscription, loading: subscriptionLoading, checkSubscriptionStatus } = useSubscription();
   
   // Initialize subscription data on component mount
   useEffect(() => {
-    if (user) {
+    // Only try to check subscription status once when component mounts
+    if (user && !subscription) {
       checkSubscriptionStatus();
     }
-  }, [user, checkSubscriptionStatus]);
+  }, [user, checkSubscriptionStatus, subscription]);
   
   // Get user initials for avatar
   const getInitials = () => {
