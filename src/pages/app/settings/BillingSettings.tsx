@@ -14,7 +14,7 @@ import BillingAddress from '@/components/billing/BillingAddress';
 import BillingPaymentMethod from '@/components/billing/BillingPaymentMethod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
-import PlanSelector from '@/components/billing/PlanSelector';
+import PlanCard from '@/components/billing/PlanCard';
 import { getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
 
@@ -226,68 +226,12 @@ const BillingSettings: React.FC = () => {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
   }
-
   const planDetails = getPlanDetails();
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
   const currentPlanId = getCurrentPlanId();
   const currentCycle = getCurrentCycle();
   const plans = getPlans(currentCycle as 'monthly' | 'yearly');
   const currentPlan = plans.find(plan => plan.id === currentPlanId);
-
-  const handleSelectPlan = async (planId: string, cycle: 'monthly' | 'yearly') => {
-    try {
-      setSubscriptionLoading(true);
-      
-      // If there's no active subscription, use create-checkout to redirect to Stripe
-      if (!localStorage.getItem('hasActiveSubscription')) {
-        const { data } = await supabase.functions.invoke('create-checkout-session', {
-          body: { priceId: planId }
-        });
-        
-        if (data?.url) {
-          // Redirect to Stripe Checkout
-          window.location.href = data.url;
-          return;
-        }
-        
-        throw new Error('Failed to create checkout session');
-      }
-      
-      // For existing subscriptions, use update-subscription as before
-      const { data } = await supabase.functions.invoke('update-subscription', {
-        body: { newPriceId: planId }
-      });
-      
-      // If we got client_secret back, the user needs to complete payment setup
-      if (data?.subscription?.client_secret) {
-        // For now, we'll handle by redirecting to customer portal
-        await openCustomerPortal();
-        return;
-      }
-
-      // If no client_secret, the update was successful
-      if (data?.success) {
-        toast({
-          title: 'Subscription Updated',
-          description: 'Your subscription has been updated successfully.'
-        });
-        return true;
-      }
-      
-      return false;
-    } catch (err) {
-      console.error('Error updating subscription:', err);
-      toast({
-        title: 'Error',
-        description: 'Could not update subscription',
-        variant: 'destructive'
-      });
-      return false;
-    } finally {
-      setSubscriptionLoading(false);
-    }
-  };
-
   return <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-medium">Billing and Usage</h2>
@@ -303,29 +247,20 @@ const BillingSettings: React.FC = () => {
         
         {/* Subscription Info Component */}
         {subscription?.subscribed && <SubscriptionInfo subscription={subscription} onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined} subscriptionLoading={subscriptionLoading} />}
-      </div>
-      
-      {/* Plan Selection Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Select Your Plan</h3>
         
-        <Card>
-          <CardContent className="pt-6 overflow-x-auto">
-            <div className="-mx-6 md:mx-0">
-              <div className="min-w-[800px] md:min-w-0 px-6 md:px-0">
-                <PlanSelector
-                  currentPlan={subscription?.current_plan}
-                  isLoading={subscriptionLoading || isSubscriptionCanceling}
-                  cycle={currentCycle as 'monthly' | 'yearly'}
-                  onSelect={handleSelectPlan}
-                  priceData={stripePrices}
-                  showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling}
-                  onDowngrade={handleManagePlan}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Plan Card */}
+        {currentPlan && <PlanCard 
+          name={currentPlan.name} 
+          description={currentPlan.description} 
+          price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} 
+          limits={currentPlan.limits} 
+          features={currentPlan.features} 
+          isActive={false} 
+          buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} 
+          onSelect={handleManagePlan} 
+          isLoading={subscriptionLoading} 
+          inBillingPage={true} 
+        />}
       </div>
       
       {/* Monthly Usage Section */}
