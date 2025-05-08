@@ -63,6 +63,14 @@ const AppLayout: React.FC = () => {
     );
   }
 
+  // Format the subscription tier with consistent naming
+  const getFormattedPlanName = () => {
+    if (subscription?.subscribed && subscription?.subscription_tier) {
+      return `${subscription.subscription_tier} Plan`;
+    }
+    return 'Free Plan';
+  };
+
   const renderUserMenu = () => (
     <div className="w-64 p-2">
       {/* User info section */}
@@ -88,7 +96,7 @@ const AppLayout: React.FC = () => {
       <div className="px-2 py-1">
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500">
-            {subscription?.subscribed && subscription?.subscription_tier ? `${subscription.subscription_tier} Plan` : 'Free Plan'}
+            {getFormattedPlanName()}
           </span>
           {(!subscription?.subscribed || !subscription?.subscription_tier) && (
             <Link 
