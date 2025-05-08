@@ -2,7 +2,7 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, CreditCard, ChevronDown } from 'lucide-react';
+import { User, CreditCard, ChevronDown, FileText } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DropdownMenu,
@@ -24,6 +24,7 @@ const Settings: React.FC = () => {
   const tabs = [
     { value: 'profile', label: 'Profile', icon: User },
     { value: 'billing', label: 'Billing', icon: CreditCard },
+    { value: 'plan', label: 'Plan', icon: FileText },
   ];
   
   return (
