@@ -1,35 +1,33 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useNavigate, Link } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
 import AppSidebar from './AppSidebar';
-import { 
-  Avatar, 
-  AvatarFallback, 
-  AvatarImage 
-} from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { getPlans } from '@/config/plans';
-
 const AppLayout: React.FC = () => {
-  const { user, isLoading, userMetadata, profile, signOut } = useAuth();
+  const {
+    user,
+    isLoading,
+    userMetadata,
+    profile,
+    signOut
+  } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   // Get subscription data with initialization
-  const { subscription, loading: subscriptionLoading, checkSubscriptionStatus } = useSubscription();
-  
+  const {
+    subscription,
+    loading: subscriptionLoading,
+    checkSubscriptionStatus
+  } = useSubscription();
+
   // Initialize subscription data on component mount
   useEffect(() => {
     // Only try to check subscription status once when component mounts
@@ -37,13 +35,13 @@ const AppLayout: React.FC = () => {
       checkSubscriptionStatus();
     }
   }, [user, checkSubscriptionStatus, subscription]);
-  
+
   // Get user initials for avatar
   const getInitials = () => {
     const name = profile?.display_name || userMetadata?.name || userMetadata?.full_name || user?.email?.split('@')[0] || 'U';
     return name.substring(0, 2).toUpperCase();
   };
-  
+
   // Handle sign out
   const handleSignOut = async () => {
     await signOut();
@@ -57,11 +55,9 @@ const AppLayout: React.FC = () => {
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
+    return <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
-      </div>
-    );
+      </div>;
   }
 
   // Format the subscription tier with consistent naming
@@ -71,29 +67,20 @@ const AppLayout: React.FC = () => {
     }
     return 'Free Plan';
   };
-  
+
   // Check if we should show upgrade button based on current plan
   const shouldShowUpgradeButton = () => {
     // Default to true if no subscription data
     if (!subscription || !subscription.subscription_tier) return true;
-    
+
     // Get all plans and find the current one
     const allPlans = getPlans('monthly');
-    const currentPlanId = subscription.subscription_tier?.toLowerCase().includes('standard') 
-      ? 'standard' 
-      : subscription.subscription_tier?.toLowerCase().includes('premium')
-      ? 'premium'
-      : subscription.subscription_tier?.toLowerCase().includes('enterprise')
-      ? 'enterprise'
-      : 'free';
-    
+    const currentPlanId = subscription.subscription_tier?.toLowerCase().includes('standard') ? 'standard' : subscription.subscription_tier?.toLowerCase().includes('premium') ? 'premium' : subscription.subscription_tier?.toLowerCase().includes('enterprise') ? 'enterprise' : 'free';
     const currentPlan = allPlans.find(plan => plan.id === currentPlanId);
     // Show upgrade if the plan config says so (defaults to true if not specified)
     return currentPlan?.showUpgrade !== false;
   };
-
-  const renderUserMenu = () => (
-    <div className="w-64 p-2">
+  const renderUserMenu = () => <div className="w-64 p-2">
       {/* User info section */}
       <div className="flex items-center space-x-3 mb-4 px-2">
         <Avatar className="h-10 w-10">
@@ -119,14 +106,9 @@ const AppLayout: React.FC = () => {
           <span className="text-sm text-gray-500">
             {getFormattedPlanName()}
           </span>
-          {shouldShowUpgradeButton() && (
-            <Link 
-              to="/app/settings/plan"
-              className="text-xs px-2 py-1 bg-primary-blue text-white rounded hover:bg-primary-blue/90 transition-colors"
-            >
+          {shouldShowUpgradeButton() && <Link to="/app/settings/plan" className="text-xs px-2 py-1 bg-primary-blue text-white rounded hover:bg-primary-blue/90 transition-colors font-medium">
               Upgrade
-            </Link>
-          )}
+            </Link>}
         </div>
       </div>
 
@@ -134,31 +116,21 @@ const AppLayout: React.FC = () => {
       <DropdownMenuSeparator className="my-2" />
 
       {/* Settings link */}
-      <Link 
-        to="/app/settings"
-        className="block w-full text-left px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-      >
+      <Link to="/app/settings" className="block w-full text-left px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100">
         Settings
       </Link>
       
       {/* Sign out */}
-      <button
-        onClick={handleSignOut}
-        className="block w-full text-left px-2 py-2 rounded-md text-red-600 hover:bg-red-50"
-      >
+      <button onClick={handleSignOut} className="block w-full text-left px-2 py-2 rounded-md text-red-600 hover:bg-red-50">
         Sign Out
       </button>
-    </div>
-  );
-
-  return (
-    <SidebarProvider>
+    </div>;
+  return <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[rgb(247_247_247)]">
         <AppSidebar />
         <div className="flex-1 min-h-screen relative">
           {/* User Profile Dropdown for Desktop */}
-          {!isMobile && (
-            <div className="absolute top-4 right-4 z-10">
+          {!isMobile && <div className="absolute top-4 right-4 z-10">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="focus:outline-none">
@@ -174,12 +146,10 @@ const AppLayout: React.FC = () => {
                   {renderUserMenu()}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          )}
+            </div>}
           
           {/* User Profile Dropdown for Mobile */}
-          {isMobile && (
-            <div className="fixed top-4 right-4 z-40">
+          {isMobile && <div className="fixed top-4 right-4 z-40">
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="focus:outline-none">
@@ -195,14 +165,11 @@ const AppLayout: React.FC = () => {
                   {renderUserMenu()}
                 </PopoverContent>
               </Popover>
-            </div>
-          )}
+            </div>}
           
           <Outlet />
         </div>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 };
-
 export default AppLayout;
