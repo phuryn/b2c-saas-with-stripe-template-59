@@ -76,7 +76,7 @@ const AppLayout: React.FC = () => {
       {/* Plan section */}
       <div className="px-2 py-1">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-gray-500">
             {subscription?.subscribed ? subscription.subscription_tier : 'Free Plan'}
           </span>
           {!subscription?.subscribed && (
