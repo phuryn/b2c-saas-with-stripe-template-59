@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PlanFeature {
   text: string;
@@ -36,6 +37,8 @@ const PlanCard: React.FC<PlanCardProps> = ({
   isLoading = false,
   inBillingPage = false,
 }) => {
+  const isMobile = useIsMobile();
+  
   // Split the price string to separate the amount and interval
   const priceMatch = price.match(/^(\$[\d,\.]+)(\/\w+)$/);
   const priceAmount = priceMatch ? priceMatch[1] : price;
@@ -61,7 +64,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   );
 
   return (
-    <div className="relative min-w-[210px]">
+    <div className={`relative min-w-[210px] ${isMobile && isRecommended ? 'mt-8' : ''}`}>
       {isRecommended && (
         <div className="absolute inset-x-0 -top-8 flex justify-center">
           <div className="bg-primary-blue text-white px-4 py-1 text-[12pt] font-medium rounded-t-md leading-6">
