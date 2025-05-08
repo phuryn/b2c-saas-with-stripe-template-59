@@ -2,11 +2,12 @@
 import React, { useState, useEffect, forwardRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, Download, Loader2 } from 'lucide-react';
+import { AlertTriangle, Download, Loader2, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Invoice {
   id: string;
@@ -33,6 +34,7 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
   const [fetchAttempted, setFetchAttempted] = useState(false);
   const [visibleInvoices, setVisibleInvoices] = useState<number>(10);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (subscription?.subscribed) {
@@ -119,6 +121,52 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
     );
   };
 
+  const renderMobileInvoiceList = () => {
+    const displayedInvoices = invoices.slice(0, visibleInvoices);
+    const hasMoreInvoices = invoices.length > visibleInvoices;
+    
+    return (
+      <div className="space-y-4">
+        {displayedInvoices.map((invoice) => (
+          <div key={invoice.id} className="border rounded-md p-4 bg-white shadow-sm">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <div className="font-medium">{formatDate(invoice.created)}</div>
+                <div className="text-sm text-muted-foreground">{invoice.number || '-'}</div>
+              </div>
+              <div className="font-medium">{formatCurrency(invoice.amount_paid, invoice.currency)}</div>
+            </div>
+            {invoice.description && (
+              <div className="text-sm text-muted-foreground mb-3">{invoice.description}</div>
+            )}
+            <div className="flex justify-end">
+              {invoice.invoice_pdf && (
+                <Button variant="outline" size="sm" className="flex items-center gap-1" asChild>
+                  <a href={invoice.invoice_pdf} target="_blank" rel="noopener noreferrer">
+                    <Receipt className="h-4 w-4" />
+                    <span>Download</span>
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+        
+        {hasMoreInvoices && (
+          <div className="flex justify-center mt-4">
+            <Button 
+              variant="outline" 
+              onClick={showMoreInvoices}
+              className="text-sm"
+            >
+              Show More
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderInvoiceTable = () => {
     const displayedInvoices = invoices.slice(0, visibleInvoices);
     const hasMoreInvoices = invoices.length > visibleInvoices;
@@ -195,7 +243,9 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
         <CardContent className="pt-6">
           {loading ? renderLoading() : 
            error ? renderError() : 
-           invoices.length > 0 ? renderInvoiceTable() : 
+           invoices.length > 0 ? (
+             isMobile ? renderMobileInvoiceList() : renderInvoiceTable()
+           ) : 
            <div className="text-center py-8 text-gray-500">
              No invoice history available
            </div>
