@@ -64,7 +64,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   );
 
   return (
-    <div className={`relative min-w-[210px] ${isMobile && isRecommended ? 'mt-8' : ''}`}>
+    <div className={`relative min-w-[210px] ${isMobile && isRecommended ? 'mt-7' : ''}`}>
       {isRecommended && (
         <div className="absolute inset-x-0 -top-8 flex justify-center">
           <div className="bg-primary-blue text-white px-4 py-1 text-[12pt] font-medium rounded-t-md leading-6">
