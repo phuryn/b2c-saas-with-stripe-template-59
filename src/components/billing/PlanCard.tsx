@@ -88,14 +88,18 @@ const PlanCard: React.FC<PlanCardProps> = ({
           <p className="text-gray-500 mt-2 break-words">{description}</p>
         </CardHeader>
         <CardContent className="grow space-y-6">
-          <div>
-            <ul className="list-none pl-0 space-y-2">
-              {limits.map(renderFeature)}
-            </ul>
-          </div>
-          <div>
-            {renderFeatures(features)}
-          </div>
+          {!inBillingPage && (
+            <>
+              <div>
+                <ul className="list-none pl-0 space-y-2">
+                  {limits.map(renderFeature)}
+                </ul>
+              </div>
+              <div>
+                {renderFeatures(features)}
+              </div>
+            </>
+          )}
         </CardContent>
         <CardFooter className={`${inBillingPage ? "flex justify-start" : "flex flex-col items-center"}`}>
           <Button 
