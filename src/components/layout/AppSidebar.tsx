@@ -102,7 +102,7 @@ const AppSidebar: React.FC = () => {
     return (
       <>
         <button
-          className="fixed top-4 left-4 z-40 p-2 rounded-md bg-white shadow-md flex items-center justify-center"
+          className="fixed top-4 right-4 z-40 p-2 rounded-md bg-white shadow-md flex items-center justify-center"
           onClick={() => setMobileOpen(true)}
           aria-label="Open menu"
         >
@@ -110,7 +110,7 @@ const AppSidebar: React.FC = () => {
         </button>
         
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-[250px] p-0 bg-white">
+          <SheetContent side="right" className="w-[250px] p-0 bg-white">
             {renderSidebarContent()}
           </SheetContent>
         </Sheet>
