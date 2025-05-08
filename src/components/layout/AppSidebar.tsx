@@ -2,18 +2,27 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger } from '@/components/ui/sidebar';
-import { Home, Link2, Settings, ArrowLeft, ArrowRight, Menu } from 'lucide-react';
+import { Home, Link2, Settings, ArrowLeft, ArrowRight, Menu, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/context/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const AppSidebar: React.FC = () => {
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, userMetadata, profile, signOut } = useAuth();
+
+  // Generate initials from display name or email
+  const getInitials = () => {
+    const name = profile?.display_name || userMetadata?.name || userMetadata?.full_name || user?.email?.split('@')[0] || 'U';
+    return name.substring(0, 2).toUpperCase();
+  };
 
   const isActive = (path: string) => {
     if (path === '/app') {
@@ -48,7 +57,26 @@ const AppSidebar: React.FC = () => {
       </SidebarHeader>
       
       <SidebarContent className="bg-white">
-        {/* Separator instead of label */}
+        {isMobile && (
+          <div className="px-4 py-2 mb-2">
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={userMetadata?.avatar_url} alt={profile?.display_name || user?.email?.split('@')[0] || 'User'} />
+                <AvatarFallback>
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="font-medium text-base">
+                  {profile?.display_name || userMetadata?.name || userMetadata?.full_name || user?.email?.split('@')[0] || 'User'}
+                </span>
+                <span className="text-xs text-gray-500">{user?.email}</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Separator */}
         <SidebarSeparator className="my-2 bg-gray-300" />
         
         {/* Main Navigation */}
@@ -76,7 +104,7 @@ const AppSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        {/* Separator instead of label */}
+        {/* Separator */}
         <SidebarSeparator className="my-2 bg-gray-300" />
         
         {/* Settings Navigation */}
@@ -94,6 +122,20 @@ const AppSidebar: React.FC = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        {isMobile && (
+          <>
+            <SidebarSeparator className="my-2 bg-gray-300" />
+            <div className="px-4 py-2">
+              <button 
+                onClick={signOut}
+                className="w-full text-left px-2 py-2 rounded-md text-red-600 hover:bg-red-50 text-base"
+              >
+                Sign out
+              </button>
+            </div>
+          </>
+        )}
       </SidebarContent>
     </>
   );
@@ -101,13 +143,22 @@ const AppSidebar: React.FC = () => {
   if (isMobile) {
     return (
       <>
-        <button
-          className="fixed top-4 right-4 z-40 p-2 rounded-md bg-white shadow-md flex items-center justify-center"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5 text-gray-700" />
-        </button>
+        <div className="fixed top-4 right-4 z-40 flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={userMetadata?.avatar_url} alt={profile?.display_name || user?.email?.split('@')[0] || 'User'} />
+            <AvatarFallback>
+              {getInitials()}
+            </AvatarFallback>
+          </Avatar>
+          
+          <button
+            className="p-2 rounded-md bg-white shadow-md flex items-center justify-center"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5 text-gray-700" />
+          </button>
+        </div>
         
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="right" className="w-[250px] p-0 bg-white">
