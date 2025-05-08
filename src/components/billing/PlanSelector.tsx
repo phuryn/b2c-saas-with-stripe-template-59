@@ -6,6 +6,7 @@ import BillingCycleSwitch from './BillingCycleSwitch';
 import PlanCard from './PlanCard';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PlanSelectorProps {
   currentPlan?: string | null;
@@ -36,6 +37,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly');
   const plans = getPlans(selectedCycle);
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   const handlePlanSelection = (plan: Plan) => {
     // On public page, redirect to appropriate location based on user and plan
@@ -127,11 +129,13 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         onChange={handleCycleChange}
       />
       
-      {/* Updated grid with min-width of 210px for each card using auto-fit */}
+      {/* Updated grid with responsive layout for mobile and desktop */}
       <div 
-        className="mt-4 grid gap-6" 
+        className={`mt-4 grid gap-6 ${
+          isMobile ? 'grid-cols-1' : 'grid-template-columns: repeat(auto-fit, minmax(210px, 1fr))'
+        }`}
         style={{
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(210px, 1fr))',
         }}
       >
         {renderPlans()}

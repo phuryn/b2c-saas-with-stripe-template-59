@@ -114,19 +114,17 @@ const PlanSettings: React.FC = () => {
         </div>
       )}
       
-      {/* Plans Selection Section */}
-      <div className="overflow-x-auto -mx-6 md:mx-0">
-        <div className="min-w-[800px] md:min-w-0 px-6 md:px-0">
-          <PlanSelector
-            currentPlan={subscription?.current_plan}
-            isLoading={actionLoading || isSubscriptionCanceling}
-            cycle={currentCycle}
-            onSelect={handleSelectPlan}
-            priceData={stripePrices}
-            showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling}
-            onDowngrade={handleDowngradeClick}
-          />
-        </div>
+      {/* Plans Selection Section - Removed overflow handling since PlanSelector will handle responsive display now */}
+      <div>
+        <PlanSelector
+          currentPlan={subscription?.current_plan}
+          isLoading={actionLoading || isSubscriptionCanceling}
+          cycle={currentCycle}
+          onSelect={handleSelectPlan}
+          priceData={stripePrices}
+          showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling}
+          onDowngrade={handleDowngradeClick}
+        />
       </div>
       
       {/* Downgrade Dialog */}
