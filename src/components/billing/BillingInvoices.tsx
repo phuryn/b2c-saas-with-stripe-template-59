@@ -2,7 +2,7 @@
 import React, { useState, useEffect, forwardRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, Download, Loader2, Receipt } from 'lucide-react';
+import { AlertTriangle, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -141,10 +141,10 @@ const BillingInvoices = forwardRef<HTMLDivElement, BillingInvoicesProps>(({ subs
             )}
             <div className="flex justify-end">
               {invoice.invoice_pdf && (
-                <Button variant="outline" size="sm" className="flex items-center gap-1" asChild>
+                <Button variant="ghost" size="sm" asChild>
                   <a href={invoice.invoice_pdf} target="_blank" rel="noopener noreferrer">
-                    <Receipt className="h-4 w-4" />
-                    <span>Download</span>
+                    <Download className="h-4 w-4" />
+                    <span className="sr-only">Download PDF</span>
                   </a>
                 </Button>
               )}

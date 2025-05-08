@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -78,6 +79,7 @@ const App = () => {
                   <Route index element={<Navigate to="/app/settings/profile" replace />} />
                   <Route path="profile" element={<ProfileSettings />} />
                   <Route path="billing" element={<BillingSettings />} />
+                  <Route path="plan" element={<PlanSettings />} />
                 </Route>
               </Route>
               
