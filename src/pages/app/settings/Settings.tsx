@@ -28,7 +28,7 @@ const Settings: React.FC = () => {
   ];
   
   return (
-    <div className={`p-6 ${isMobile ? 'pt-16' : ''}`}>
+    <div className="p-6">
       <h1 className="text-2xl font-semibold mb-6">Settings</h1>
       
       {isMobile ? (

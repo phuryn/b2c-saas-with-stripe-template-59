@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useNavigate, Link } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -10,6 +11,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { getPlans } from '@/config/plans';
+
 const AppLayout: React.FC = () => {
   const {
     user,
@@ -80,7 +82,9 @@ const AppLayout: React.FC = () => {
     // Show upgrade if the plan config says so (defaults to true if not specified)
     return currentPlan?.showUpgrade !== false;
   };
-  const renderUserMenu = () => <div className="w-64 p-2">
+
+  const renderUserMenu = () => (
+    <div className="w-64 p-2">
       {/* User info section */}
       <div className="flex items-center space-x-3 mb-4 px-2">
         <Avatar className="h-10 w-10">
@@ -106,9 +110,11 @@ const AppLayout: React.FC = () => {
           <span className="text-sm text-gray-500">
             {getFormattedPlanName()}
           </span>
-          {shouldShowUpgradeButton() && <Link to="/app/settings/plan" className="text-xs px-2 py-1 bg-primary-blue text-white rounded hover:bg-primary-blue/90 transition-colors font-medium">
+          {shouldShowUpgradeButton() && (
+            <Link to="/app/settings/plan" className="text-xs px-2 py-1 bg-primary-blue text-white rounded hover:bg-primary-blue/90 transition-colors font-medium">
               Upgrade
-            </Link>}
+            </Link>
+          )}
         </div>
       </div>
 
@@ -124,13 +130,17 @@ const AppLayout: React.FC = () => {
       <button onClick={handleSignOut} className="block w-full text-left px-2 py-2 rounded-md text-red-600 hover:bg-red-50">
         Sign Out
       </button>
-    </div>;
-  return <SidebarProvider>
+    </div>
+  );
+
+  return (
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[rgb(247_247_247)]">
         <AppSidebar />
         <div className="flex-1 min-h-screen relative">
           {/* User Profile Dropdown for Desktop */}
-          {!isMobile && <div className="absolute top-4 right-4 z-10">
+          {!isMobile && (
+            <div className="absolute top-4 right-4 z-10">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="focus:outline-none">
@@ -146,10 +156,12 @@ const AppLayout: React.FC = () => {
                   {renderUserMenu()}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>}
+            </div>
+          )}
           
           {/* User Profile Dropdown for Mobile */}
-          {isMobile && <div className="fixed top-4 right-4 z-40">
+          {isMobile && (
+            <div className="fixed top-4 right-4 z-40">
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="focus:outline-none">
@@ -165,11 +177,17 @@ const AppLayout: React.FC = () => {
                   {renderUserMenu()}
                 </PopoverContent>
               </Popover>
-            </div>}
+            </div>
+          )}
           
-          <Outlet />
+          {/* Apply padding for mobile view to all app pages via wrapper */}
+          <div className={isMobile ? "pt-16" : ""}>
+            <Outlet />
+          </div>
         </div>
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
+
 export default AppLayout;
