@@ -23,7 +23,6 @@ import Terms from "./pages/Terms";
 import Auth from "./pages/Auth";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
 
 // App pages
 import Dashboard from "./pages/app/Dashboard";
@@ -67,7 +66,8 @@ const App = () => {
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/signup" element={<Signup />} />
-                  <Route path="/login" element={<Login />} />
+                  {/* Redirect /login to /auth */}
+                  <Route path="/login" element={<Navigate to="/auth" replace />} />
                 </Route>
               )}
               
