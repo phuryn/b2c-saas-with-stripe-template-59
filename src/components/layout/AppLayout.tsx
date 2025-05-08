@@ -16,14 +16,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const AppLayout: React.FC = () => {
   const { user, isLoading, userMetadata, profile, signOut } = useAuth();
+  const { subscription } = useSubscription();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
   
   // Get user initials for avatar
   const getInitials = () => {
@@ -52,7 +53,8 @@ const AppLayout: React.FC = () => {
   }
 
   const renderUserMenu = () => (
-    <div className="p-4">
+    <div className="w-64 p-2">
+      {/* User info section */}
       <div className="flex items-center space-x-3 mb-4 px-2">
         <Avatar className="h-10 w-10">
           <AvatarImage src={userMetadata?.avatar_url} alt={profile?.display_name || user?.email?.split('@')[0] || 'User'} />
@@ -68,21 +70,40 @@ const AppLayout: React.FC = () => {
         </div>
       </div>
 
-      <div className="text-sm px-2 mb-2 text-gray-500 font-medium">My Profile</div>
-      
+      {/* Separator */}
+      <DropdownMenuSeparator className="my-2" />
+
+      {/* Plan section */}
+      <div className="px-2 py-1">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-700">
+            {subscription?.subscribed ? subscription.subscription_tier : 'Free Plan'}
+          </span>
+          {!subscription?.subscribed && (
+            <Link 
+              to="/app/settings/plan"
+              className="text-xs px-2 py-1 bg-primary-blue text-white rounded hover:bg-primary-blue/90 transition-colors"
+            >
+              Upgrade
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* Separator */}
+      <DropdownMenuSeparator className="my-2" />
+
+      {/* Settings link */}
       <Link 
-        to="/app/settings/profile" 
+        to="/app/settings"
         className="block w-full text-left px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-        onClick={() => isMobile && setMobileUserMenuOpen(false)}
       >
-        Profile
+        Settings
       </Link>
       
+      {/* Sign out */}
       <button
-        onClick={() => {
-          handleSignOut();
-          if (isMobile) setMobileUserMenuOpen(false);
-        }}
+        onClick={handleSignOut}
         className="block w-full text-left px-2 py-2 rounded-md text-red-600 hover:bg-red-50"
       >
         Sign Out
@@ -110,42 +131,30 @@ const AppLayout: React.FC = () => {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem className="font-medium" disabled>
-                    My Account
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/app/settings/profile">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    Sign Out
-                  </DropdownMenuItem>
+                  {renderUserMenu()}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           )}
           
-          {/* User Profile Button for Mobile */}
+          {/* User Profile Dropdown for Mobile */}
           {isMobile && (
             <div className="fixed top-4 right-4 z-40">
-              <button 
-                className="focus:outline-none"
-                onClick={() => setMobileUserMenuOpen(true)}
-              >
-                <Avatar className="h-9 w-9 cursor-pointer">
-                  <AvatarImage src={userMetadata?.avatar_url} alt={profile?.display_name || user?.email?.split('@')[0] || 'User'} />
-                  <AvatarFallback>
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-              
-              {/* Mobile User Profile Sheet */}
-              <Sheet open={mobileUserMenuOpen} onOpenChange={setMobileUserMenuOpen}>
-                <SheetContent side="right" className="w-[250px] p-0 bg-white">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="focus:outline-none">
+                    <Avatar className="h-9 w-9 cursor-pointer">
+                      <AvatarImage src={userMetadata?.avatar_url} alt={profile?.display_name || user?.email?.split('@')[0] || 'User'} />
+                      <AvatarFallback>
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-64" align="end">
                   {renderUserMenu()}
-                </SheetContent>
-              </Sheet>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
           

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger } from '@/components/ui/sidebar';
-import { Home, Link2, Settings, ArrowLeft, ArrowRight, Menu } from 'lucide-react';
+import { Home, Link2, ArrowLeft, ArrowRight, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -71,25 +71,6 @@ const AppSidebar: React.FC = () => {
                   <Link to="/app/links" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app/links') && "text-primary-blue bg-primary-blue/10", "text-base")}>
                     <Link2 className={cn("h-5 w-5", isActive('/app/links') ? "text-primary-blue" : "text-gray-800")} />
                     <span className={cn(isActive('/app/links') && "text-primary-blue")}>Links</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        {/* Separator */}
-        <SidebarSeparator className="my-2 bg-gray-300" />
-        
-        {/* Settings Navigation */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/app/settings')}>
-                  <Link to="/app/settings" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app/settings') && "text-primary-blue bg-primary-blue/10", "text-base")}>
-                    <Settings className={cn("h-5 w-5", isActive('/app/settings') ? "text-primary-blue" : "text-gray-800")} />
-                    <span className={cn(isActive('/app/settings') && "text-primary-blue")}>Settings</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
