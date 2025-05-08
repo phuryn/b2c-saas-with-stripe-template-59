@@ -18,12 +18,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const AppLayout: React.FC = () => {
   const { user, isLoading, userMetadata, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
   
   // Get user initials for avatar
   const getInitials = () => {
@@ -50,45 +54,6 @@ const AppLayout: React.FC = () => {
       </div>
     );
   }
-
-  const renderUserMenu = () => (
-    <div className="p-4">
-      <div className="flex items-center space-x-3 mb-4 px-2">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={userMetadata?.avatar_url} alt={profile?.display_name || user?.email?.split('@')[0] || 'User'} />
-          <AvatarFallback>
-            {getInitials()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col">
-          <span className="font-medium text-base">
-            {profile?.display_name || userMetadata?.name || userMetadata?.full_name || user?.email?.split('@')[0] || 'User'}
-          </span>
-          <span className="text-xs text-gray-500">{user?.email}</span>
-        </div>
-      </div>
-
-      <div className="text-sm px-2 mb-2 text-gray-500 font-medium">My Profile</div>
-      
-      <Link 
-        to="/app/settings/profile" 
-        className="block w-full text-left px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-        onClick={() => isMobile && setMobileUserMenuOpen(false)}
-      >
-        Profile
-      </Link>
-      
-      <button
-        onClick={() => {
-          handleSignOut();
-          if (isMobile) setMobileUserMenuOpen(false);
-        }}
-        className="block w-full text-left px-2 py-2 rounded-md text-red-600 hover:bg-red-50"
-      >
-        Sign Out
-      </button>
-    </div>
-  );
 
   return (
     <SidebarProvider>
@@ -125,27 +90,33 @@ const AppLayout: React.FC = () => {
             </div>
           )}
           
-          {/* User Profile Button for Mobile */}
+          {/* User Profile Button for Mobile - Now using Dropdown instead of Sheet */}
           {isMobile && (
             <div className="fixed top-4 right-4 z-40">
-              <button 
-                className="focus:outline-none"
-                onClick={() => setMobileUserMenuOpen(true)}
-              >
-                <Avatar className="h-9 w-9 cursor-pointer">
-                  <AvatarImage src={userMetadata?.avatar_url} alt={profile?.display_name || user?.email?.split('@')[0] || 'User'} />
-                  <AvatarFallback>
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-              
-              {/* Mobile User Profile Sheet */}
-              <Sheet open={mobileUserMenuOpen} onOpenChange={setMobileUserMenuOpen}>
-                <SheetContent side="right" className="w-[250px] p-0 bg-white">
-                  {renderUserMenu()}
-                </SheetContent>
-              </Sheet>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="focus:outline-none">
+                    <Avatar className="h-9 w-9 cursor-pointer">
+                      <AvatarImage src={userMetadata?.avatar_url} alt={profile?.display_name || user?.email?.split('@')[0] || 'User'} />
+                      <AvatarFallback>
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-white">
+                  <DropdownMenuItem className="font-medium" disabled>
+                    My Account
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/app/settings/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
           
