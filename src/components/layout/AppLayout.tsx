@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useNavigate, Link } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
@@ -22,9 +22,18 @@ import { useSubscription } from '@/hooks/useSubscription';
 
 const AppLayout: React.FC = () => {
   const { user, isLoading, userMetadata, profile, signOut } = useAuth();
-  const { subscription } = useSubscription();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  
+  // Get subscription data with initialization
+  const { subscription, checkSubscriptionStatus } = useSubscription();
+  
+  // Initialize subscription data on component mount
+  useEffect(() => {
+    if (user) {
+      checkSubscriptionStatus();
+    }
+  }, [user, checkSubscriptionStatus]);
   
   // Get user initials for avatar
   const getInitials = () => {
@@ -77,9 +86,9 @@ const AppLayout: React.FC = () => {
       <div className="px-2 py-1">
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500">
-            {subscription?.subscribed ? subscription.subscription_tier : 'Free Plan'}
+            {subscription?.subscribed && subscription?.subscription_tier ? subscription.subscription_tier : 'Free Plan'}
           </span>
-          {!subscription?.subscribed && (
+          {(!subscription?.subscribed || !subscription?.subscription_tier) && (
             <Link 
               to="/app/settings/plan"
               className="text-xs px-2 py-1 bg-primary-blue text-white rounded hover:bg-primary-blue/90 transition-colors"
