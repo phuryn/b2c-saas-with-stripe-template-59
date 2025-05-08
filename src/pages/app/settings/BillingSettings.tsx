@@ -17,14 +17,12 @@ import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
 import PlanCard from '@/components/billing/PlanCard';
 import { getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
-
 interface StripePrice {
   id: string;
   unit_amount: number;
   currency: string;
   interval?: string;
 }
-
 const BillingSettings: React.FC = () => {
   const {
     user,
@@ -235,10 +233,7 @@ const BillingSettings: React.FC = () => {
   return <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-medium">Billing and Usage</h2>
-        {subscription?.subscribed && <Button variant="ghost" size="sm" onClick={checkSubscriptionStatus} disabled={refreshing} className="transition-all hover:bg-primary/10">
-            {refreshing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-            Refresh
-          </Button>}
+        {subscription?.subscribed}
       </div>
       
       {/* Your Plan Section */}
@@ -249,18 +244,7 @@ const BillingSettings: React.FC = () => {
         {subscription?.subscribed && <SubscriptionInfo subscription={subscription} onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined} subscriptionLoading={subscriptionLoading} />}
         
         {/* Plan Card */}
-        {currentPlan && <PlanCard 
-          name={currentPlan.name} 
-          description={currentPlan.description} 
-          price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} 
-          limits={currentPlan.limits} 
-          features={currentPlan.features} 
-          isActive={false} 
-          buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} 
-          onSelect={handleManagePlan} 
-          isLoading={subscriptionLoading} 
-          inBillingPage={true} 
-        />}
+        {currentPlan && <PlanCard name={currentPlan.name} description={currentPlan.description} price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} limits={currentPlan.limits} features={currentPlan.features} isActive={false} buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} onSelect={handleManagePlan} isLoading={subscriptionLoading} inBillingPage={true} />}
       </div>
       
       {/* Monthly Usage Section */}
@@ -276,5 +260,4 @@ const BillingSettings: React.FC = () => {
       <BillingInvoices subscription={subscription} />
     </div>;
 };
-
 export default BillingSettings;
