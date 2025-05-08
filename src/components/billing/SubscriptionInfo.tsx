@@ -55,12 +55,7 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
           ) : (
             <p className="text-sm text-muted-foreground">
               Your subscription will auto-renew on {formatDate(subscription.subscription_end)}.
-              
-              {cardInfo && (
-                <span className="block mt-1">
-                  On that date, the {cardInfo.name} card (ending in {cardInfo.last4}) will be charged.
-                </span>
-              )}
+              {cardInfo && ` On that date, the ${cardInfo.name} card (ending in ${cardInfo.last4}) will be charged.`}
             </p>
           )}
         </div>

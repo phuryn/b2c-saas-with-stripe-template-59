@@ -3,6 +3,7 @@ import React from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface BillingCycleSwitchProps {
   selectedCycle: 'monthly' | 'yearly';
@@ -13,8 +14,10 @@ const BillingCycleSwitch: React.FC<BillingCycleSwitchProps> = ({
   selectedCycle, 
   onChange 
 }) => {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="mb-12">
+    <div className={`${isMobile ? 'mb-5' : 'mb-12'}`}>
       <div className="relative">
         <div className="flex items-center justify-center rounded-full p-2">
           <div className="flex items-center">
