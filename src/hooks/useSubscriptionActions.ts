@@ -45,7 +45,6 @@ export function useSubscriptionActions() {
 
       // If no client_secret, the update was successful
       if (data?.success) {
-        toast.success('Subscription updated successfully!');
         return true;
       }
       
@@ -91,7 +90,6 @@ export function useSubscriptionActions() {
       const data = await updateSubscription(undefined, undefined, { cancel: true });
       
       if (data?.success) {
-        toast.success('Your subscription has been cancelled');
         return true;
       }
       
@@ -114,7 +112,6 @@ export function useSubscriptionActions() {
       const data = await updateSubscription(undefined, undefined, { renew: true });
       
       if (data?.success) {
-        toast.success('Your subscription has been renewed');
         return true;
       }
       

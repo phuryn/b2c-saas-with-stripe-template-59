@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -55,6 +56,18 @@ const PlanSettings: React.FC = () => {
     }
   }, [searchParams]);
 
+  // Handle plan selection with automatic refresh
+  const handlePlanSelection = async (planId: string, cycle: 'monthly' | 'yearly') => {
+    const success = await handleSelectPlan(planId, cycle);
+    if (success) {
+      toast.success('Plan Updated', {
+        description: 'Your subscription plan has been updated successfully.'
+      });
+      await refreshSubscriptionData(); // Refresh subscription data after successful plan change
+    }
+  };
+
+  // Handle downgrade with automatic refresh
   const handleDowngradeClick = () => {
     setShowDowngradeDialog(true);
   };
@@ -62,8 +75,24 @@ const PlanSettings: React.FC = () => {
   const confirmDowngrade = async () => {
     const success = await handleDowngrade();
     if (success) {
+      toast.success('Subscription Cancelled', {
+        description: 'Your subscription has been cancelled and will end at the current billing period.'
+      });
       setShowDowngradeDialog(false);
+      await refreshSubscriptionData(); // Refresh subscription data after downgrade
     }
+  };
+
+  // Handle renewal with automatic refresh
+  const handleRenewal = async () => {
+    const success = await handleRenewSubscription();
+    if (success) {
+      toast.success('Subscription Renewed', {
+        description: 'Your subscription has been renewed successfully.'
+      });
+      await refreshSubscriptionData(); // Refresh subscription data after renewal
+    }
+    return success;
   };
 
   const getCurrentPlanId = () => {
@@ -99,7 +128,7 @@ const PlanSettings: React.FC = () => {
       {subscription?.subscribed && (
         <SubscriptionInfo
           subscription={subscription}
-          onRenewSubscription={isSubscriptionCanceling ? handleRenewSubscription : undefined}
+          onRenewSubscription={isSubscriptionCanceling ? handleRenewal : undefined}
           subscriptionLoading={actionLoading}
         />
       )}
@@ -116,7 +145,7 @@ const PlanSettings: React.FC = () => {
           currentPlan={subscription?.current_plan}
           isLoading={actionLoading || isSubscriptionCanceling}
           cycle={currentCycle}
-          onSelect={handleSelectPlan}
+          onSelect={handlePlanSelection}
           priceData={stripePrices}
           showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling}
           onDowngrade={handleDowngradeClick}

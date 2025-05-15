@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Subscription, PaymentMethod } from '@/types/subscription';
+import { toast } from '@/components/ui/use-toast';
 
 interface SubscriptionInfoProps {
   subscription: Subscription | null;
@@ -44,6 +45,16 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
   
   if (!subscription) return null;
   
+  const handleRenewSubscription = async () => {
+    if (onRenewSubscription) {
+      await onRenewSubscription();
+      toast({
+        title: "Subscription Renewed",
+        description: "Your subscription has been successfully renewed."
+      });
+    }
+  };
+  
   return (
     <div className="bg-muted/50 rounded-lg p-4 border border-muted-foreground/20">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -65,7 +76,7 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
             <Button 
               variant="default" 
               size="sm" 
-              onClick={onRenewSubscription} 
+              onClick={handleRenewSubscription} 
               disabled={subscriptionLoading} 
               className="shrink-0"
             >
