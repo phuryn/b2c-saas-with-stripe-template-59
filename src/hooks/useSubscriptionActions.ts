@@ -51,7 +51,8 @@ export function useSubscriptionActions() {
       return false;
     } catch (err) {
       console.error('Error updating subscription:', err);
-      toast.error('Could not update subscription');
+      const errorMessage = err instanceof Error ? err.message : 'Could not update subscription';
+      toast.error(errorMessage);
       return false;
     } finally {
       setSubscriptionLoading(false);
@@ -74,7 +75,8 @@ export function useSubscriptionActions() {
       return false;
     } catch (err) {
       console.error('Error opening customer portal:', err);
-      toast.error('Failed to open customer portal');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to open customer portal';
+      toast.error(errorMessage);
       return false;
     } finally {
       setSubscriptionLoading(false);
@@ -96,7 +98,8 @@ export function useSubscriptionActions() {
       return false;
     } catch (err) {
       console.error('Error cancelling subscription:', err);
-      toast.error('Could not cancel subscription');
+      const errorMessage = err instanceof Error ? err.message : 'Could not cancel subscription';
+      toast.error(errorMessage);
       return false;
     } finally {
       setSubscriptionLoading(false);
@@ -118,7 +121,8 @@ export function useSubscriptionActions() {
       return false;
     } catch (err) {
       console.error('Error renewing subscription:', err);
-      toast.error('Could not renew subscription');
+      const errorMessage = err instanceof Error ? err.message : 'Could not renew subscription';
+      toast.error(errorMessage);
       return false;
     } finally {
       setSubscriptionLoading(false);

@@ -13,7 +13,7 @@ export const fetchSubscriptionStatus = async (): Promise<Subscription | null> =>
   const { data, error } = await supabase.functions.invoke('check-subscription');
   
   if (error) {
-    throw new Error(error.message);
+    throw new Error(error.message || 'Failed to check subscription status');
   }
   
   return data;
@@ -27,7 +27,7 @@ export const createCheckoutSession = async (planId: string): Promise<{ url: stri
     body: { priceId: planId }
   });
   
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(error.message || 'Failed to create checkout session');
   
   return data;
 };
@@ -48,7 +48,14 @@ export const updateSubscription = async (
     }
   });
   
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error('Error updating subscription:', error);
+    throw new Error(error.message || 'Could not update subscription');
+  }
+  
+  if (!data) {
+    throw new Error('No data received from update-subscription endpoint');
+  }
   
   return data;
 };
@@ -59,7 +66,7 @@ export const updateSubscription = async (
 export const openCustomerPortalApi = async (): Promise<{ url: string } | null> => {
   const { data, error } = await supabase.functions.invoke('customer-portal');
   
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(error.message || 'Failed to open customer portal');
   
   return data;
 };
