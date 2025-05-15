@@ -14,4 +14,3 @@ project_id = "bnwvnlgspaxuzbfiphik"
 [functions.get-invoices]
 
 [functions.fix-users-policy]
-

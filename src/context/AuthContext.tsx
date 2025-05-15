@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [roleCheckFailed, setRoleCheckFailed] = useState(false);
   const [policyFixed, setPolicyFixed] = useState(false);
+  const [policyFixAttempts, setPolicyFixAttempts] = useState(0);
   const [userMetadata, setUserMetadata] = useState<{
     avatar_url?: string;
     full_name?: string;
@@ -63,8 +63,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Function to fix user policy via the edge function
   const fixUserPolicy = async () => {
+    // Limit the number of attempts to avoid infinite loops
+    if (policyFixAttempts >= 3) {
+      console.log("Maximum policy fix attempts reached. Please contact support.");
+      toast.error("Maximum policy fix attempts reached. Please contact support.");
+      return;
+    }
+
     try {
+      setPolicyFixAttempts(prev => prev + 1);
       console.log("Attempting to fix user policy via edge function...");
+      
       const { data, error } = await supabase.functions.invoke('fix-users-policy');
       
       if (error) {
@@ -78,10 +87,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPolicyFixed(true);
         toast.success("User permissions system has been fixed");
         
-        // Retry fetching user role after policy is fixed
-        if (user) {
-          await fetchUserRole(user.id);
-        }
+        // Wait a moment before retrying the role fetch to ensure the changes have propagated
+        setTimeout(async () => {
+          if (user) {
+            await fetchUserRole(user.id);
+          }
+        }, 1000);
+      } else {
+        console.error("Policy fix returned success: false", data);
+        toast.error("Failed to fix permissions system. Please try again.");
       }
     } catch (error) {
       console.error('Error invoking fix-users-policy function:', error);
@@ -104,9 +118,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error('Error fetching user role:', error);
         
-        // If we get a policy recursion error and haven't fixed it yet, try fixing it
-        if (error.message.includes("infinite recursion") && !policyFixed) {
-          console.log("Detected policy recursion error, will try to fix it");
+        // Check for specific error messages that indicate policy recursion
+        const errorHasRecursion = error.message.includes("infinite recursion");
+        const errorHasPolicy = error.message.includes("policy");
+        
+        if ((errorHasRecursion || errorHasPolicy) && !policyFixed && policyFixAttempts < 3) {
+          console.log("Detected potential policy error, will try to fix it");
           await fixUserPolicy();
           setRoleCheckFailed(true);
           return null;
@@ -185,10 +202,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Fetch user role and profile data with setTimeout to avoid auth deadlocks
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             console.log("User authenticated, fetching role and profile data");
+            setPolicyFixAttempts(0); // Reset policy fix attempts on new sign-in
             setTimeout(() => {
               fetchUserRole(session.user.id);
               fetchUserProfile(session.user.id);
-            }, 0);
+            }, 1000);
           }
 
           // Show sign-in toast only for explicit sign-in events
@@ -243,9 +261,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setAuthProvider('email');
           }
           
-          // Fetch additional user data
-          await fetchUserRole(session.user.id);
-          await fetchUserProfile(session.user.id);
+          // Fetch additional user data with a delay to ensure auth is ready
+          setTimeout(async () => {
+            await fetchUserRole(session.user.id);
+            await fetchUserProfile(session.user.id);
+          }, 1000);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
