@@ -7,6 +7,7 @@
 export const MAX_RETRIES = 3;
 export const RETRY_DELAY = 5000; // 5 seconds between retries
 export const DEBOUNCE_DELAY = 300; // 300ms debounce period
+export const CHECK_INTERVAL = 60000; // 60 seconds between subscription checks
 
 /**
  * Checks if a request should be rate-limited based on last attempt time
@@ -41,6 +42,26 @@ export const debounce = <F extends (...args: any[]) => any>(
       }, waitFor);
     });
   };
+};
+
+/**
+ * Checks if enough time has passed since last subscription check
+ */
+export const shouldCheckSubscription = (forceCheck: boolean = false): boolean => {
+  try {
+    if (forceCheck) return true;
+    
+    const lastCheck = Number(localStorage.getItem('last_subscription_check') || 0);
+    const now = Date.now();
+    
+    // Allow checking if:
+    // 1. Never checked before (lastCheck is 0)
+    // 2. Enough time has passed since last check
+    // 3. Force check is requested
+    return lastCheck === 0 || (now - lastCheck) > CHECK_INTERVAL;
+  } catch (e) {
+    return true;
+  }
 };
 
 /**

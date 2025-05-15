@@ -18,6 +18,7 @@ const PlanSettings: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const [initialized, setInitialized] = useState(false);
   
   // Use our custom hooks
   const {
@@ -46,10 +47,11 @@ const PlanSettings: React.FC = () => {
 
   // Set the initial cycle based on subscription data
   useEffect(() => {
-    if (subscription?.subscribed) {
+    if (subscription?.subscribed && subscription?.current_plan && !initialized) {
       const currentCycle = getCurrentCycle();
-      console.log('Setting initial cycle to:', currentCycle);
+      console.log('Setting initial cycle based on subscription to:', currentCycle);
       setSelectedCycle(currentCycle);
+      setInitialized(true);
     }
   }, [subscription]);
 
@@ -131,7 +133,6 @@ const PlanSettings: React.FC = () => {
     );
   }
 
-  const currentCycle = getCurrentCycle();
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
   
   return (

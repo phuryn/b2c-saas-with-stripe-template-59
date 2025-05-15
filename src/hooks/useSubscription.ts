@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { 
   shouldSkipRequest, 
   handleSubscriptionError,
+  shouldCheckSubscription,
   MAX_RETRIES,
   RETRY_DELAY 
 } from '@/utils/subscriptionRateLimit';
@@ -42,27 +43,6 @@ export function useSubscription() {
   const lastAttemptRef = useRef<number>(0);
   const retryCountRef = useRef<number>(0);
   const debounceTimerRef = useRef<number | null>(null);
-  
-  // Import subscription actions
-  const { 
-    subscriptionLoading,
-    handleSelectPlan,
-    openCustomerPortal,
-    handleDowngrade,
-    handleRenewSubscription 
-  } = useSubscriptionActions();
-
-  // Check if enough time has passed since last check (debouncing)
-  const shouldCheckSubscription = useCallback(() => {
-    try {
-      const lastCheck = Number(localStorage.getItem(SUBSCRIPTION_CHECK_TIMESTAMP) || 0);
-      const now = Date.now();
-      // Only check once every 60 seconds unless forced
-      return (now - lastCheck) > 60000;
-    } catch (e) {
-      return true;
-    }
-  }, []);
 
   /**
    * Fetch subscription status from API
@@ -75,7 +55,7 @@ export function useSubscription() {
     }
     
     // Rate limiting and debouncing protection
-    if (!force && !shouldCheckSubscription()) {
+    if (!force && !shouldCheckSubscription(force)) {
       console.log('Skipping subscription check due to debounce');
       return subscription;  // Return cached subscription
     }
@@ -130,7 +110,7 @@ export function useSubscription() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [errorState, subscription, user, shouldCheckSubscription]);
+  }, [errorState, subscription, user]);
 
   /**
    * Refresh subscription data with debouncing
@@ -169,11 +149,20 @@ export function useSubscription() {
     };
   }, [refreshing, user, checkSubscriptionStatus]);
 
+  // Import subscription actions
+  const { 
+    subscriptionLoading,
+    handleSelectPlan,
+    openCustomerPortal,
+    handleDowngrade,
+    handleRenewSubscription 
+  } = useSubscriptionActions();
+
   // Initial subscription check when auth state changes
   useEffect(() => {
     // Only check subscription if user is authenticated and auth loading is complete
     if (user && !authLoading) {
-      checkSubscriptionStatus();
+      checkSubscriptionStatus(true);
     } else if (!user && !authLoading) {
       // Clear subscription state when logged out
       setSubscription(null);
