@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
 import { FaLinkedin } from 'react-icons/fa';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -42,7 +41,7 @@ const Auth: React.FC = () => {
     },
   });
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated - but be careful to prevent loops
   useEffect(() => {
     // Log authentication state for debugging
     console.log("Auth page - Authentication state:", { 
@@ -51,12 +50,40 @@ const Auth: React.FC = () => {
       from 
     });
     
+    // Only redirect if user is authenticated and we're not still loading
     if (user && !isLoading) {
       console.log(`User is already authenticated, redirecting to: ${from}`);
-      toast.success("You are already signed in");
-      navigate(from, { replace: true });
+      // Use a short delay to avoid potential race conditions
+      const timer = setTimeout(() => {
+        navigate(from, { replace: true });
+        toast.success("You are already signed in");
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, [user, isLoading, navigate, from]);
+
+  // Don't show sign-in form while we're checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
+      </div>
+    );
+  }
+
+  // If user is authenticated, show a simple message while redirecting
+  if (user) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">You are already signed in</h2>
+          <p className="text-gray-500 mb-4">Redirecting you to the application...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-blue mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
 
   const handleEmailLogin = async (values: LoginFormValues) => {
     try {
@@ -152,27 +179,6 @@ const Auth: React.FC = () => {
       toast.error("Could not sign in with LinkedIn. Please try again.");
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
-      </div>
-    );
-  }
-
-  // Don't render the login form if already authenticated (should redirect via useEffect)
-  if (user) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">You are already signed in</h2>
-          <p className="text-gray-500 mb-4">Redirecting you to the application...</p>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-blue mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <section className="section-padding">

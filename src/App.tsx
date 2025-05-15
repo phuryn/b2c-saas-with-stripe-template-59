@@ -32,7 +32,14 @@ import ProfileSettings from "./pages/app/settings/ProfileSettings";
 import BillingSettings from "./pages/app/settings/BillingSettings";
 import PlanSettings from "./pages/app/settings/PlanSettings";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   const [isOnAppDomain, setIsOnAppDomain] = useState(false);
@@ -47,7 +54,7 @@ const App = () => {
       <TooltipProvider>
         <AuthProvider>
           <Toaster />
-          <SonnerToaster />
+          <SonnerToaster position="top-right" />
           <BrowserRouter>
             <Routes>
               {/* Conditional root route - redirect to /app if on app domain */}

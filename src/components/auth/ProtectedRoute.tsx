@@ -12,14 +12,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
   const { user, userRole, isLoading } = useAuth();
   const location = useLocation();
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Give the auth system a bit more time to complete initialization
     const timer = setTimeout(() => {
       setHasCheckedAuth(true);
-      setIsAuthenticated(!!user);
-
+      
       // Log auth state for debugging
       console.log("Auth state in ProtectedRoute:", { 
         user: !!user, 
@@ -42,7 +40,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
   }
 
   // If not authenticated, redirect to auth page
-  if (!isAuthenticated) {
+  if (!user) {
     console.log("User not authenticated, redirecting to /auth");
     // Remember the page they were trying to access for potential redirect back after login
     return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
@@ -54,7 +52,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
     // This prevents being locked out of the app when there are database issues
     if (userRole === null) {
       // Show a warning toast that role permissions couldn't be verified
-      toast.warning("Could not verify permission level. Some features may be restricted.", {
+      toast("Could not verify permission level. Some features may be restricted.", {
         duration: 5000,
       });
       console.warn("User role check failed, proceeding with limited access");

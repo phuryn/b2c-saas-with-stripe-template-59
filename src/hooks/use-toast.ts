@@ -1,6 +1,6 @@
 
 // Import the shadcn UI toast components
-import { useToast as useShadcnToast } from '@/components/ui/use-toast';
+import { useToast as useShadcnToast, toast as shadcnToast } from '@/components/ui/use-toast';
 // Import sonner for simpler toast notifications
 import { toast as sonnerToast } from 'sonner';
 
