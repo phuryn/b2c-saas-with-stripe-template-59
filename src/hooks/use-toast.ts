@@ -19,13 +19,13 @@ export const toast = {
   ...sonnerToast,
   // Override default methods with custom duration
   success: (message: string, options?: any) => 
-    sonnerToast.success(message, { duration: 3000, ...options }),
+    sonnerToast.success(message, { duration: 1000, ...options }),
   error: (message: string, options?: any) => 
-    sonnerToast.error(message, { duration: 5000, ...options }),
+    sonnerToast.error(message, { duration: 3000, ...options }),
   info: (message: string, options?: any) => 
-    sonnerToast.info(message, { duration: 3000, ...options }),
+    sonnerToast.info(message, { duration: 1000, ...options }),
   warning: (message: string, options?: any) => 
-    sonnerToast.warning(message, { duration: 4000, ...options }),
+    sonnerToast.warning(message, { duration: 2000, ...options }),
   // Keep the original methods accessible as well
   default: sonnerToast
 };

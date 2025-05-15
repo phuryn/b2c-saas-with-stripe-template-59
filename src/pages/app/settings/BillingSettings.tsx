@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,7 +80,7 @@ const BillingSettings: React.FC = () => {
       toast.success('Your subscription has been updated successfully.');
       checkSubscriptionStatus();
     } else if (searchParams.get('canceled') === 'true') {
-      toast('Subscription update canceled');
+      toast.info('Subscription update canceled');
     }
   }, [searchParams]);
 
@@ -229,9 +230,24 @@ const BillingSettings: React.FC = () => {
   };
 
   const handleRenewSubscription = async () => {
-    if (onRenewSubscription) {
-      await onRenewSubscription();
-      toast.success("Your subscription has been successfully renewed.");
+    try {
+      setSubscriptionLoading(true);
+      const { data, error } = await supabase.functions.invoke('update-subscription', {
+        body: { renew: true }
+      });
+      
+      if (error) throw new Error(error.message || 'Failed to renew subscription');
+      
+      if (data?.success) {
+        toast.success("Your subscription has been successfully renewed.");
+        await checkSubscriptionStatus();
+      }
+    } catch (err) {
+      console.error('Error renewing subscription:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      toast.error(`Failed to renew subscription: ${errorMessage}`);
+    } finally {
+      setSubscriptionLoading(false);
     }
   };
 
@@ -290,7 +306,7 @@ const BillingSettings: React.FC = () => {
         <h3 className="text-lg font-medium">Your Current Plan</h3>
         
         {/* Subscription Info Component */}
-        {subscription?.subscribed && <SubscriptionInfo subscription={subscription} onRenewSubscription={isSubscriptionCanceling ? () => openCustomerPortal() : undefined} subscriptionLoading={subscriptionLoading} />}
+        {subscription?.subscribed && <SubscriptionInfo subscription={subscription} onRenewSubscription={isSubscriptionCanceling ? handleRenewSubscription : undefined} subscriptionLoading={subscriptionLoading} />}
         
         {/* Plan Card */}
         {currentPlan && <PlanCard name={currentPlan.name} description={currentPlan.description} price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} limits={currentPlan.limits} features={currentPlan.features} isActive={false} buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} onSelect={handleManagePlan} isLoading={subscriptionLoading} inBillingPage={true} />}
