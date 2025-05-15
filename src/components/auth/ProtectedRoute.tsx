@@ -9,12 +9,10 @@ type ProtectedRouteProps = {
 };
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
-  const { user, userRole, isLoading, fixUserPolicy } = useAuth();
+  const { user, userRole, isLoading } = useAuth();
   const location = useLocation();
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
-  const [hasFixedPolicy, setHasFixedPolicy] = useState(false);
-  const [policyFixAttempts, setPolicyFixAttempts] = useState(0); // Track policy fix attempts
   const [redirectCount, setRedirectCount] = useState(0); // Track redirects to prevent loops
 
   useEffect(() => {
@@ -28,7 +26,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
         userRole, 
         isLoading, 
         path: location.pathname,
-        hasFixedPolicy,
         redirectCount
       });
 
@@ -51,27 +48,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [user, userRole, isLoading, location.pathname, hasFixedPolicy, redirectCount]);
-
-  // If there's an issue with the role check due to policy issues, try to fix it
-  useEffect(() => {
-    if (user && hasCheckedAuth && userRole === null && !hasFixedPolicy && !isLoading && policyFixAttempts < 2) {
-      console.log("Attempting to fix user policy...");
-      const attemptFix = async () => {
-        try {
-          setPolicyFixAttempts(prev => prev + 1); // Increment attempt counter
-          await fixUserPolicy();
-          setHasFixedPolicy(true);
-          toast.success("Permissions system fixed successfully");
-        } catch (error) {
-          console.error("Failed to fix user policy:", error);
-          toast.error("Could not fix permissions system. Please try again later.");
-        }
-      };
-      
-      attemptFix();
-    }
-  }, [user, userRole, hasCheckedAuth, hasFixedPolicy, fixUserPolicy, isLoading, policyFixAttempts]);
+  }, [user, userRole, isLoading, location.pathname, redirectCount]);
 
   // Show loading state until we've checked authentication
   if (isLoading || !hasCheckedAuth) {

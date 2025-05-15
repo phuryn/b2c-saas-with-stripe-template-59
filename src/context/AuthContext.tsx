@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +23,6 @@ type AuthContextType = {
   } | null;
   updateProfile: (data: { display_name: string }) => Promise<void>;
   authProvider: 'email' | 'google' | 'linkedin' | null;
-  fixUserPolicy: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -35,7 +35,6 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   updateProfile: async () => {},
   authProvider: null,
-  fixUserPolicy: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -46,8 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userRole, setUserRole] = useState<'administrator' | 'support' | 'user' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [roleCheckFailed, setRoleCheckFailed] = useState(false);
-  const [policyFixed, setPolicyFixed] = useState(false);
-  const [policyFixAttempts, setPolicyFixAttempts] = useState(0);
   const [userMetadata, setUserMetadata] = useState<{
     avatar_url?: string;
     full_name?: string;
@@ -61,54 +58,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authProvider, setAuthProvider] = useState<'email' | 'google' | 'linkedin' | null>(null);
   const { toast: shadcnToast } = useToast();
 
-  // Function to fix user policy via the edge function
-  const fixUserPolicy = async () => {
-    // Limit the number of attempts to avoid infinite loops
-    if (policyFixAttempts >= 3) {
-      console.log("Maximum policy fix attempts reached. Please contact support.");
-      toast.error("Maximum policy fix attempts reached. Please contact support.");
-      return;
-    }
-
-    try {
-      setPolicyFixAttempts(prev => prev + 1);
-      console.log("Attempting to fix user policy via edge function...");
-      
-      const { data, error } = await supabase.functions.invoke('fix-users-policy');
-      
-      if (error) {
-        console.error('Error fixing user policy:', error);
-        toast.error("Failed to fix permissions system. Please try again.");
-        return;
-      }
-      
-      if (data?.success) {
-        console.log("Successfully fixed user policy:", data);
-        setPolicyFixed(true);
-        toast.success("User permissions system has been fixed");
-        
-        // Wait a moment before retrying the role fetch to ensure the changes have propagated
-        setTimeout(async () => {
-          if (user) {
-            await fetchUserRole(user.id);
-          }
-        }, 1000);
-      } else {
-        console.error("Policy fix returned success: false", data);
-        toast.error("Failed to fix permissions system. Please try again.");
-      }
-    } catch (error) {
-      console.error('Error invoking fix-users-policy function:', error);
-      toast.error("Failed to fix permissions system. Please try again.");
-    }
-  };
-
   // Function to safely fetch user role with error handling
   const fetchUserRole = async (userId: string) => {
     try {
       console.log("Fetching user role for:", userId);
       
-      // First try the direct approach
       const { data, error } = await supabase
         .from('users')
         .select('role')
@@ -117,19 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error('Error fetching user role:', error);
-        
-        // Check for specific error messages that indicate policy recursion
-        const errorHasRecursion = error.message.includes("infinite recursion");
-        const errorHasPolicy = error.message.includes("policy");
-        
-        if ((errorHasRecursion || errorHasPolicy) && !policyFixed && policyFixAttempts < 3) {
-          console.log("Detected potential policy error, will try to fix it");
-          await fixUserPolicy();
-          setRoleCheckFailed(true);
-          return null;
-        }
-        
-        // For other errors or if we already tried fixing, just mark as failed
         setRoleCheckFailed(true);
         return null;
       }
@@ -202,7 +143,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Fetch user role and profile data with setTimeout to avoid auth deadlocks
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             console.log("User authenticated, fetching role and profile data");
-            setPolicyFixAttempts(0); // Reset policy fix attempts on new sign-in
             setTimeout(() => {
               fetchUserRole(session.user.id);
               fetchUserProfile(session.user.id);
@@ -296,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, [roleCheckFailed, policyFixed]);
+  }, [roleCheckFailed]);
 
   const updateProfile = async (data: { display_name: string }) => {
     if (!user) return;
@@ -344,7 +284,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profile,
         updateProfile,
         authProvider,
-        fixUserPolicy,
       }}
     >
       {children}
