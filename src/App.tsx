@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -62,47 +63,49 @@ const App = () => {
             richColors
           />
           <BrowserRouter>
-            {/* Conditional root route - redirect to /app if on app domain */}
-            {isOnAppDomain ? (
-              <Route path="/" element={<Navigate to="/app" replace />} />
-            ) : (
-              <Route element={<PublicLayout />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/careers" element={<Careers />} />
-                <Route path="/faqs" element={<FAQs />} />
-                <Route path="/knowledge" element={<Knowledge />} />
-                <Route path="/support" element={<Support />} />
-                <Route path="/privacy_policy" element={<Privacy />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/signup" element={<Signup />} />
-                {/* Redirect /login to /auth */}
-                <Route path="/login" element={<Navigate to="/auth" replace />} />
-              </Route>
-            )}
-            
-            {/* App routes - wrap with ProtectedRoute */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/app" element={<AppLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="links" element={<Links />} />
-                <Route path="settings" element={<Settings />}>
-                  <Route index element={<Navigate to="/app/settings/profile" replace />} />
-                  <Route path="profile" element={<ProfileSettings />} />
-                  <Route path="billing" element={<BillingSettings />} />
-                  <Route path="plan" element={<PlanSettings />} />
+            <Routes>
+              {/* Conditional root route - redirect to /app if on app domain */}
+              {isOnAppDomain ? (
+                <Route path="/" element={<Navigate to="/app" replace />} />
+              ) : (
+                <Route element={<PublicLayout />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/careers" element={<Careers />} />
+                  <Route path="/faqs" element={<FAQs />} />
+                  <Route path="/knowledge" element={<Knowledge />} />
+                  <Route path="/support" element={<Support />} />
+                  <Route path="/privacy_policy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/signup" element={<Signup />} />
+                  {/* Redirect /login to /auth */}
+                  <Route path="/login" element={<Navigate to="/auth" replace />} />
+                </Route>
+              )}
+              
+              {/* App routes - wrap with ProtectedRoute */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/app" element={<AppLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="links" element={<Links />} />
+                  <Route path="settings" element={<Settings />}>
+                    <Route index element={<Navigate to="/app/settings/profile" replace />} />
+                    <Route path="profile" element={<ProfileSettings />} />
+                    <Route path="billing" element={<BillingSettings />} />
+                    <Route path="plan" element={<PlanSettings />} />
+                  </Route>
                 </Route>
               </Route>
-            </Route>
-            
-            {/* Protected routes for specific roles */}
-            <Route element={<ProtectedRoute requiredRole="administrator" />}>
-              {/* Add admin routes here */}
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
+              
+              {/* Protected routes for specific roles */}
+              <Route element={<ProtectedRoute requiredRole="administrator" />}>
+                {/* Add admin routes here */}
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>
