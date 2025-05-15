@@ -12,3 +12,6 @@ project_id = "bnwvnlgspaxuzbfiphik"
 [functions.get-prices]
 
 [functions.get-invoices]
+
+[functions.fix-users-policy]
+

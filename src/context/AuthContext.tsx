@@ -1,7 +1,8 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 
 type AuthContextType = {
@@ -22,6 +23,7 @@ type AuthContextType = {
   } | null;
   updateProfile: (data: { display_name: string }) => Promise<void>;
   authProvider: 'email' | 'google' | 'linkedin' | null;
+  fixUserPolicy: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -34,6 +36,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   updateProfile: async () => {},
   authProvider: null,
+  fixUserPolicy: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -44,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userRole, setUserRole] = useState<'administrator' | 'support' | 'user' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [roleCheckFailed, setRoleCheckFailed] = useState(false);
+  const [policyFixed, setPolicyFixed] = useState(false);
   const [userMetadata, setUserMetadata] = useState<{
     avatar_url?: string;
     full_name?: string;
@@ -57,10 +61,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authProvider, setAuthProvider] = useState<'email' | 'google' | 'linkedin' | null>(null);
   const { toast: shadcnToast } = useToast();
 
+  // Function to fix user policy via the edge function
+  const fixUserPolicy = async () => {
+    try {
+      console.log("Attempting to fix user policy via edge function...");
+      const { data, error } = await supabase.functions.invoke('fix-users-policy');
+      
+      if (error) {
+        console.error('Error fixing user policy:', error);
+        toast.error("Failed to fix permissions system. Please try again.");
+        return;
+      }
+      
+      if (data?.success) {
+        console.log("Successfully fixed user policy:", data);
+        setPolicyFixed(true);
+        toast.success("User permissions system has been fixed");
+        
+        // Retry fetching user role after policy is fixed
+        if (user) {
+          await fetchUserRole(user.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error invoking fix-users-policy function:', error);
+      toast.error("Failed to fix permissions system. Please try again.");
+    }
+  };
+
   // Function to safely fetch user role with error handling
   const fetchUserRole = async (userId: string) => {
     try {
       console.log("Fetching user role for:", userId);
+      
+      // First try the direct approach
       const { data, error } = await supabase
         .from('users')
         .select('role')
@@ -69,9 +103,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error('Error fetching user role:', error);
-        setRoleCheckFailed(true);
         
-        // Only return null, don't update state here as we want to keep trying
+        // If we get a policy recursion error and haven't fixed it yet, try fixing it
+        if (error.message.includes("infinite recursion") && !policyFixed) {
+          console.log("Detected policy recursion error, will try to fix it");
+          await fixUserPolicy();
+          setRoleCheckFailed(true);
+          return null;
+        }
+        
+        // For other errors or if we already tried fixing, just mark as failed
+        setRoleCheckFailed(true);
         return null;
       }
       
@@ -234,7 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, [roleCheckFailed]);
+  }, [roleCheckFailed, policyFixed]);
 
   const updateProfile = async (data: { display_name: string }) => {
     if (!user) return;
@@ -282,6 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profile,
         updateProfile,
         authProvider,
+        fixUserPolicy,
       }}
     >
       {children}

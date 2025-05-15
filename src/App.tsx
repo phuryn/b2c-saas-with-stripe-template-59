@@ -35,8 +35,9 @@ import PlanSettings from "./pages/app/settings/PlanSettings";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: 0, // Reduce retries to avoid unnecessary API calls
       refetchOnWindowFocus: false,
+      staleTime: 30000, // Consider data fresh for 30 seconds
     },
   },
 });

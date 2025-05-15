@@ -12,6 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
   const { user, userRole, isLoading } = useAuth();
   const location = useLocation();
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
   useEffect(() => {
     // Give the auth system a bit more time to complete initialization
@@ -25,6 +26,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
         isLoading, 
         path: location.pathname 
       });
+
+      // Determine if we need to redirect
+      if (!user && !isLoading) {
+        console.log("User not authenticated, will redirect to /auth");
+        setRedirectPath(`/auth?from=${encodeURIComponent(location.pathname)}`);
+      } else {
+        setRedirectPath(null);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
@@ -40,10 +49,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
   }
 
   // If not authenticated, redirect to auth page
-  if (!user) {
-    console.log("User not authenticated, redirecting to /auth");
+  if (redirectPath) {
     // Remember the page they were trying to access for potential redirect back after login
-    return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
+    return <Navigate to={redirectPath} replace />;
   }
 
   // If a specific role is required, use the role check

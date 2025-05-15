@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -26,12 +27,12 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 const Auth: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const fromPath = searchParams.get('from') || '/app';
   const { user, isLoading } = useAuth();
   const { toast: shadcnToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Get the return path from location state
-  const from = location.state?.from || "/app";
+  const [redirectInProgress, setRedirectInProgress] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -43,25 +44,33 @@ const Auth: React.FC = () => {
 
   // Redirect if already authenticated - but be careful to prevent loops
   useEffect(() => {
+    // Skip redirection if we're already in the process of redirecting
+    if (redirectInProgress) return;
+
     // Log authentication state for debugging
     console.log("Auth page - Authentication state:", { 
       user: !!user,
       isLoading,
-      from 
+      fromPath,
+      redirectInProgress
     });
     
     // Only redirect if user is authenticated and we're not still loading
-    if (user && !isLoading) {
-      console.log(`User is already authenticated, redirecting to: ${from}`);
+    if (user && !isLoading && !redirectInProgress) {
+      console.log(`User is already authenticated, will redirect to: ${fromPath}`);
+      
+      // Set redirect flag to prevent multiple redirects
+      setRedirectInProgress(true);
+      
       // Use a short delay to avoid potential race conditions
       const timer = setTimeout(() => {
-        navigate(from, { replace: true });
+        navigate(fromPath, { replace: true });
         toast.success("You are already signed in");
-      }, 100);
+      }, 200);
       
       return () => clearTimeout(timer);
     }
-  }, [user, isLoading, navigate, from]);
+  }, [user, isLoading, navigate, fromPath, redirectInProgress]);
 
   // Don't show sign-in form while we're checking authentication
   if (isLoading) {
@@ -99,14 +108,12 @@ const Auth: React.FC = () => {
         throw error;
       }
 
-      console.log("Login successful, redirecting to:", from);
+      console.log("Login successful, will redirect to:", fromPath);
+      setRedirectInProgress(true);
       
       // Add directLogin parameter to track explicit login attempts
-      const params = new URLSearchParams();
-      params.set('directLogin', 'true');
-      
-      // Navigate to the path they were trying to access or default to /app
-      navigate(from + (from.includes('?') ? '&' : '?') + params.toString(), { replace: true });
+      navigate(fromPath, { replace: true });
+      toast.success("Successfully signed in");
       
     } catch (error: any) {
       console.error('Error with email login:', error);
@@ -222,7 +229,7 @@ const Auth: React.FC = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-primary-blue hover:bg-primary-blue/90"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || redirectInProgress}
                   >
                     {isSubmitting ? "Signing In..." : "Sign In"}
                   </Button>
@@ -241,6 +248,7 @@ const Auth: React.FC = () => {
                   variant="outline" 
                   className="flex items-center gap-2 justify-center py-6"
                   onClick={handleGoogleSignIn}
+                  disabled={redirectInProgress}
                 >
                   <FcGoogle className="h-6 w-6" />
                   <span>Continue with Google</span>
@@ -250,6 +258,7 @@ const Auth: React.FC = () => {
                   variant="outline" 
                   className="flex items-center gap-2 justify-center py-6"
                   onClick={handleLinkedInSignIn}
+                  disabled={redirectInProgress}
                 >
                   <FaLinkedin className="h-6 w-6 text-[#0A66C2]" />
                   <span>Continue with LinkedIn</span>
