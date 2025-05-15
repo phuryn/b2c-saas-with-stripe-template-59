@@ -48,8 +48,19 @@ const PlanSettings: React.FC = () => {
   // Get the current cycle based on the subscription plan
   const getCurrentCycle = (): BillingCycle => {
     if (!subscription?.current_plan) return 'yearly'; // Default to yearly
-    // Check if current plan includes 'yearly' substring
-    return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
+    
+    // Debug to see what's in the current plan
+    console.log('Current plan value:', subscription.current_plan);
+    
+    // Check for yearly with more robust detection, since price_1RLoScLdL9hht8n4hSQtsOte doesn't explicitly contain 'yearly'
+    // From the edge function logs we can see this corresponds to a yearly plan
+    if (subscription.current_plan === 'price_1RLoScLdL9hht8n4hSQtsOte') {
+      return 'yearly';
+    }
+    
+    // Fallback to standard check
+    return subscription.current_plan.includes('yearly') || 
+           subscription.current_plan.includes('annual') ? 'yearly' : 'monthly';
   };
 
   // Set the initial cycle based on subscription data BEFORE rendering the component
