@@ -76,9 +76,7 @@ const BillingSettings: React.FC = () => {
   useEffect(() => {
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
-      toast('Subscription Updated', {
-        description: 'Your subscription has been updated successfully.'
-      });
+      toast.success('Your subscription has been updated successfully.');
       checkSubscriptionStatus();
     } else if (searchParams.get('canceled') === 'true') {
       toast('Subscription update canceled');
@@ -109,10 +107,7 @@ const BillingSettings: React.FC = () => {
       console.error('Error fetching prices from Stripe:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(`Failed to fetch pricing information: ${errorMessage}`);
-      toast('Error', {
-        description: 'Failed to fetch pricing information from Stripe.',
-        variant: 'destructive'
-      });
+      toast.error('Failed to fetch pricing information from Stripe.');
     } finally {
       setPricesLoading(false);
     }
@@ -137,10 +132,7 @@ const BillingSettings: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(`Failed to retrieve subscription information: ${errorMessage}`);
       
-      toast('Error', {
-        description: 'Failed to retrieve subscription information.',
-        variant: 'destructive'
-      });
+      toast.error('Failed to retrieve subscription information.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -162,10 +154,7 @@ const BillingSettings: React.FC = () => {
     } catch (err) {
       console.error('Error opening customer portal:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      toast('Error', {
-        description: `Failed to open customer portal: ${errorMessage}`,
-        variant: 'destructive'
-      });
+      toast.error(`Failed to open customer portal: ${errorMessage}`);
     } finally {
       setSubscriptionLoading(false);
     }
