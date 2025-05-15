@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,25 +34,20 @@ const Auth: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
 
+  // Initialize the form with react-hook-form
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
   // Handle auth state and redirection
   useEffect(() => {
-    // Skip if auth check is still in progress or if we've already redirected
     if (isLoading || hasRedirected) return;
     
-    // Log authentication state for debugging
-    console.log("Auth page - Authentication state:", { 
-      user: !!user,
-      isLoading,
-      fromPath,
-      hasRedirected,
-      pathname: location.pathname,
-      search: location.search
-    });
-    
-    // Only redirect if user is authenticated
     if (user && !hasRedirected) {
-      console.log(`User is already authenticated, redirecting to: /app`);
-      
       // Set redirect flag to prevent multiple redirects
       setHasRedirected(true);
       
