@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
 
 const loginFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -24,9 +26,13 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading } = useAuth();
-  const { toast } = useToast();
+  const { toast: shadcnToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Get the return path from location state
+  const from = location.state?.from || "/app";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -36,21 +42,27 @@ const Auth: React.FC = () => {
     },
   });
 
-  // Only redirect if user explicitly signed in through this page, not for existing sessions
+  // Redirect if already authenticated
   useEffect(() => {
-    // Checking URL parameter for direct login attempt
-    const params = new URLSearchParams(window.location.search);
-    const directLogin = params.get('directLogin') === 'true';
+    // Log authentication state for debugging
+    console.log("Auth page - Authentication state:", { 
+      user: !!user,
+      isLoading,
+      from 
+    });
     
-    // Only redirect if this is a direct login attempt and user is authenticated
-    if (directLogin && user && !isLoading) {
-      navigate('/app');
+    if (user && !isLoading) {
+      console.log(`User is already authenticated, redirecting to: ${from}`);
+      toast.success("You are already signed in");
+      navigate(from, { replace: true });
     }
-  }, [user, navigate, isLoading]);
+  }, [user, isLoading, navigate, from]);
 
   const handleEmailLogin = async (values: LoginFormValues) => {
     try {
       setIsSubmitting(true);
+      console.log("Attempting email login for:", values.email);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
@@ -60,18 +72,18 @@ const Auth: React.FC = () => {
         throw error;
       }
 
+      console.log("Login successful, redirecting to:", from);
+      
       // Add directLogin parameter to track explicit login attempts
-      const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams();
       params.set('directLogin', 'true');
-      navigate(`/app?${params.toString()}`);
+      
+      // Navigate to the path they were trying to access or default to /app
+      navigate(from + (from.includes('?') ? '&' : '?') + params.toString(), { replace: true });
       
     } catch (error: any) {
       console.error('Error with email login:', error);
-      toast({
-        title: "Authentication failed",
-        description: error.message || "Could not sign in with email and password. Please try again.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Could not sign in with email and password. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -79,16 +91,21 @@ const Auth: React.FC = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      console.log("Attempting Google sign-in");
+      
       // Add directLogin parameter to track explicit login attempts
       const currentUrl = window.location.href;
       const baseUrl = window.location.hostname.startsWith('app.')
         ? currentUrl.split('/auth')[0]
         : currentUrl.split('/auth')[0].replace('://', '://app.');
       
+      // Pass the 'from' path as a state parameter so we can redirect back after auth
+      const redirectPath = from !== "/app" ? from : "/app";
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${baseUrl}/app?directLogin=true`,
+          redirectTo: `${baseUrl}${redirectPath}?directLogin=true`,
           queryParams: {
             // Force a fresh login prompt even if the user is already logged in
             prompt: 'select_account'
@@ -99,27 +116,28 @@ const Auth: React.FC = () => {
       if (error) {
         throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error with Google sign in:', error);
-      toast({
-        title: "Authentication failed",
-        description: "Could not sign in with Google. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Could not sign in with Google. Please try again.");
     }
   };
 
   const handleLinkedInSignIn = async () => {
     try {
+      console.log("Attempting LinkedIn sign-in");
+      
       const currentUrl = window.location.href;
       const baseUrl = window.location.hostname.startsWith('app.')
         ? currentUrl.split('/auth')[0]
         : currentUrl.split('/auth')[0].replace('://', '://app.');
       
+      // Pass the 'from' path as a state parameter so we can redirect back after auth
+      const redirectPath = from !== "/app" ? from : "/app";
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin_oidc',
         options: {
-          redirectTo: `${baseUrl}/app?directLogin=true`,
+          redirectTo: `${baseUrl}${redirectPath}?directLogin=true`,
           queryParams: {
             prompt: 'select_account'
           }
@@ -129,13 +147,9 @@ const Auth: React.FC = () => {
       if (error) {
         throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error with LinkedIn sign in:', error);
-      toast({
-        title: "Authentication failed",
-        description: "Could not sign in with LinkedIn. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Could not sign in with LinkedIn. Please try again.");
     }
   };
 
@@ -143,6 +157,19 @@ const Auth: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
+      </div>
+    );
+  }
+
+  // Don't render the login form if already authenticated (should redirect via useEffect)
+  if (user) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">You are already signed in</h2>
+          <p className="text-gray-500 mb-4">Redirecting you to the application...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-blue mx-auto"></div>
+        </div>
       </div>
     );
   }

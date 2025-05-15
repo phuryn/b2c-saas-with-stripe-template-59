@@ -71,15 +71,17 @@ const App = () => {
                 </Route>
               )}
               
-              {/* App routes */}
-              <Route path="/app" element={<AppLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="links" element={<Links />} />
-                <Route path="settings" element={<Settings />}>
-                  <Route index element={<Navigate to="/app/settings/profile" replace />} />
-                  <Route path="profile" element={<ProfileSettings />} />
-                  <Route path="billing" element={<BillingSettings />} />
-                  <Route path="plan" element={<PlanSettings />} />
+              {/* App routes - wrap with ProtectedRoute */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/app" element={<AppLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="links" element={<Links />} />
+                  <Route path="settings" element={<Settings />}>
+                    <Route index element={<Navigate to="/app/settings/profile" replace />} />
+                    <Route path="profile" element={<ProfileSettings />} />
+                    <Route path="billing" element={<BillingSettings />} />
+                    <Route path="plan" element={<PlanSettings />} />
+                  </Route>
                 </Route>
               </Route>
               
