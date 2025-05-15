@@ -83,7 +83,6 @@ serve(async (req) => {
     } else if (flow === 'billing_address_update') {
       // Since Stripe doesn't support billing_address_update as a direct flow type,
       // we'll just create a regular portal session without specifying a flow
-      // This will allow the user to access all billing settings
       logStep("Creating general portal session for billing address update");
       // No specific flow_data needed here, the standard portal allows billing address updates
     }

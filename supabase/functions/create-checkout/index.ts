@@ -49,7 +49,7 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    // Create checkout session
+    // Create checkout session with tax ID collection and billing address
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
@@ -60,6 +60,12 @@ serve(async (req) => {
           quantity: 1
         }
       ],
+      // Add tax ID collection - enabled but not required
+      tax_id_collection: {
+        enabled: true
+      },
+      // Add billing address collection - auto means it will collect but not require all fields
+      billing_address_collection: 'auto',
       success_url: `${req.headers.get("origin")}/app/settings/plan?success=true`,
       cancel_url: `${req.headers.get("origin")}/app/settings/plan?canceled=true`,
       allow_promotion_codes: true
