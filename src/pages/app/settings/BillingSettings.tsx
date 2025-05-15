@@ -228,6 +228,13 @@ const BillingSettings: React.FC = () => {
     checkSubscriptionStatus();
   };
 
+  const handleRenewSubscription = async () => {
+    if (onRenewSubscription) {
+      await onRenewSubscription();
+      toast.success("Your subscription has been successfully renewed.");
+    }
+  };
+
   const renderErrorState = () => {
     return (
       <Alert variant="destructive" className="mb-6">

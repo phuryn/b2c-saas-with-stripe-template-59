@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -60,7 +59,6 @@ const App = () => {
             closeButton
             duration={3000}
             richColors
-            dismissible
           />
           <BrowserRouter>
             <Routes>

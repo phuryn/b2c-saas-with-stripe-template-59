@@ -1,6 +1,6 @@
 
 import { useTheme } from "next-themes"
-import { Toaster as Sonner, toast } from "sonner"
+import { Toaster as Sonner } from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
@@ -14,7 +14,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       duration={3000}
       closeButton
       richColors
-      dismissible
+      // Removed 'dismissible' property as it's not in the ToasterProps type
       toastOptions={{
         classNames: {
           toast:
@@ -31,4 +31,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
-export { Toaster, toast }
+export { Toaster }
+
+// Re-export the toast from our custom hook
+export { toast } from "@/hooks/use-toast"

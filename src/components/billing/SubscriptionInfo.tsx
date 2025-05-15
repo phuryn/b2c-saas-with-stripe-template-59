@@ -48,9 +48,7 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
   const handleRenewSubscription = async () => {
     if (onRenewSubscription) {
       await onRenewSubscription();
-      toast('Subscription Renewed', {
-        description: "Your subscription has been successfully renewed."
-      });
+      toast.success("Your subscription has been successfully renewed.");
     }
   };
   
