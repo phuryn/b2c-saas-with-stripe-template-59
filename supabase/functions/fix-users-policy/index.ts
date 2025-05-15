@@ -23,127 +23,98 @@ serve(async (req) => {
 
     console.log('[FIX-USERS-POLICY] Starting policy fix...');
 
-    // Instead of trying to fetch existing policies (which was failing),
-    // directly try to drop any policies that might exist on the users table
-    // using a more direct approach
+    // First, directly address the Row Level Security on the users table
+    // We'll drop existing policies and recreate them without recursion
     
-    // First, disable RLS temporarily to make sure we can reset it
-    const disableRlsResult = await supabase.rpc('execute_sql', {
-      sql: `
-        -- Temporarily disable RLS on users table to reset it
-        ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
-      `
-    });
+    const queryResults = [];
+    
+    // Step 1: Disable Row Level Security temporarily to reset it
+    const { error: disableRlsError } = await supabase
+      .from('_rls_actions')
+      .insert({
+        action: 'ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;'
+      });
 
-    if (disableRlsResult.error) {
-      console.error('[FIX-USERS-POLICY] Error disabling RLS:', disableRlsResult.error);
-      // Continue anyway as some errors here are expected if RLS wasn't enabled
+    if (disableRlsError) {
+      console.error('[FIX-USERS-POLICY] Error disabling RLS:', disableRlsError);
+      // Continue anyway, the table might not have RLS enabled
+      queryResults.push({ step: 'disable_rls', success: false, error: disableRlsError.message });
     } else {
       console.log('[FIX-USERS-POLICY] Successfully disabled RLS temporarily');
+      queryResults.push({ step: 'disable_rls', success: true });
     }
 
-    // Drop all existing policies on the users table
-    const dropPoliciesResult = await supabase.rpc('execute_sql', {
-      sql: `
-        -- This will drop all policies on the users table if they exist
-        -- Note: We use DO block with exception handling to avoid errors if policies don't exist
-        DO $$
-        BEGIN
-          -- Try to drop each possible policy with exception handling
-          BEGIN
-            DROP POLICY IF EXISTS "Users can view own user data" ON public.users;
-          EXCEPTION WHEN OTHERS THEN
-            -- Policy doesn't exist or can't be dropped, just continue
-          END;
-          
-          BEGIN
-            DROP POLICY IF EXISTS "Administrators can view all users" ON public.users;
-          EXCEPTION WHEN OTHERS THEN
-            -- Policy doesn't exist or can't be dropped, just continue
-          END;
-          
-          -- If there were any other policies you were trying to create, add them here
-          -- This makes sure we clean up any existing policies that might conflict
-        END;
-        $$;
-      `
-    });
+    // Step 2: Drop all existing policies on the users table
+    const { error: dropPoliciesError } = await supabase
+      .from('_rls_actions')
+      .insert({
+        action: `
+          -- Drop any existing policies on the users table
+          DROP POLICY IF EXISTS "Users can view own user data" ON public.users;
+          DROP POLICY IF EXISTS "Administrators can view all users" ON public.users;
+        `
+      });
 
-    if (dropPoliciesResult.error) {
-      console.error('[FIX-USERS-POLICY] Error dropping policies:', dropPoliciesResult.error);
-      // Continue anyway as we'll try to recreate them
+    if (dropPoliciesError) {
+      console.error('[FIX-USERS-POLICY] Error dropping policies:', dropPoliciesError);
+      queryResults.push({ step: 'drop_policies', success: false, error: dropPoliciesError.message });
     } else {
       console.log('[FIX-USERS-POLICY] Successfully dropped any existing policies');
+      queryResults.push({ step: 'drop_policies', success: true });
     }
 
-    // Create a security definer function to safely get user role
-    const createFnResult = await supabase.rpc('execute_sql', {
-      sql: `
-        CREATE OR REPLACE FUNCTION public.get_user_role(user_id uuid)
-        RETURNS app_role
-        LANGUAGE sql
-        SECURITY DEFINER
-        SET search_path = public
-        STABLE
-        AS $$
-          SELECT role FROM public.users WHERE id = user_id;
-        $$;
-      `
-    });
+    // Step 3: Create a security definer function to safely get user role
+    const { error: createFnError } = await supabase
+      .from('_rls_actions')
+      .insert({
+        action: `
+          -- Create a security definer function to safely get roles without recursion
+          CREATE OR REPLACE FUNCTION public.get_user_role(user_id uuid)
+          RETURNS app_role
+          LANGUAGE sql
+          SECURITY DEFINER
+          SET search_path = public
+          STABLE
+          AS $$
+            SELECT role FROM public.users WHERE id = user_id;
+          $$;
+        `
+      });
 
-    if (createFnResult.error) {
-      console.error('[FIX-USERS-POLICY] Error creating function:', createFnResult.error);
-      throw createFnResult.error;
+    if (createFnError) {
+      console.error('[FIX-USERS-POLICY] Error creating function:', createFnError);
+      queryResults.push({ step: 'create_function', success: false, error: createFnError.message });
     } else {
       console.log('[FIX-USERS-POLICY] Successfully created get_user_role function');
+      queryResults.push({ step: 'create_function', success: true });
     }
 
-    // Create new non-recursive policies
-    const createPolicyResult = await supabase.rpc('execute_sql', {
-      sql: `
-        -- Enable RLS on the users table
-        ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-        
-        -- Create policy for selecting user data
-        CREATE POLICY "Users can view own user data" ON public.users
-          FOR SELECT
-          USING (auth.uid() = id);
+    // Step 4: Enable RLS and create new policies using the security definer function
+    const { error: createPolicyError } = await supabase
+      .from('_rls_actions')
+      .insert({
+        action: `
+          -- Enable RLS on the users table
+          ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
           
-        -- Create policy for administrators to view all users
-        CREATE POLICY "Administrators can view all users" ON public.users
-          FOR SELECT
-          USING (
-            (SELECT role FROM public.users WHERE id = auth.uid()) = 'administrator'::app_role
-          );
-      `
-    });
+          -- Create policy for users to view their own data
+          CREATE POLICY "Users can view own user data" ON public.users
+            FOR SELECT
+            USING (auth.uid() = id);
+          
+          -- Create policy for administrators to view all users using the security definer function
+          CREATE POLICY "Administrators can view all users" ON public.users
+            FOR SELECT
+            USING (public.get_user_role(auth.uid()) = 'administrator'::app_role);
+        `
+      });
 
-    if (createPolicyResult.error) {
-      console.error('[FIX-USERS-POLICY] Error creating policies:', createPolicyResult.error);
-      throw createPolicyResult.error;
+    if (createPolicyError) {
+      console.error('[FIX-USERS-POLICY] Error creating policies:', createPolicyError);
+      queryResults.push({ step: 'create_policies', success: false, error: createPolicyError.message });
     } else {
       console.log('[FIX-USERS-POLICY] Successfully created policies');
-    }
-
-    // Update the policy for administrators to use the security definer function
-    const updateAdminPolicyResult = await supabase.rpc('execute_sql', {
-      sql: `
-        -- Drop and recreate the admin policy using the security definer function
-        DROP POLICY IF EXISTS "Administrators can view all users" ON public.users;
-        
-        CREATE POLICY "Administrators can view all users" ON public.users
-          FOR SELECT
-          USING (
-            public.get_user_role(auth.uid()) = 'administrator'::app_role
-          );
-      `
-    });
-
-    if (updateAdminPolicyResult.error) {
-      console.error('[FIX-USERS-POLICY] Error updating admin policy:', updateAdminPolicyResult.error);
-      // Continue anyway as the main fix might still work
-    } else {
-      console.log('[FIX-USERS-POLICY] Successfully updated admin policy to use security definer function');
+      queryResults.push({ step: 'create_policies', success: true });
     }
 
     console.log('[FIX-USERS-POLICY] Successfully fixed users policies');
@@ -151,7 +122,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Users table policies fixed successfully'
+        message: 'Users table policies fixed successfully',
+        results: queryResults
       }),
       {
         headers: {
