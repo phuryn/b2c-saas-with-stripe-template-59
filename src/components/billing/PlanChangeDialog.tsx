@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { toast } from '@/hooks/use-toast';
 
 interface PlanChangeDialogProps {
   open: boolean;
@@ -27,6 +28,19 @@ const PlanChangeDialog: React.FC<PlanChangeDialogProps> = ({
   loading,
   newPlanName
 }) => {
+  const handleConfirm = () => {
+    try {
+      onConfirm();
+      // Don't automatically close the dialog - it will be closed by the parent component
+      // after the operation completes successfully
+    } catch (err) {
+      console.error('Error during plan change:', err);
+      toast.error("An error occurred while changing plans. Please try again.");
+      // Still allow the dialog to close on error
+      onOpenChange(false);
+    }
+  };
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -38,12 +52,20 @@ const PlanChangeDialog: React.FC<PlanChangeDialogProps> = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
+          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleConfirm} 
+            disabled={loading}
+            className="relative"
+          >
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
-            Confirm Plan Change
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Processing...
+              </>
+            ) : (
+              "Confirm Plan Change"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
