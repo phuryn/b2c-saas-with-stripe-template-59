@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 type ProtectedRouteProps = {
   requiredRole?: 'administrator' | 'support' | 'user';
@@ -89,7 +89,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
     // This prevents being locked out of the app when there are database issues
     if (userRole === null) {
       // Show a warning toast that role permissions couldn't be verified
-      toast("Could not verify permission level. Some features may be restricted.", {
+      toast.warning("Could not verify permission level. Some features may be restricted.", {
         duration: 5000,
       });
       console.warn("User role check failed, proceeding with limited access");
