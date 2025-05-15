@@ -17,7 +17,7 @@ const PlanSettings: React.FC = () => {
   const { user, session } = useAuth();
   const [searchParams] = useSearchParams();
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
-  const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly'); // Default to yearly
   const [initialized, setInitialized] = useState(false);
   
   // Use our custom hooks
@@ -41,17 +41,31 @@ const PlanSettings: React.FC = () => {
 
   useEffect(() => {
     if (session) {
-      checkSubscriptionStatus();
+      checkSubscriptionStatus(true); // Force a check to ensure we have the latest data
     }
   }, [session]);
 
-  // Set the initial cycle based on subscription data
+  // Get the current cycle based on the subscription plan
+  const getCurrentCycle = (): BillingCycle => {
+    if (!subscription?.current_plan) return 'yearly'; // Default to yearly
+    // Check if current plan includes 'yearly' substring
+    return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
+  };
+
+  // Set the initial cycle based on subscription data BEFORE rendering the component
   useEffect(() => {
     if (subscription?.subscribed && subscription?.current_plan && !initialized) {
       const currentCycle = getCurrentCycle();
       console.log('Setting initial cycle based on subscription to:', currentCycle);
       setSelectedCycle(currentCycle);
       setInitialized(true);
+    }
+  }, [subscription]);
+
+  // Reset initialization if subscription changes
+  useEffect(() => {
+    if (!subscription) {
+      setInitialized(false);
     }
   }, [subscription]);
 
@@ -112,11 +126,6 @@ const PlanSettings: React.FC = () => {
     if (subscription.current_plan.includes('premium')) return 'premium';
     if (subscription.current_plan.includes('enterprise')) return 'enterprise';
     return null;
-  };
-  
-  const getCurrentCycle = (): BillingCycle => {
-    if (!subscription?.current_plan) return 'yearly'; // Default to yearly
-    return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
   };
 
   // Handler for cycle changes in PlanSelector
