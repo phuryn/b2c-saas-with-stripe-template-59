@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -45,15 +44,16 @@ export function useSubscriptionActions() {
 
       // If no client_secret, the update was successful
       if (data?.success) {
-        return true;
+        // Return the cycle along with success status for UI updates
+        return { success: true, cycle };
       }
       
-      return false;
+      return { success: false };
     } catch (err) {
       console.error('Error updating subscription:', err);
       const errorMessage = err instanceof Error ? err.message : 'Could not update subscription';
       toast.error(errorMessage);
-      return false;
+      return { success: false };
     } finally {
       setSubscriptionLoading(false);
     }

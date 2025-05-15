@@ -49,6 +49,7 @@ const PlanSettings: React.FC = () => {
     if (subscription?.subscribed) {
       const currentCycle = getCurrentCycle();
       setSelectedCycle(currentCycle);
+      console.log('Setting initial cycle to:', currentCycle);
     }
   }, [subscription]);
 
@@ -64,9 +65,15 @@ const PlanSettings: React.FC = () => {
 
   // Handle plan selection with automatic refresh
   const handlePlanSelection = async (planId: string, cycle: 'monthly' | 'yearly') => {
-    const success = await handleSelectPlan(planId, cycle);
-    if (success) {
+    const result = await handleSelectPlan(planId, cycle);
+    if (result && result.success) {
       toast.success('Plan updated successfully');
+      
+      // Update the cycle in the UI immediately
+      if (result.cycle) {
+        setSelectedCycle(result.cycle);
+      }
+      
       await refreshSubscriptionData(); // Refresh subscription data after successful plan change
     }
   };
@@ -105,12 +112,13 @@ const PlanSettings: React.FC = () => {
   };
   
   const getCurrentCycle = (): BillingCycle => {
-    if (!subscription?.current_plan) return 'monthly';
+    if (!subscription?.current_plan) return 'yearly'; // Default to yearly
     return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
   };
 
   // Handler for cycle changes in PlanSelector
   const handleCycleChange = (cycle: 'monthly' | 'yearly') => {
+    console.log('Cycle changed to:', cycle);
     setSelectedCycle(cycle);
   };
 

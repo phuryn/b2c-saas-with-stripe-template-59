@@ -47,6 +47,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   // Effect to update the selected cycle if the prop changes
   useEffect(() => {
     if (cycle) {
+      console.log('PlanSelector: Cycle prop changed to', cycle);
       setSelectedCycle(cycle);
     }
   }, [cycle]);
@@ -146,6 +147,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   };
 
   const handleCycleChange = (cycle: 'monthly' | 'yearly') => {
+    console.log('BillingCycleSwitch: Cycle changed to', cycle);
     setSelectedCycle(cycle);
     // Call the parent's onCycleChange if provided
     if (onCycleChange) {
