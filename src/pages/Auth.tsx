@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -71,7 +70,7 @@ const Auth: React.FC = () => {
       
       // Use a short delay to avoid potential race conditions
       const timer = setTimeout(() => {
-        navigate(fromPath, { replace: true });
+        navigate(`${fromPath}?directLogin=true`, { replace: true });  // Add directLogin parameter
         toast.success("You are already signed in");
       }, 500);
       
@@ -122,7 +121,7 @@ const Auth: React.FC = () => {
       setRedirectInProgress(true);
       
       // Add directLogin parameter to track explicit login attempts
-      navigate(fromPath, { replace: true });
+      navigate(`${fromPath}?directLogin=true`, { replace: true });
       toast.success("Successfully signed in");
       
     } catch (error: any) {

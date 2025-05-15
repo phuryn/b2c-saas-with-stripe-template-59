@@ -29,13 +29,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
         redirectCount
       });
 
-      // Determine if we need to redirect
+      // Only redirect if not authenticated, not loading, and not already on auth page
       if (!user && !isLoading) {
         console.log("User not authenticated, will redirect to /auth");
         
         // Skip redirect entirely on auth pages to avoid loops
         if (location.pathname.startsWith('/auth') || location.pathname === '/signup') {
           console.log("Already on auth page, skipping redirect");
+          return;
+        }
+        
+        // IMPORTANT: Don't redirect from /app to /auth if we just came from a login flow
+        // This checks for the directLogin parameter that might be set during OAuth redirects
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('directLogin') === 'true') {
+          console.log("Direct login detected, skipping redirect to give auth time to initialize");
           return;
         }
         
