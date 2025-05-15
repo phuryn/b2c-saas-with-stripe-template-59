@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -30,19 +31,19 @@ const AppLayout: React.FC = () => {
     checkSubscriptionStatus
   } = useSubscription();
 
-  // Don't initialize subscription immediately - check after we confirm authentication
+  // Only initialize subscription once after auth is confirmed
   useEffect(() => {
     // Only check subscription once auth is confirmed and user exists
     if (user && !authLoading && !location.pathname.startsWith('/auth')) {
-      console.log("Auth confirmed in AppLayout, checking subscription status");
+      console.log("Auth confirmed in AppLayout, checking subscription status once");
       // Use a slight delay to ensure auth is fully propagated
       const timer = setTimeout(() => {
-        checkSubscriptionStatus();
+        checkSubscriptionStatus(false); // Don't force check - respect caching
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [user, authLoading, location.pathname, checkSubscriptionStatus]);
+  }, [user, authLoading]);
 
   // Get user initials for avatar
   const getInitials = () => {

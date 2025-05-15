@@ -9,13 +9,13 @@ import {
   shouldSkipRequest, 
   handleSubscriptionError,
   shouldCheckSubscription,
+  updateLastCheckTimestamp,
   MAX_RETRIES,
   RETRY_DELAY 
 } from '@/utils/subscriptionRateLimit';
 
 // Store last known subscription state in localStorage
 const SUBSCRIPTION_STORAGE_KEY = 'last_known_subscription';
-const SUBSCRIPTION_CHECK_TIMESTAMP = 'last_subscription_check';
 
 /**
  * Hook for managing subscription state and operations
@@ -51,12 +51,12 @@ export function useSubscription() {
     // Don't check subscription if user is not authenticated
     if (!user) {
       console.log('Skipping subscription check - user not authenticated');
-      return null;
+      return subscription;  // Return cached subscription
     }
-    
+
     // Rate limiting and debouncing protection
     if (!force && !shouldCheckSubscription(force)) {
-      console.log('Skipping subscription check due to debounce');
+      console.log('Skipping subscription check due to rate limiting', new Date().toISOString());
       return subscription;  // Return cached subscription
     }
     
@@ -69,9 +69,11 @@ export function useSubscription() {
     try {
       setLoading(prev => !subscription && prev); // Only show loading if no cached data
       lastAttemptRef.current = Date.now();
-      localStorage.setItem(SUBSCRIPTION_CHECK_TIMESTAMP, lastAttemptRef.current.toString());
       
       const data = await fetchSubscriptionStatus();
+      
+      // Update last check timestamp
+      updateLastCheckTimestamp();
       
       // Reset error state and retry count on success
       setErrorState(false);
@@ -162,7 +164,8 @@ export function useSubscription() {
   useEffect(() => {
     // Only check subscription if user is authenticated and auth loading is complete
     if (user && !authLoading) {
-      checkSubscriptionStatus(true);
+      console.log("Auth confirmed, checking subscription status once");
+      checkSubscriptionStatus(false);
     } else if (!user && !authLoading) {
       // Clear subscription state when logged out
       setSubscription(null);

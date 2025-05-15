@@ -57,6 +57,13 @@ export const updateSubscription = async (
     throw new Error('No data received from update-subscription endpoint');
   }
   
+  // After subscription update, clear the check timestamp to force a fresh check
+  try {
+    localStorage.removeItem('last_subscription_check');
+  } catch (e) {
+    console.warn('Could not clear subscription check timestamp:', e);
+  }
+  
   return data;
 };
 

@@ -7,7 +7,7 @@
 export const MAX_RETRIES = 3;
 export const RETRY_DELAY = 5000; // 5 seconds between retries
 export const DEBOUNCE_DELAY = 300; // 300ms debounce period
-export const CHECK_INTERVAL = 60000; // 60 seconds between subscription checks
+export const CHECK_INTERVAL = 300000; // 5 minutes (300,000ms) between subscription checks
 
 /**
  * Checks if a request should be rate-limited based on last attempt time
@@ -65,6 +65,17 @@ export const shouldCheckSubscription = (forceCheck: boolean = false): boolean =>
 };
 
 /**
+ * Updates the last check timestamp
+ */
+export const updateLastCheckTimestamp = (): void => {
+  try {
+    localStorage.setItem('last_subscription_check', Date.now().toString());
+  } catch (e) {
+    console.warn('Could not update last subscription check timestamp:', e);
+  }
+};
+
+/**
  * Handles subscription error state
  */
 export const handleSubscriptionError = (
@@ -104,3 +115,4 @@ export const getCachedSubscriptionData = () => {
 export const resetSubscriptionRateLimiting = () => {
   localStorage.removeItem('last_subscription_check');
 };
+
