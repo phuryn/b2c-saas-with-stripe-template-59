@@ -276,24 +276,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('recentLogin');
       
       // Force token refresh before sign out to ensure we have a valid token
-      await supabase.auth.refreshSession();
+      try {
+        await supabase.auth.refreshSession();
+      } catch (refreshError) {
+        console.warn('Session refresh failed:', refreshError);
+        // Continue with signout anyway
+      }
       
-      // Then attempt sign out with both local and global scope
-      const { error: localError } = await supabase.auth.signOut({ scope: 'local' });
-      if (localError) {
+      // Try local sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+        console.log('Local sign out successful');
+      } catch (localError) {
         console.warn('Local sign out failed:', localError);
-        // Still try global sign out
+        // Continue with navigation anyway
       }
       
       // Force navigation after sign out regardless of API response
-      window.location.href = '/';
+      toast.info("You have been signed out");
+      setTimeout(() => {
+        window.location.replace('/');
+      }, 500);
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error("There was a problem signing you out. Please try refreshing the page.");
       
       // Force navigation even if there was an error
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.replace('/');
       }, 1000);
     }
   };
@@ -316,3 +326,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;

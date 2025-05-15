@@ -31,98 +31,41 @@ const Auth: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { toast: shadcnToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [redirectInProgress, setRedirectInProgress] = useState(false);
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const [redirectTimeout, setRedirectTimeout] = useState<NodeJS.Timeout | null>(null);
-
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginFormSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  // Clear any existing redirect timeouts when component unmounts
-  useEffect(() => {
-    return () => {
-      if (redirectTimeout) clearTimeout(redirectTimeout);
-    };
-  }, [redirectTimeout]);
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   // Handle auth state and redirection
   useEffect(() => {
-    // Skip if auth check is still in progress
-    if (isLoading) return;
-    
-    // Avoid unnecessary processing if we've already determined auth state
-    if (authCheckComplete) return;
+    // Skip if auth check is still in progress or if we've already redirected
+    if (isLoading || hasRedirected) return;
     
     // Log authentication state for debugging
     console.log("Auth page - Authentication state:", { 
       user: !!user,
       isLoading,
       fromPath,
-      redirectInProgress,
-      authCheckComplete,
-      redirectAttempted,
+      hasRedirected,
       pathname: location.pathname,
       search: location.search
     });
     
     // Only redirect if user is authenticated
-    if (user && !redirectInProgress && !redirectAttempted) {
-      console.log(`User is already authenticated, will redirect to: ${fromPath}`);
+    if (user && !hasRedirected) {
+      console.log(`User is already authenticated, redirecting to: /app`);
       
-      // Set redirect flags to prevent multiple redirects
-      setRedirectInProgress(true);
-      setAuthCheckComplete(true);
-      setRedirectAttempted(true);
+      // Set redirect flag to prevent multiple redirects
+      setHasRedirected(true);
       
       // Store login timestamp in localStorage to help prevent redirect loops
       localStorage.setItem('recentLogin', Date.now().toString());
       
-      // Use a short delay to avoid potential race conditions
-      const timer = setTimeout(() => {
-        // Force navigation to app with window.location for a clean state
-        window.location.href = `/app`;
-      }, 500);
-      
-      setRedirectTimeout(timer);
-      return () => clearTimeout(timer);
-    } else if (!isLoading) {
-      // Mark auth check as complete even if not authenticated
-      setAuthCheckComplete(true);
+      // Force navigation to app with window.location for a clean state
+      window.location.href = `/app`;
     }
-  }, [user, isLoading, navigate, fromPath, redirectInProgress, redirectAttempted, authCheckComplete, location.pathname, location.search]);
+  }, [user, isLoading, navigate, fromPath, hasRedirected, location.pathname, location.search]);
 
-  // Don't show sign-in form while we're checking authentication
-  if (isLoading || (user && !authCheckComplete)) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
-      </div>
-    );
-  }
-
-  // If user is authenticated and redirect is in progress, show a simple message
-  if (user && redirectInProgress) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">You are already signed in</h2>
-          <p className="text-gray-500 mb-4">Redirecting you to the application...</p>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-blue mx-auto"></div>
-          <Button 
-            onClick={() => window.location.href = "/app"} 
-            className="mt-6 bg-primary-blue hover:bg-primary-blue/90"
-          >
-            Go to App Now
-          </Button>
-        </div>
-      </div>
-    );
+  // If auth is loading or user is authenticated, show nothing (will redirect right away)
+  if (isLoading || user) {
+    return null;
   }
 
   const handleEmailLogin = async (values: LoginFormValues) => {
@@ -142,8 +85,7 @@ const Auth: React.FC = () => {
       // Store login timestamp in localStorage to help prevent redirect loops
       localStorage.setItem('recentLogin', Date.now().toString());
 
-      console.log("Login successful, will redirect to:", fromPath);
-      setRedirectInProgress(true);
+      console.log("Login successful, will redirect to app");
       
       // Force navigation to app with window.location for a clean state
       window.location.href = `/app`;
@@ -166,16 +108,13 @@ const Auth: React.FC = () => {
         ? currentUrl.split('/auth')[0]
         : currentUrl.split('/auth')[0].replace('://', '://app.');
       
-      // Pass the 'from' path as a state parameter so we can redirect back after auth
-      const redirectPath = fromPath !== "/app" ? fromPath : "/app";
-      
       // Store login timestamp in localStorage to help prevent redirect loops
       localStorage.setItem('recentLogin', Date.now().toString());
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${baseUrl}${redirectPath}?directLogin=true`,
+          redirectTo: `${baseUrl}/app?directLogin=true`,
           queryParams: {
             // Force a fresh login prompt even if the user is already logged in
             prompt: 'select_account'
@@ -201,16 +140,13 @@ const Auth: React.FC = () => {
         ? currentUrl.split('/auth')[0]
         : currentUrl.split('/auth')[0].replace('://', '://app.');
       
-      // Pass the 'from' path as a state parameter so we can redirect back after auth
-      const redirectPath = fromPath !== "/app" ? fromPath : "/app";
-      
       // Store login timestamp in localStorage to help prevent redirect loops
       localStorage.setItem('recentLogin', Date.now().toString());
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin_oidc',
         options: {
-          redirectTo: `${baseUrl}${redirectPath}?directLogin=true`,
+          redirectTo: `${baseUrl}/app?directLogin=true`,
           queryParams: {
             prompt: 'select_account'
           }
@@ -268,7 +204,7 @@ const Auth: React.FC = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-primary-blue hover:bg-primary-blue/90"
-                    disabled={isSubmitting || redirectInProgress}
+                    disabled={isSubmitting}
                   >
                     {isSubmitting ? "Signing In..." : "Sign In"}
                   </Button>
@@ -287,7 +223,6 @@ const Auth: React.FC = () => {
                   variant="outline" 
                   className="flex items-center gap-2 justify-center py-6"
                   onClick={handleGoogleSignIn}
-                  disabled={redirectInProgress}
                 >
                   <FcGoogle className="h-6 w-6" />
                   <span>Continue with Google</span>
@@ -297,7 +232,6 @@ const Auth: React.FC = () => {
                   variant="outline" 
                   className="flex items-center gap-2 justify-center py-6"
                   onClick={handleLinkedInSignIn}
-                  disabled={redirectInProgress}
                 >
                   <FaLinkedin className="h-6 w-6 text-[#0A66C2]" />
                   <span>Continue with LinkedIn</span>
