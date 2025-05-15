@@ -31,8 +31,7 @@ const PlanSettings: React.FC = () => {
     handleSelectPlan,
     openCustomerPortal,
     handleDowngrade,
-    handleRenewSubscription,
-    handleCancelPendingChange
+    handleRenewSubscription
   } = useSubscription();
   
   const {
@@ -93,19 +92,9 @@ const PlanSettings: React.FC = () => {
 
   // Handle plan selection with automatic refresh
   const handlePlanSelection = async (planId: string, cycle: 'monthly' | 'yearly') => {
-    // Determine if we should schedule change for end of cycle
-    const shouldScheduleForEndOfCycle = determineIfScheduleNeeded(planId, cycle);
-    
-    const result = await handleSelectPlan(planId, cycle, {
-      scheduleForEndOfCycle: shouldScheduleForEndOfCycle
-    });
-    
+    const result = await handleSelectPlan(planId, cycle);
     if (result && result.success) {
-      if (shouldScheduleForEndOfCycle) {
-        toast.success('Plan change scheduled for the end of your current billing cycle');
-      } else {
-        toast.success('Plan updated successfully');
-      }
+      toast.success('Plan updated successfully');
       
       // Update the cycle in the UI immediately
       if (result.cycle) {
@@ -115,29 +104,6 @@ const PlanSettings: React.FC = () => {
       
       await refreshSubscriptionData(); // Refresh subscription data after successful plan change
     }
-  };
-  
-  // Helper function to determine if a change should be scheduled
-  const determineIfScheduleNeeded = (newPlanId: string, newCycle: 'monthly' | 'yearly'): boolean => {
-    if (!subscription?.current_plan) return false;
-    
-    const currentPlanId = subscription.current_plan;
-    const currentCycle = getCurrentCycle();
-    
-    // 1. Is this a billing cycle change? (monthly to yearly or vice versa)
-    if (currentCycle !== newCycle) {
-      return true;
-    }
-    
-    // 2. Is this a downgrade? (premium to standard)
-    if (
-      (currentPlanId.includes('premium') && newPlanId.includes('standard')) ||
-      (stripePrices[currentPlanId]?.unit_amount > stripePrices[newPlanId]?.unit_amount)
-    ) {
-      return true;
-    }
-    
-    return false;
   };
 
   // Handle downgrade with automatic refresh
@@ -160,16 +126,6 @@ const PlanSettings: React.FC = () => {
     if (success) {
       toast.success('Subscription renewed successfully');
       await refreshSubscriptionData(); // Refresh subscription data after renewal
-    }
-    return success;
-  };
-  
-  // Handle cancelling pending changes
-  const handleCancelChange = async () => {
-    const success = await handleCancelPendingChange();
-    if (success) {
-      toast.success('Pending change cancelled successfully');
-      await refreshSubscriptionData(); // Refresh subscription data after cancelling
     }
     return success;
   };
@@ -198,7 +154,6 @@ const PlanSettings: React.FC = () => {
   }
 
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
-  const hasPendingChange = subscription?.pending_change && subscription.pending_change.type;
   
   return (
     <div className="space-y-8">
@@ -208,8 +163,7 @@ const PlanSettings: React.FC = () => {
       {subscription?.subscribed && (
         <SubscriptionInfo
           subscription={subscription}
-          onRenewSubscription={isSubscriptionCanceling && !hasPendingChange ? handleRenewal : undefined}
-          onCancelPendingChange={hasPendingChange ? handleCancelChange : undefined}
+          onRenewSubscription={isSubscriptionCanceling ? handleRenewal : undefined}
           subscriptionLoading={actionLoading}
         />
       )}
@@ -228,10 +182,9 @@ const PlanSettings: React.FC = () => {
           cycle={selectedCycle}
           onSelect={handlePlanSelection}
           priceData={stripePrices}
-          showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling && !hasPendingChange}
+          showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling}
           onDowngrade={handleDowngradeClick}
           onCycleChange={handleCycleChange}
-          disableControls={Boolean(hasPendingChange)}
         />
       </div>
       

@@ -1,126 +1,119 @@
 
 import React from 'react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Check } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
+
+interface PlanFeature {
+  text: string;
+  isHeader?: boolean;
+}
 
 interface PlanCardProps {
   name: string;
-  description?: string;
+  description: string;
   price: string;
-  features?: string[];
-  limits?: string[];
-  buttonText?: string;
-  isActive?: boolean;
+  limits: string[];
+  features: string[];
+  isActive: boolean;
   isRecommended?: boolean;
-  onSelect?: () => void;
+  buttonText: string;
+  onSelect: () => void;
   isLoading?: boolean;
-  disabled?: boolean;
-  inBillingPage?: boolean;
+  inBillingPage?: boolean; // New prop to determine if the component is used in BillingSettings
 }
 
-// Helper hook to handle disabled state
-export const usePlanCardHelpers = () => {
-  const handleDisabledPlanClick = () => {
-    toast.info("You have a pending plan change. Please cancel it first before making new changes.");
-  };
-  
-  return {
-    handleDisabledPlanClick
-  };
-};
-
-// The actual component
 const PlanCard: React.FC<PlanCardProps> = ({
   name,
   description,
   price,
-  features = [],
-  limits = [],
-  buttonText = "Select Plan",
-  isActive = false,
+  limits,
+  features,
+  isActive,
   isRecommended = false,
+  buttonText,
   onSelect,
   isLoading = false,
-  disabled = false,
-  inBillingPage = false
+  inBillingPage = false,
 }) => {
-  const handleClick = () => {
-    if (disabled && !isActive) {
-      const { handleDisabledPlanClick } = usePlanCardHelpers();
-      handleDisabledPlanClick();
-      return;
-    }
-    
-    if (onSelect && !isLoading && (!isActive || inBillingPage)) {
-      onSelect();
-    }
-  };
+  const isMobile = useIsMobile();
+  
+  // Split the price string to separate the amount and interval
+  const priceMatch = price.match(/^(\$[\d,\.]+)(\/\w+)$/);
+  const priceAmount = priceMatch ? priceMatch[1] : price;
+  const priceInterval = priceMatch ? priceMatch[2] : '';
+  
+  const renderFeature = (feature: string) => (
+    <li key={feature} className="flex items-start gap-2">
+      <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+      <span className="break-words">{feature}</span>
+    </li>
+  );
+
+  const renderFeatures = (featuresList: string[]) => (
+    <ul className="list-none pl-0 space-y-2">
+      {featuresList.map((feature) => {
+        // Check if this feature is a header (like "Includes:" or "Everything in X, plus:")
+        if (feature === "Includes:" || feature.toLowerCase().includes("plus:") || feature.toLowerCase().includes("everything in")) {
+          return <li key={feature} className="text-sm font-medium mt-4">{feature}</li>;
+        }
+        return renderFeature(feature);
+      })}
+    </ul>
+  );
 
   return (
-    <Card 
-      className={`relative flex flex-col ${isRecommended ? 'border-primary' : ''} ${
-        isActive ? 'ring-2 ring-primary' : ''
-      } h-full`}
-    >
+    <div className={`relative min-w-[210px] ${isMobile && isRecommended ? 'mt-7' : ''}`}>
       {isRecommended && (
-        <div className="absolute top-0 translate-y-[-50%] left-1/2 transform -translate-x-1/2">
-          <div className="bg-primary text-primary-foreground text-xs px-4 py-1 rounded-full">
-            Recommended
+        <div className="absolute inset-x-0 -top-8 flex justify-center">
+          <div className="bg-primary-blue text-white px-4 py-1 text-[12pt] font-medium rounded-t-md leading-6">
+            RECOMMENDED
           </div>
         </div>
       )}
-      
-      {isActive && !inBillingPage && (
-        <div className="absolute -top-3 -right-3 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-md">
-          Current
-        </div>
-      )}
-      
-      <CardHeader className="pb-2">
-        <h3 className="text-xl font-medium text-center">{name}</h3>
-        {description && <p className="text-center text-muted-foreground text-sm mt-1">{description}</p>}
-      </CardHeader>
-      
-      <CardContent className="flex-grow">
-        <div className="text-center mb-4">
-          <div className="text-3xl font-bold">{price}</div>
-        </div>
-        
-        {limits.length > 0 && (
-          <div className="border-t border-b py-2 mb-4">
-            {limits.map((limit, i) => (
-              <div key={`limit-${i}`} className="text-sm flex items-center justify-center">
-                <span>{limit}</span>
-              </div>
-            ))}
+      <Card className={`flex h-full flex-col overflow-hidden ${isRecommended ? 'border-primary-blue ring-1 ring-primary-blue' : ''}`}>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold break-words">{name}</CardTitle>
+          <div className="flex items-baseline">
+            {priceMatch ? (
+              <>
+                <span className="text-2xl font-bold text-primary-blue">{priceAmount}</span>
+                <span className="text-[#292929] text-sm ml-0.5">{priceInterval}</span>
+              </>
+            ) : (
+              <span className="text-2xl font-bold text-primary-blue">{price}</span>
+            )}
           </div>
+          <p className="text-gray-500 mt-2 break-words">{description}</p>
+        </CardHeader>
+        
+        {/* Only render CardContent if not in billing page */}
+        {!inBillingPage && (
+          <CardContent className="grow space-y-6">
+            <div>
+              <ul className="list-none pl-0 space-y-2">
+                {limits.map(renderFeature)}
+              </ul>
+            </div>
+            <div>
+              {renderFeatures(features)}
+            </div>
+          </CardContent>
         )}
         
-        {features.length > 0 && (
-          <ul className="space-y-1">
-            {features.map((feature, i) => (
-              <li key={`feature-${i}`} className="text-sm flex items-center">
-                <Check className="h-4 w-4 mr-2 text-primary flex-shrink-0" />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-      
-      <CardFooter>
-        <Button 
-          onClick={handleClick} 
-          className="w-full"
-          disabled={isLoading || (isActive && !inBillingPage) || (disabled && !isActive)}
-          variant={isActive && !inBillingPage ? "outline" : "default"}
-        >
-          {buttonText}
-        </Button>
-      </CardFooter>
-    </Card>
+        <CardFooter className={`${inBillingPage ? "flex justify-start" : "flex flex-col items-center"} ${!inBillingPage ? "mt-auto" : ""}`}>
+          <Button 
+            onClick={onSelect}
+            disabled={isLoading || (isActive && !inBillingPage)} // Enable button in BillingSettings even for active plan
+            className={inBillingPage ? "" : "w-full"} // Remove full width for BillingSettings
+            variant={isActive ? "outline" : "default"}
+          >
+            {buttonText}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 

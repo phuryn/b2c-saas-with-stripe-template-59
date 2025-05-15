@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2, RefreshCw, AlertTriangle, Check } from 'lucide-react';
+import { Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Import our components
@@ -12,7 +12,7 @@ import BillingAddress from '@/components/billing/BillingAddress';
 import BillingPaymentMethod from '@/components/billing/BillingPaymentMethod';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
-import { usePlanCardHelpers } from '@/components/billing/PlanCard';
+import PlanCard from '@/components/billing/PlanCard';
 import { getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -32,8 +32,7 @@ const BillingSettings: React.FC = () => {
     subscriptionLoading,
     refreshSubscriptionData,
     openCustomerPortal,
-    handleRenewSubscription,
-    handleCancelPendingChange
+    handleRenewSubscription
   } = useSubscription();
 
   // Use the stripe prices hook
@@ -43,7 +42,6 @@ const BillingSettings: React.FC = () => {
   } = useStripePrices();
   
   const [error, setError] = useState<string | null>(null);
-  const { handleDisabledPlanClick } = usePlanCardHelpers();
 
   useEffect(() => {
     // Check URL parameters for subscription status messages
@@ -110,8 +108,6 @@ const BillingSettings: React.FC = () => {
   const plans = getPlans(currentCycle as 'monthly' | 'yearly');
   const currentPlan = plans.find(plan => plan.id === currentPlanId);
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
-  const hasPendingChange = subscription?.pending_change && subscription.pending_change.type !== null;
-  const disableControls = Boolean(hasPendingChange);
 
   return <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -134,67 +130,10 @@ const BillingSettings: React.FC = () => {
         <h3 className="text-lg font-medium">Your Current Plan</h3>
         
         {/* Subscription Info Component */}
-        {subscription?.subscribed && (
-          <SubscriptionInfo 
-            subscription={subscription} 
-            onRenewSubscription={isSubscriptionCanceling ? handleRenewSubscription : undefined} 
-            onCancelPendingChange={hasPendingChange ? handleCancelPendingChange : undefined}
-            subscriptionLoading={subscriptionLoading} 
-          />
-        )}
+        {subscription?.subscribed && <SubscriptionInfo subscription={subscription} onRenewSubscription={isSubscriptionCanceling ? handleRenewSubscription : undefined} subscriptionLoading={subscriptionLoading} />}
         
         {/* Plan Card */}
-        {currentPlan && (
-          <div className="plan-card-container">
-            <Card 
-              className={`relative flex flex-col ${currentPlan.recommended ? 'border-primary' : ''} h-full`}
-            >
-              <CardHeader className="pb-2">
-                <h3 className="text-xl font-medium text-center">{currentPlan.name}</h3>
-                {currentPlan.description && <p className="text-center text-muted-foreground text-sm mt-1">{currentPlan.description}</p>}
-              </CardHeader>
-              
-              <div className="px-6 pb-6 flex-grow">
-                <div className="text-center mb-4">
-                  <div className="text-3xl font-bold">
-                    {currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)}
-                  </div>
-                </div>
-                
-                {currentPlan.limits?.length > 0 && (
-                  <div className="border-t border-b py-2 mb-4">
-                    {currentPlan.limits.map((limit, i) => (
-                      <div key={`limit-${i}`} className="text-sm flex items-center justify-center">
-                        <span>{limit}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {currentPlan.features?.length > 0 && (
-                  <ul className="space-y-1">
-                    {currentPlan.features.map((feature, i) => (
-                      <li key={`feature-${i}`} className="text-sm flex items-center">
-                        <Check className="h-4 w-4 mr-2 text-primary flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              
-              <div className="px-6 pb-6">
-                <Button 
-                  onClick={handleManagePlan} 
-                  className="w-full"
-                  disabled={subscriptionLoading || disableControls}
-                >
-                  {currentPlan.free ? "Upgrade" : "Manage Plan"}
-                </Button>
-              </div>
-            </Card>
-          </div>
-        )}
+        {currentPlan && <PlanCard name={currentPlan.name} description={currentPlan.description} price={currentPlan.free ? 'Free' : formatPrice(currentPlan.priceId, currentCycle, stripePrices, plans)} limits={currentPlan.limits} features={currentPlan.features} isActive={false} buttonText={currentPlan.free ? "Upgrade" : "Manage Plan"} onSelect={handleManagePlan} isLoading={subscriptionLoading} inBillingPage={true} />}
       </div>
       
       {/* Monthly Usage Section */}
