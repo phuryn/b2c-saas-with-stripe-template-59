@@ -9,10 +9,11 @@ type ProtectedRouteProps = {
 };
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
-  const { user, userRole, isLoading } = useAuth();
+  const { user, userRole, isLoading, fixUserPolicy } = useAuth();
   const location = useLocation();
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
+  const [hasFixedPolicy, setHasFixedPolicy] = useState(false);
 
   useEffect(() => {
     // Give the auth system a bit more time to complete initialization
@@ -24,7 +25,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
         user: !!user, 
         userRole, 
         isLoading, 
-        path: location.pathname 
+        path: location.pathname,
+        hasFixedPolicy
       });
 
       // Determine if we need to redirect
@@ -37,7 +39,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [user, userRole, isLoading, location.pathname]);
+  }, [user, userRole, isLoading, location.pathname, hasFixedPolicy]);
+
+  // If there's an issue with the role check due to policy issues, try to fix it
+  useEffect(() => {
+    if (user && hasCheckedAuth && userRole === null && !hasFixedPolicy && !isLoading) {
+      console.log("Attempting to fix user policy...");
+      const attemptFix = async () => {
+        try {
+          await fixUserPolicy();
+          setHasFixedPolicy(true);
+          toast.success("Permissions system fixed successfully");
+        } catch (error) {
+          console.error("Failed to fix user policy:", error);
+          toast.error("Could not fix permissions system. Please try again later.");
+        }
+      };
+      
+      attemptFix();
+    }
+  }, [user, userRole, hasCheckedAuth, hasFixedPolicy, fixUserPolicy, isLoading]);
 
   // Show loading state until we've checked authentication
   if (isLoading || !hasCheckedAuth) {

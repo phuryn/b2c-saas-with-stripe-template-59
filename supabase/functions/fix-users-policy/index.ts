@@ -22,18 +22,41 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceRole);
 
     console.log('[FIX-USERS-POLICY] Starting policy fix...');
-
-    // First, directly address the Row Level Security on the users table
-    // We'll drop existing policies and recreate them without recursion
     
+    // First, check if the _rls_actions table exists
+    const { error: checkTableError } = await supabase
+      .from('_rls_actions')
+      .select('id')
+      .limit(1);
+    
+    if (checkTableError) {
+      console.error('[FIX-USERS-POLICY] Error checking _rls_actions table:', checkTableError);
+      // Table might not exist or there might be other issues
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Failed to check _rls_actions table. Please verify that the required migrations have been applied.',
+          details: checkTableError.message
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+          status: 500,
+        }
+      );
+    }
+
     const queryResults = [];
     
     // Step 1: Disable Row Level Security temporarily to reset it
-    const { error: disableRlsError } = await supabase
+    const { data: disableRlsData, error: disableRlsError } = await supabase
       .from('_rls_actions')
       .insert({
         action: 'ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;'
-      });
+      })
+      .select();
 
     if (disableRlsError) {
       console.error('[FIX-USERS-POLICY] Error disabling RLS:', disableRlsError);
@@ -45,7 +68,7 @@ serve(async (req) => {
     }
 
     // Step 2: Drop all existing policies on the users table
-    const { error: dropPoliciesError } = await supabase
+    const { data: dropPoliciesData, error: dropPoliciesError } = await supabase
       .from('_rls_actions')
       .insert({
         action: `
@@ -53,7 +76,8 @@ serve(async (req) => {
           DROP POLICY IF EXISTS "Users can view own user data" ON public.users;
           DROP POLICY IF EXISTS "Administrators can view all users" ON public.users;
         `
-      });
+      })
+      .select();
 
     if (dropPoliciesError) {
       console.error('[FIX-USERS-POLICY] Error dropping policies:', dropPoliciesError);
@@ -64,7 +88,7 @@ serve(async (req) => {
     }
 
     // Step 3: Create a security definer function to safely get user role
-    const { error: createFnError } = await supabase
+    const { data: createFnData, error: createFnError } = await supabase
       .from('_rls_actions')
       .insert({
         action: `
@@ -79,7 +103,8 @@ serve(async (req) => {
             SELECT role FROM public.users WHERE id = user_id;
           $$;
         `
-      });
+      })
+      .select();
 
     if (createFnError) {
       console.error('[FIX-USERS-POLICY] Error creating function:', createFnError);
@@ -90,7 +115,7 @@ serve(async (req) => {
     }
 
     // Step 4: Enable RLS and create new policies using the security definer function
-    const { error: createPolicyError } = await supabase
+    const { data: createPolicyData, error: createPolicyError } = await supabase
       .from('_rls_actions')
       .insert({
         action: `
@@ -107,7 +132,8 @@ serve(async (req) => {
             FOR SELECT
             USING (public.get_user_role(auth.uid()) = 'administrator'::app_role);
         `
-      });
+      })
+      .select();
 
     if (createPolicyError) {
       console.error('[FIX-USERS-POLICY] Error creating policies:', createPolicyError);
@@ -115,6 +141,49 @@ serve(async (req) => {
     } else {
       console.log('[FIX-USERS-POLICY] Successfully created policies');
       queryResults.push({ step: 'create_policies', success: true });
+    }
+
+    // Step 5: Execute the actions
+    // We'll retrieve all unexecuted actions and execute them sequentially
+    const { data: actionsToExecute, error: getActionsError } = await supabase
+      .from('_rls_actions')
+      .select('*')
+      .eq('executed', false);
+      
+    if (getActionsError) {
+      console.error('[FIX-USERS-POLICY] Error getting actions to execute:', getActionsError);
+      queryResults.push({ step: 'get_actions', success: false, error: getActionsError.message });
+    } else {
+      console.log(`[FIX-USERS-POLICY] Found ${actionsToExecute?.length || 0} actions to execute`);
+      
+      // Execute each action
+      if (actionsToExecute && actionsToExecute.length > 0) {
+        for (const action of actionsToExecute) {
+          try {
+            // Use PostgreSQL's built-in function to execute the action
+            const { error: execError } = await supabase.rpc('execute_sql', {
+              sql: action.action
+            });
+            
+            if (execError) {
+              console.error(`[FIX-USERS-POLICY] Error executing action ${action.id}:`, execError);
+              queryResults.push({ step: `execute_action_${action.id}`, success: false, error: execError.message });
+            } else {
+              // Mark action as executed
+              await supabase
+                .from('_rls_actions')
+                .update({ executed: true })
+                .eq('id', action.id);
+                
+              console.log(`[FIX-USERS-POLICY] Successfully executed action ${action.id}`);
+              queryResults.push({ step: `execute_action_${action.id}`, success: true });
+            }
+          } catch (error) {
+            console.error(`[FIX-USERS-POLICY] Error executing action ${action.id}:`, error);
+            queryResults.push({ step: `execute_action_${action.id}`, success: false, error: error.message });
+          }
+        }
+      }
     }
 
     console.log('[FIX-USERS-POLICY] Successfully fixed users policies');

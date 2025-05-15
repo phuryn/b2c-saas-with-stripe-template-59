@@ -33,6 +33,7 @@ const Auth: React.FC = () => {
   const { toast: shadcnToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [redirectInProgress, setRedirectInProgress] = useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -42,38 +43,46 @@ const Auth: React.FC = () => {
     },
   });
 
-  // Redirect if already authenticated - but be careful to prevent loops
+  // Redirect if already authenticated - with improved safety checks
   useEffect(() => {
-    // Skip redirection if we're already in the process of redirecting
-    if (redirectInProgress) return;
-
+    // Skip if auth check is still in progress
+    if (isLoading) return;
+    
+    // Avoid unnecessary processing if we've already determined auth state
+    if (authCheckComplete) return;
+    
     // Log authentication state for debugging
     console.log("Auth page - Authentication state:", { 
       user: !!user,
       isLoading,
       fromPath,
-      redirectInProgress
+      redirectInProgress,
+      authCheckComplete
     });
     
-    // Only redirect if user is authenticated and we're not still loading
-    if (user && !isLoading && !redirectInProgress) {
+    // Only redirect if user is authenticated
+    if (user && !redirectInProgress) {
       console.log(`User is already authenticated, will redirect to: ${fromPath}`);
       
-      // Set redirect flag to prevent multiple redirects
+      // Set redirect flags to prevent multiple redirects
       setRedirectInProgress(true);
+      setAuthCheckComplete(true);
       
       // Use a short delay to avoid potential race conditions
       const timer = setTimeout(() => {
         navigate(fromPath, { replace: true });
         toast.success("You are already signed in");
-      }, 200);
+      }, 500);
       
       return () => clearTimeout(timer);
+    } else if (!isLoading) {
+      // Mark auth check as complete even if not authenticated
+      setAuthCheckComplete(true);
     }
-  }, [user, isLoading, navigate, fromPath, redirectInProgress]);
+  }, [user, isLoading, navigate, fromPath, redirectInProgress, authCheckComplete]);
 
   // Don't show sign-in form while we're checking authentication
-  if (isLoading) {
+  if (isLoading || (user && !authCheckComplete)) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
@@ -81,8 +90,8 @@ const Auth: React.FC = () => {
     );
   }
 
-  // If user is authenticated, show a simple message while redirecting
-  if (user) {
+  // If user is authenticated and redirect is in progress, show a simple message
+  if (user && redirectInProgress) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
