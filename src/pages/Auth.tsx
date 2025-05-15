@@ -134,7 +134,7 @@ const Auth: React.FC = () => {
         : currentUrl.split('/auth')[0].replace('://', '://app.');
       
       // Pass the 'from' path as a state parameter so we can redirect back after auth
-      const redirectPath = from !== "/app" ? from : "/app";
+      const redirectPath = fromPath !== "/app" ? fromPath : "/app";
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -166,7 +166,7 @@ const Auth: React.FC = () => {
         : currentUrl.split('/auth')[0].replace('://', '://app.');
       
       // Pass the 'from' path as a state parameter so we can redirect back after auth
-      const redirectPath = from !== "/app" ? from : "/app";
+      const redirectPath = fromPath !== "/app" ? fromPath : "/app";
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin_oidc',
