@@ -33,6 +33,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
       if (!user && !isLoading) {
         console.log("User not authenticated, will redirect to /auth");
         
+        // Skip redirect entirely on auth pages to avoid loops
+        if (location.pathname.startsWith('/auth') || location.pathname === '/signup') {
+          console.log("Already on auth page, skipping redirect");
+          return;
+        }
+        
         // Check redirect count to prevent infinite loops
         if (redirectCount < 3) {
           setRedirectPath(`/auth?from=${encodeURIComponent(location.pathname)}`);

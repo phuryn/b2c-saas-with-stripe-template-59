@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet, useNavigate, Link } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
 import AppSidebar from './AppSidebar';
@@ -15,12 +14,13 @@ import { getPlans } from '@/config/plans';
 const AppLayout: React.FC = () => {
   const {
     user,
-    isLoading,
+    isLoading: authLoading,
     userMetadata,
     profile,
     signOut
   } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
 
   // Get subscription data with initialization
@@ -30,13 +30,19 @@ const AppLayout: React.FC = () => {
     checkSubscriptionStatus
   } = useSubscription();
 
-  // Initialize subscription data on component mount
+  // Don't initialize subscription immediately - check after we confirm authentication
   useEffect(() => {
-    // Only try to check subscription status once when component mounts
-    if (user && !subscription) {
-      checkSubscriptionStatus();
+    // Only check subscription once auth is confirmed and user exists
+    if (user && !authLoading && !location.pathname.startsWith('/auth')) {
+      console.log("Auth confirmed in AppLayout, checking subscription status");
+      // Use a slight delay to ensure auth is fully propagated
+      const timer = setTimeout(() => {
+        checkSubscriptionStatus();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
     }
-  }, [user, checkSubscriptionStatus, subscription]);
+  }, [user, authLoading, location.pathname, checkSubscriptionStatus]);
 
   // Get user initials for avatar
   const getInitials = () => {
@@ -51,18 +57,19 @@ const AppLayout: React.FC = () => {
   };
 
   // Redirect to login if not authenticated
-  if (!isLoading && !user) {
-    return <Navigate to="/auth" replace />;
+  if (!authLoading && !user) {
+    console.log("User not authenticated in AppLayout, redirecting to /auth");
+    return <Navigate to={`/auth?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
   // Show loading state
-  if (isLoading) {
+  if (authLoading) {
     return <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
       </div>;
   }
 
-  // Format the subscription tier with consistent naming
+  // Format the subscription tier with consistent naming and defensive coding
   const getFormattedPlanName = () => {
     if (subscription?.subscribed && subscription?.subscription_tier) {
       return `${subscription.subscription_tier} Plan`;
@@ -76,11 +83,23 @@ const AppLayout: React.FC = () => {
     if (!subscription || !subscription.subscription_tier) return true;
 
     // Get all plans and find the current one
-    const allPlans = getPlans('monthly');
-    const currentPlanId = subscription.subscription_tier?.toLowerCase().includes('standard') ? 'standard' : subscription.subscription_tier?.toLowerCase().includes('premium') ? 'premium' : subscription.subscription_tier?.toLowerCase().includes('enterprise') ? 'enterprise' : 'free';
-    const currentPlan = allPlans.find(plan => plan.id === currentPlanId);
-    // Show upgrade if the plan config says so (defaults to true if not specified)
-    return currentPlan?.showUpgrade !== false;
+    try {
+      const allPlans = getPlans('monthly');
+      const currentPlanId = subscription.subscription_tier?.toLowerCase().includes('standard') 
+        ? 'standard' 
+        : subscription.subscription_tier?.toLowerCase().includes('premium') 
+          ? 'premium' 
+          : subscription.subscription_tier?.toLowerCase().includes('enterprise') 
+            ? 'enterprise' 
+            : 'free';
+            
+      const currentPlan = allPlans.find(plan => plan.id === currentPlanId);
+      // Show upgrade if the plan config says so (defaults to true if not specified)
+      return currentPlan?.showUpgrade !== false;
+    } catch (e) {
+      console.error("Error determining upgrade button visibility:", e);
+      return true; // Default to showing the button if there's an error
+    }
   };
 
   const renderUserMenu = () => (

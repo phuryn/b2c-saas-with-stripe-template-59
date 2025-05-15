@@ -15,7 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 const loginFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -57,7 +57,8 @@ const Auth: React.FC = () => {
       isLoading,
       fromPath,
       redirectInProgress,
-      authCheckComplete
+      authCheckComplete,
+      pathname: location.pathname
     });
     
     // Only redirect if user is authenticated
@@ -79,7 +80,7 @@ const Auth: React.FC = () => {
       // Mark auth check as complete even if not authenticated
       setAuthCheckComplete(true);
     }
-  }, [user, isLoading, navigate, fromPath, redirectInProgress, authCheckComplete]);
+  }, [user, isLoading, navigate, fromPath, redirectInProgress, authCheckComplete, location.pathname]);
 
   // Don't show sign-in form while we're checking authentication
   if (isLoading || (user && !authCheckComplete)) {

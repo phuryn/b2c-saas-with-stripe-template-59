@@ -1,8 +1,10 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Subscription } from '@/types/subscription';
 import { fetchSubscriptionStatus } from '@/api/subscriptionApi';
 import { useSubscriptionActions } from './useSubscriptionActions';
+import { useAuth } from '@/context/AuthContext';
 import { 
   shouldSkipRequest, 
   handleSubscriptionError,
@@ -10,19 +12,36 @@ import {
   RETRY_DELAY 
 } from '@/utils/subscriptionRateLimit';
 
+// Store last known subscription state in localStorage
+const SUBSCRIPTION_STORAGE_KEY = 'last_known_subscription';
+const SUBSCRIPTION_CHECK_TIMESTAMP = 'last_subscription_check';
+
 /**
  * Hook for managing subscription state and operations
  */
 export function useSubscription() {
+  // Get auth context to check if user is authenticated
+  const { user, isLoading: authLoading } = useAuth();
+  
   // State
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState<Subscription | null>(() => {
+    // Try to initialize from localStorage if available
+    try {
+      const storedSubscription = localStorage.getItem(SUBSCRIPTION_STORAGE_KEY);
+      return storedSubscription ? JSON.parse(storedSubscription) : null;
+    } catch (e) {
+      console.warn('Error reading subscription from localStorage:', e);
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(!subscription); // Only show loading if no cached data
   const [refreshing, setRefreshing] = useState(false);
   const [errorState, setErrorState] = useState(false);
   
   // Tracking for rate limiting
   const lastAttemptRef = useRef<number>(0);
   const retryCountRef = useRef<number>(0);
+  const debounceTimerRef = useRef<number | null>(null);
   
   // Import subscription actions
   const { 
@@ -33,19 +52,44 @@ export function useSubscription() {
     handleRenewSubscription 
   } = useSubscriptionActions();
 
+  // Check if enough time has passed since last check (debouncing)
+  const shouldCheckSubscription = useCallback(() => {
+    try {
+      const lastCheck = Number(localStorage.getItem(SUBSCRIPTION_CHECK_TIMESTAMP) || 0);
+      const now = Date.now();
+      // Only check once every 60 seconds unless forced
+      return (now - lastCheck) > 60000;
+    } catch (e) {
+      return true;
+    }
+  }, []);
+
   /**
    * Fetch subscription status from API
    */
-  const checkSubscriptionStatus = useCallback(async () => {
-    // Rate limiting protection
+  const checkSubscriptionStatus = useCallback(async (force = false) => {
+    // Don't check subscription if user is not authenticated
+    if (!user) {
+      console.log('Skipping subscription check - user not authenticated');
+      return null;
+    }
+    
+    // Rate limiting and debouncing protection
+    if (!force && !shouldCheckSubscription()) {
+      console.log('Skipping subscription check due to debounce');
+      return subscription;  // Return cached subscription
+    }
+    
+    // Additional rate limiting protection
     if (shouldSkipRequest(lastAttemptRef.current, errorState)) {
       console.log('Skipping subscription check due to recent error');
-      return null;
+      return subscription;  // Return cached subscription
     }
 
     try {
-      setLoading(true);
+      setLoading(prev => !subscription && prev); // Only show loading if no cached data
       lastAttemptRef.current = Date.now();
+      localStorage.setItem(SUBSCRIPTION_CHECK_TIMESTAMP, lastAttemptRef.current.toString());
       
       const data = await fetchSubscriptionStatus();
       
@@ -55,10 +99,14 @@ export function useSubscription() {
       setSubscription(data);
       
       // Store subscription state in localStorage for future reference
-      if (data?.subscribed) {
-        localStorage.setItem('hasActiveSubscription', 'true');
-      } else {
-        localStorage.removeItem('hasActiveSubscription');
+      if (data) {
+        localStorage.setItem(SUBSCRIPTION_STORAGE_KEY, JSON.stringify(data));
+        
+        if (data?.subscribed) {
+          localStorage.setItem('hasActiveSubscription', 'true');
+        } else {
+          localStorage.removeItem('hasActiveSubscription');
+        }
       }
       
       return data;
@@ -72,47 +120,78 @@ export function useSubscription() {
       handleSubscriptionError(err, retryCountRef.current, setErrorState, !errorState);
       
       // Only show error toast on initial errors, not on every retry
-      if (!errorState) {
+      if (!errorState && retryCountRef.current > 1) {
         toast.error(`Failed to retrieve subscription information. ${errorDetails}`);
       }
       
-      return null;
+      // Return cached subscription on error
+      return subscription;
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [errorState]);
+  }, [errorState, subscription, user, shouldCheckSubscription]);
 
   /**
-   * Refresh subscription data
+   * Refresh subscription data with debouncing
    */
-  const refreshSubscriptionData = async () => {
-    if (refreshing) return;
+  const refreshSubscriptionData = useCallback(() => {
+    if (refreshing || !user) return;
     
-    // Reset error state when manually refreshing
-    setErrorState(false);
+    // Clear any existing debounce timer
+    if (debounceTimerRef.current) {
+      window.clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Set refreshing state immediately for UI feedback
     setRefreshing(true);
     
-    try {
-      await checkSubscriptionStatus();
-      // Removed toast notification as per user request
-    } catch (err) {
-      const errorDetails = err instanceof Error ? err.message : String(err);
-      console.error('Error refreshing subscription data:', err);
-      toast.error(`Could not refresh subscription information: ${errorDetails}`);
-    } finally {
-      setRefreshing(false);
-    }
-  };
+    // Debounce the actual API call
+    debounceTimerRef.current = window.setTimeout(async () => {
+      try {
+        // Reset error state when manually refreshing
+        setErrorState(false);
+        await checkSubscriptionStatus(true);
+      } catch (err) {
+        const errorDetails = err instanceof Error ? err.message : String(err);
+        console.error('Error refreshing subscription data:', err);
+        toast.error(`Could not refresh subscription information: ${errorDetails}`);
+      } finally {
+        setRefreshing(false);
+        debounceTimerRef.current = null;
+      }
+    }, 300); // 300ms debounce
+    
+    return () => {
+      if (debounceTimerRef.current) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [refreshing, user, checkSubscriptionStatus]);
 
-  // Initial subscription check
+  // Initial subscription check when auth state changes
   useEffect(() => {
-    checkSubscriptionStatus();
-  }, [checkSubscriptionStatus]);
+    // Only check subscription if user is authenticated and auth loading is complete
+    if (user && !authLoading) {
+      checkSubscriptionStatus();
+    } else if (!user && !authLoading) {
+      // Clear subscription state when logged out
+      setSubscription(null);
+      localStorage.removeItem(SUBSCRIPTION_STORAGE_KEY);
+      localStorage.removeItem('hasActiveSubscription');
+    }
+    
+    // Cleanup debounce timer
+    return () => {
+      if (debounceTimerRef.current) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [user, authLoading, checkSubscriptionStatus]);
 
   return {
     subscription,
-    loading,
+    loading: loading || (authLoading && !subscription),
     refreshing,
     subscriptionLoading,
     checkSubscriptionStatus,
