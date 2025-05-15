@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -14,6 +13,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
   const [redirectCount, setRedirectCount] = useState(0); // Track redirects to prevent loops
+  const [forceAccess, setForceAccess] = useState(false);
+
+  useEffect(() => {
+    // Reset redirect count when location changes
+    if (location.pathname !== '/app') {
+      setRedirectCount(0);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     // Give the auth system a bit more time to complete initialization
@@ -30,9 +37,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
         search: location.search
       });
 
+      // Detect potential redirect loop and allow access if needed
+      if (redirectCount > 2) {
+        console.warn("Multiple redirects detected, forcing app access");
+        setForceAccess(true);
+        return;
+      }
+
       // Only redirect if not authenticated, not loading, and not already on auth page
-      if (!user && !isLoading) {
-        console.log("User not authenticated, will redirect to /auth");
+      if (!user && !isLoading && !forceAccess) {
+        console.log("User not authenticated in ProtectedRoute, redirecting to /auth");
         
         // Skip redirect entirely on auth pages to avoid loops
         if (location.pathname.startsWith('/auth') || location.pathname === '/signup') {
@@ -40,15 +54,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
           return;
         }
         
-        // IMPORTANT: Don't redirect from /app to /auth if we just came from a login flow
-        // This checks for the directLogin parameter that might be set during OAuth redirects
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('directLogin') === 'true') {
-          console.log("Direct login detected, skipping redirect to give auth time to initialize");
-          return;
-        }
-        
-        // Also check localStorage for a recently completed login
+        // Check localStorage for a recently completed login
         const recentLogin = localStorage.getItem('recentLogin');
         const recentLoginTime = recentLogin ? parseInt(recentLogin) : 0;
         const now = Date.now();
@@ -74,7 +80,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [user, userRole, isLoading, location.pathname, location.search, redirectCount]);
+  }, [user, userRole, isLoading, location.pathname, location.search, redirectCount, forceAccess]);
 
   // Show loading state until we've checked authentication
   if (isLoading || !hasCheckedAuth) {
@@ -86,13 +92,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
   }
 
   // If not authenticated, redirect to auth page (with redirect loop protection)
-  if (redirectPath && redirectCount < 3) {
+  if (redirectPath && redirectCount < 3 && !forceAccess) {
     // Remember the page they were trying to access for potential redirect back after login
     return <Navigate to={redirectPath} replace />;
   }
 
   // If too many redirects occurred, show an error message instead of redirecting
-  if (redirectCount >= 3) {
+  if (redirectCount >= 3 && !forceAccess) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="text-red-500 text-2xl mb-4">Authentication Error</div>
@@ -110,7 +116,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
   }
 
   // If a specific role is required, use the role check
-  if (requiredRole) {
+  if (requiredRole && !forceAccess) {
     // If userRole is null due to database errors, we'll let the user through but show a warning
     // This prevents being locked out of the app when there are database issues
     if (userRole === null) {

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -167,6 +166,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Show sign-out toast
           if (event === 'SIGNED_OUT') {
             toast.info("You have been signed out");
+            // Clear any stored login timestamps
+            localStorage.removeItem('recentLogin');
+            
+            // Reset application state after sign out
+            setUserRole(null);
+            setUserMetadata(null);
+            setProfile(null);
+            setAuthProvider(null);
           }
         }
       }
@@ -264,11 +271,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       console.log("Signing out user");
-      await supabase.auth.signOut();
-      // Redirection will be handled by onAuthStateChange
+      
+      // Clear local storage items first
+      localStorage.removeItem('recentLogin');
+      
+      // Force token refresh before sign out to ensure we have a valid token
+      await supabase.auth.refreshSession();
+      
+      // Then attempt sign out with both local and global scope
+      const { error: localError } = await supabase.auth.signOut({ scope: 'local' });
+      if (localError) {
+        console.warn('Local sign out failed:', localError);
+        // Still try global sign out
+      }
+      
+      // Force navigation after sign out regardless of API response
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
-      toast.error("There was a problem signing you out");
+      toast.error("There was a problem signing you out. Please try refreshing the page.");
+      
+      // Force navigation even if there was an error
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
     }
   };
 

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,6 +34,7 @@ const Auth: React.FC = () => {
   const [redirectInProgress, setRedirectInProgress] = useState(false);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [redirectTimeout, setRedirectTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -44,7 +44,14 @@ const Auth: React.FC = () => {
     },
   });
 
-  // Redirect if already authenticated - with improved safety checks
+  // Clear any existing redirect timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (redirectTimeout) clearTimeout(redirectTimeout);
+    };
+  }, [redirectTimeout]);
+
+  // Handle auth state and redirection
   useEffect(() => {
     // Skip if auth check is still in progress
     if (isLoading) return;
@@ -78,17 +85,11 @@ const Auth: React.FC = () => {
       
       // Use a short delay to avoid potential race conditions
       const timer = setTimeout(() => {
-        // Check if we need to force a full page reload
-        // This ensures we break any potential redirect loops
-        if (location.pathname === '/auth' && !location.search.includes('directLogin')) {
-          console.log("Forcing a full page reload to break potential redirect loop");
-          window.location.href = `${fromPath}?directLogin=true`;
-        } else {
-          navigate(`${fromPath}?directLogin=true`, { replace: true });
-          toast.success("You are already signed in");
-        }
+        // Force navigation to app with window.location for a clean state
+        window.location.href = `/app`;
       }, 500);
       
+      setRedirectTimeout(timer);
       return () => clearTimeout(timer);
     } else if (!isLoading) {
       // Mark auth check as complete even if not authenticated
@@ -144,9 +145,8 @@ const Auth: React.FC = () => {
       console.log("Login successful, will redirect to:", fromPath);
       setRedirectInProgress(true);
       
-      // Add directLogin parameter to track explicit login attempts
-      navigate(`${fromPath}?directLogin=true`, { replace: true });
-      toast.success("Successfully signed in");
+      // Force navigation to app with window.location for a clean state
+      window.location.href = `/app`;
       
     } catch (error: any) {
       console.error('Error with email login:', error);

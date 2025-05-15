@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Sheet,
   SheetContent,
@@ -22,15 +21,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 
 const PublicHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut, userMetadata, profile } = useAuth();
 
   const handleSignOut = async () => {
-    await signOut();
-    // Redirection will be handled by AuthContext
+    if (isSigningOut) return;
+    
+    try {
+      setIsSigningOut(true);
+      toast.info("Signing you out...");
+      
+      // Call the signOut function from AuthContext
+      await signOut();
+      
+      // The redirection will be handled by the signOut function
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      toast.error("There was a problem signing you out. Please try again.");
+      setIsSigningOut(false);
+    }
   };
 
   // Get user initials for avatar
@@ -101,8 +116,12 @@ const PublicHeader: React.FC = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/app/settings/profile">Profile</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    Sign Out
+                  <DropdownMenuItem 
+                    onClick={handleSignOut} 
+                    disabled={isSigningOut}
+                    className={isSigningOut ? "opacity-50 cursor-not-allowed" : ""}
+                  >
+                    {isSigningOut ? "Signing Out..." : "Sign Out"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
