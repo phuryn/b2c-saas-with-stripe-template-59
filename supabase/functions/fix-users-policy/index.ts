@@ -31,7 +31,6 @@ serve(async (req) => {
     
     if (checkTableError) {
       console.error('[FIX-USERS-POLICY] Error checking _rls_actions table:', checkTableError);
-      // Table might not exist or there might be other issues
       return new Response(
         JSON.stringify({
           success: false,
@@ -67,14 +66,13 @@ serve(async (req) => {
       queryResults.push({ step: 'disable_rls', success: true });
     }
 
-    // Step 2: Drop all existing policies on the users table
+    // Step 2: Drop any existing policies on the users table (already done manually by admin)
     const { data: dropPoliciesData, error: dropPoliciesError } = await supabase
       .from('_rls_actions')
       .insert({
         action: `
-          -- Drop any existing policies on the users table
+          -- Drop any remaining policies on the users table
           DROP POLICY IF EXISTS "Users can view own user data" ON public.users;
-          DROP POLICY IF EXISTS "Administrators can view all users" ON public.users;
         `
       })
       .select();
@@ -87,7 +85,7 @@ serve(async (req) => {
       queryResults.push({ step: 'drop_policies', success: true });
     }
 
-    // Step 3: Create a security definer function to safely get user role
+    // Step 3: Create a security definer function to safely get user role without recursion
     const { data: createFnData, error: createFnError } = await supabase
       .from('_rls_actions')
       .insert({
@@ -114,7 +112,7 @@ serve(async (req) => {
       queryResults.push({ step: 'create_function', success: true });
     }
 
-    // Step 4: Enable RLS and create new policies using the security definer function
+    // Step 4: Enable RLS and create basic policy for user to view their own data
     const { data: createPolicyData, error: createPolicyError } = await supabase
       .from('_rls_actions')
       .insert({
@@ -126,11 +124,6 @@ serve(async (req) => {
           CREATE POLICY "Users can view own user data" ON public.users
             FOR SELECT
             USING (auth.uid() = id);
-          
-          -- Create policy for administrators to view all users using the security definer function
-          CREATE POLICY "Administrators can view all users" ON public.users
-            FOR SELECT
-            USING (public.get_user_role(auth.uid()) = 'administrator'::app_role);
         `
       })
       .select();

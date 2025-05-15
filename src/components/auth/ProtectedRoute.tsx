@@ -14,6 +14,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
   const [hasFixedPolicy, setHasFixedPolicy] = useState(false);
+  const [policyFixAttempts, setPolicyFixAttempts] = useState(0); // Track policy fix attempts
+  const [redirectCount, setRedirectCount] = useState(0); // Track redirects to prevent loops
 
   useEffect(() => {
     // Give the auth system a bit more time to complete initialization
@@ -26,27 +28,38 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
         userRole, 
         isLoading, 
         path: location.pathname,
-        hasFixedPolicy
+        hasFixedPolicy,
+        redirectCount
       });
 
       // Determine if we need to redirect
       if (!user && !isLoading) {
         console.log("User not authenticated, will redirect to /auth");
-        setRedirectPath(`/auth?from=${encodeURIComponent(location.pathname)}`);
+        
+        // Check redirect count to prevent infinite loops
+        if (redirectCount < 3) {
+          setRedirectPath(`/auth?from=${encodeURIComponent(location.pathname)}`);
+          setRedirectCount(prevCount => prevCount + 1);
+        } else {
+          console.warn("Too many redirects, stopping the redirect loop");
+          toast.error("Authentication error - too many redirects");
+          setRedirectPath(null);
+        }
       } else {
         setRedirectPath(null);
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [user, userRole, isLoading, location.pathname, hasFixedPolicy]);
+  }, [user, userRole, isLoading, location.pathname, hasFixedPolicy, redirectCount]);
 
   // If there's an issue with the role check due to policy issues, try to fix it
   useEffect(() => {
-    if (user && hasCheckedAuth && userRole === null && !hasFixedPolicy && !isLoading) {
+    if (user && hasCheckedAuth && userRole === null && !hasFixedPolicy && !isLoading && policyFixAttempts < 2) {
       console.log("Attempting to fix user policy...");
       const attemptFix = async () => {
         try {
+          setPolicyFixAttempts(prev => prev + 1); // Increment attempt counter
           await fixUserPolicy();
           setHasFixedPolicy(true);
           toast.success("Permissions system fixed successfully");
@@ -58,7 +71,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
       
       attemptFix();
     }
-  }, [user, userRole, hasCheckedAuth, hasFixedPolicy, fixUserPolicy, isLoading]);
+  }, [user, userRole, hasCheckedAuth, hasFixedPolicy, fixUserPolicy, isLoading, policyFixAttempts]);
 
   // Show loading state until we've checked authentication
   if (isLoading || !hasCheckedAuth) {
@@ -69,10 +82,28 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
     );
   }
 
-  // If not authenticated, redirect to auth page
-  if (redirectPath) {
+  // If not authenticated, redirect to auth page (with redirect loop protection)
+  if (redirectPath && redirectCount < 3) {
     // Remember the page they were trying to access for potential redirect back after login
     return <Navigate to={redirectPath} replace />;
+  }
+
+  // If too many redirects occurred, show an error message instead of redirecting
+  if (redirectCount >= 3) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="text-red-500 text-2xl mb-4">Authentication Error</div>
+        <div className="text-gray-600 max-w-md text-center mb-6">
+          Too many redirects detected. This could be due to an authentication issue or a permissions problem.
+        </div>
+        <button 
+          onClick={() => window.location.href = '/auth'} 
+          className="bg-primary-blue text-white px-4 py-2 rounded hover:bg-primary-blue/90"
+        >
+          Try Logging In Again
+        </button>
+      </div>
+    );
   }
 
   // If a specific role is required, use the role check

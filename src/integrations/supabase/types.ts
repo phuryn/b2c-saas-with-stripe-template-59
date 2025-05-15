@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      _rls_actions: {
+        Row: {
+          action: string
+          created_at: string | null
+          executed: boolean | null
+          id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          executed?: boolean | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          executed?: boolean | null
+          id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           display_name: string | null
@@ -92,6 +113,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      execute_sql: {
+        Args: { sql: string }
+        Returns: undefined
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
