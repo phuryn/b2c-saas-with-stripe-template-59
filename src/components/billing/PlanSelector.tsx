@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Plan, getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
-import BillingCycleSwitch from './BillingCycleSwitch';
-import PlanCard from './PlanCard';
+import { useBillingSwitchHelpers } from './BillingCycleSwitch';
+import { usePlanCardHelpers } from './PlanCard';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import PlanChangeDialog from './PlanChangeDialog';
+import { toast } from '@/hooks/use-toast';
 
 interface PlanSelectorProps {
   currentPlan?: string | null;
@@ -45,6 +46,8 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   const plans = getPlans(selectedCycle);
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { handleDisabledCycleChange } = useBillingSwitchHelpers();
+  const { handleDisabledPlanClick } = usePlanCardHelpers();
   
   // Effect to update the selected cycle if the prop changes
   useEffect(() => {
@@ -57,7 +60,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   const handlePlanSelection = (plan: Plan) => {
     // If controls are disabled due to pending change, don't allow selection
     if (disableControls) {
-      toast.info("You have a pending plan change. Please cancel it first before making new changes.");
+      handleDisabledPlanClick();
       return;
     }
     
@@ -108,57 +111,10 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     setSelectedPlan(null);
   };
 
-  const renderPlans = () => {
-    // Filter out the free plan if not on the public page
-    const filteredPlans = isPublicPage ? plans : plans.filter(plan => !plan.free);
-    
-    return filteredPlans.map((plan) => {
-      // Check if this is the current plan by comparing price IDs directly
-      // Only show active state if not on public page
-      const isActive = !isPublicPage && (
-        currentPlan === plan.priceId || 
-        (plan.id !== 'free' && currentPlan?.includes(plan.id))
-      );
-      
-      let buttonText = plan.buttonText || 'Select Plan';
-      
-      if (isPublicPage) {
-        // Custom button text for public page
-        if (plan.id === 'free') {
-          buttonText = user ? 'Manage Your Plan' : 'Sign Up Free';
-        } else if (user) {
-          buttonText = 'Manage Your Plan';
-        } else {
-          buttonText = 'Try Now';
-        }
-      } else if (isActive) {
-        // For app settings page
-        buttonText = 'Current Plan';
-      }
-      
-      return (
-        <PlanCard
-          key={plan.id}
-          name={plan.name}
-          description={plan.description}
-          price={formatPrice(plan.priceId, selectedCycle, priceData, plans)}
-          limits={plan.limits}
-          features={plan.features}
-          isActive={isActive}
-          isRecommended={plan.recommended}
-          buttonText={buttonText}
-          onSelect={() => handlePlanSelection(plan)}
-          isLoading={isLoading}
-          disabled={disableControls && !isActive}
-        />
-      );
-    });
-  };
-
   const handleCycleChange = (cycle: 'monthly' | 'yearly') => {
     // If controls are disabled due to pending changes, don't allow cycle changes
     if (disableControls) {
-      toast.info("You have a pending plan change. Please cancel it first before changing billing cycle.");
+      handleDisabledCycleChange();
       return;
     }
     

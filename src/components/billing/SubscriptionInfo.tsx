@@ -45,7 +45,7 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
 }) => {
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
   const cardInfo = getFormattedCardInfo(subscription?.payment_method);
-  const hasPendingChange = subscription?.pending_change && subscription.pending_change.type;
+  const hasPendingChange = subscription?.pending_change && subscription.pending_change.type !== null;
   
   if (!subscription) return null;
   
