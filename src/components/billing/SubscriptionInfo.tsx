@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Subscription, PaymentMethod } from '@/types/subscription';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface SubscriptionInfoProps {
   subscription: Subscription | null;
@@ -48,8 +48,7 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
   const handleRenewSubscription = async () => {
     if (onRenewSubscription) {
       await onRenewSubscription();
-      toast({
-        title: "Subscription Renewed",
+      toast('Subscription Renewed', {
         description: "Your subscription has been successfully renewed."
       });
     }

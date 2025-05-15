@@ -1,10 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import PlanSelector from '@/components/billing/PlanSelector';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useStripePrices } from '@/hooks/useStripePrices';
@@ -16,7 +15,6 @@ import { BillingCycle } from '@/types/subscription';
 const PlanSettings: React.FC = () => {
   const { user, session } = useAuth();
   const [searchParams] = useSearchParams();
-  const { toast: uiToast } = useToast();
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
   
   // Use our custom hooks
@@ -47,7 +45,7 @@ const PlanSettings: React.FC = () => {
   useEffect(() => {
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
-      toast.success('Subscription Updated', {
+      toast('Subscription Updated', {
         description: 'Your subscription has been updated successfully.',
       });
       checkSubscriptionStatus();
@@ -60,7 +58,7 @@ const PlanSettings: React.FC = () => {
   const handlePlanSelection = async (planId: string, cycle: 'monthly' | 'yearly') => {
     const success = await handleSelectPlan(planId, cycle);
     if (success) {
-      toast.success('Plan Updated', {
+      toast('Plan Updated', {
         description: 'Your subscription plan has been updated successfully.'
       });
       await refreshSubscriptionData(); // Refresh subscription data after successful plan change
@@ -75,7 +73,7 @@ const PlanSettings: React.FC = () => {
   const confirmDowngrade = async () => {
     const success = await handleDowngrade();
     if (success) {
-      toast.success('Subscription Cancelled', {
+      toast('Subscription Cancelled', {
         description: 'Your subscription has been cancelled and will end at the current billing period.'
       });
       setShowDowngradeDialog(false);
@@ -87,7 +85,7 @@ const PlanSettings: React.FC = () => {
   const handleRenewal = async () => {
     const success = await handleRenewSubscription();
     if (success) {
-      toast.success('Subscription Renewed', {
+      toast('Subscription Renewed', {
         description: 'Your subscription has been renewed successfully.'
       });
       await refreshSubscriptionData(); // Refresh subscription data after renewal

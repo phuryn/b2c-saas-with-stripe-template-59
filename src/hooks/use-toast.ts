@@ -1,15 +1,6 @@
-// This is a proxy module to unify toast usage across the app
-import { toast as sonnerToast } from 'sonner';
-import { useToast as useShadcnToast } from '@/components/ui/toast';
-
-// Export the shadcn toast hook for components that use it
-export const useToast = useShadcnToast;
-
-// Export a toast function that uses sonner for simple toast calls
-export const toast = sonnerToast;
-
 import { type ToastActionElement, ToastProps } from "@/components/ui/toast";
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect } from "react";
+import { toast as sonnerToast } from 'sonner';
 
 const TOAST_LIMIT = 10;
 const TOAST_REMOVE_DELAY = 1000000;
@@ -145,7 +136,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">;
 
-function toast({ ...props }: Toast) {
+function shadcnToast({ ...props }: Toast) {
   const id = genId();
 
   const update = (props: ToasterToast) =>
@@ -189,9 +180,11 @@ function useToast() {
 
   return {
     ...state,
-    toast,
+    toast: shadcnToast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   };
 }
 
-export { useToast, toast };
+// Export for both toast systems
+export { useToast };
+export const toast = sonnerToast;
