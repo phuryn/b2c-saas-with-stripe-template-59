@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { STRIPE_CONFIG } from '@/config/stripe';
 import { Button } from '@/components/ui/button';
 
@@ -17,12 +18,15 @@ import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
 import PlanCard from '@/components/billing/PlanCard';
 import { getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
 interface StripePrice {
   id: string;
   unit_amount: number;
   currency: string;
   interval?: string;
 }
+
 const BillingSettings: React.FC = () => {
   const {
     user,
@@ -30,13 +34,12 @@ const BillingSettings: React.FC = () => {
   } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  
   const [loading, setLoading] = useState(true);
   const [pricesLoading, setPricesLoading] = useState(true);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<{
     subscribed: boolean;
     subscription_tier: string | null;
@@ -60,14 +63,17 @@ const BillingSettings: React.FC = () => {
     } | null;
   } | null>(null);
   const [stripePrices, setStripePrices] = useState<Record<string, StripePrice>>({});
+
   useEffect(() => {
     fetchStripePrices();
   }, []);
+
   useEffect(() => {
     if (session) {
       checkSubscriptionStatus();
     }
   }, [session]);
+
   useEffect(() => {
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
@@ -81,21 +87,20 @@ const BillingSettings: React.FC = () => {
         description: 'Subscription update canceled.'
       });
     }
-  }, [searchParams, toast]);
+  }, [searchParams]);
+
   const fetchStripePrices = async () => {
     try {
       setPricesLoading(true);
       // Collect all price IDs
       const priceIds = [STRIPE_CONFIG.prices.standard.monthly, STRIPE_CONFIG.prices.standard.yearly, STRIPE_CONFIG.prices.premium.monthly, STRIPE_CONFIG.prices.premium.yearly];
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('get-prices', {
+      const { data, error } = await supabase.functions.invoke('get-prices', {
         body: {
           priceIds: priceIds.join(',')
         }
       });
-      if (error) throw new Error(error.message);
+      
+      if (error) throw new Error(error.message || 'Failed to fetch pricing information');
 
       // Create a map of price IDs to price data
       const priceMap: Record<string, StripePrice> = {};
@@ -103,8 +108,11 @@ const BillingSettings: React.FC = () => {
         priceMap[price.id] = price;
       });
       setStripePrices(priceMap);
+      setError(null);
     } catch (err) {
       console.error('Error fetching prices from Stripe:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Failed to fetch pricing information: ${errorMessage}`);
       toast({
         title: 'Error',
         description: 'Failed to fetch pricing information from Stripe.',
@@ -114,21 +122,26 @@ const BillingSettings: React.FC = () => {
       setPricesLoading(false);
     }
   };
-  const checkSubscriptionStatus = async () => {
+
+  const checkSubscriptionStatus = useCallback(async () => {
     try {
       setLoading(true);
       setRefreshing(true);
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('check-subscription');
+      setError(null);
+      
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
       if (error) {
-        throw new Error(error.message);
+        throw new Error(error.message || 'Failed to retrieve subscription information');
       }
+      
       console.log('Subscription data from API:', data); // Log the subscription data
       setSubscription(data);
     } catch (err) {
       console.error('Error checking subscription status:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Failed to retrieve subscription information: ${errorMessage}`);
+      
       toast({
         title: 'Error',
         description: 'Failed to retrieve subscription information.',
@@ -138,32 +151,37 @@ const BillingSettings: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
+
   const openCustomerPortal = async () => {
     try {
       setSubscriptionLoading(true);
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('customer-portal');
-      if (error) throw new Error(error.message);
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      
+      if (error) throw new Error(error.message || 'Failed to open customer portal');
+      
       if (data?.url) {
         window.location.href = data.url;
+      } else {
+        throw new Error('No portal URL returned');
       }
     } catch (err) {
       console.error('Error opening customer portal:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       toast({
         title: 'Error',
-        description: 'Failed to open customer portal.',
+        description: `Failed to open customer portal: ${errorMessage}`,
         variant: 'destructive'
       });
     } finally {
       setSubscriptionLoading(false);
     }
   };
+
   const handleManagePlan = () => {
     navigate('/app/settings/plan');
   };
+
   const formatPriceDisplay = (price: number | undefined, currency: string = 'usd'): string => {
     if (price === undefined) return '$0';
 
@@ -175,6 +193,7 @@ const BillingSettings: React.FC = () => {
       minimumFractionDigits: dollars % 1 === 0 ? 0 : 2
     }).format(dollars);
   };
+
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -183,6 +202,7 @@ const BillingSettings: React.FC = () => {
       day: 'numeric'
     });
   };
+
   const getPlanDetails = () => {
     if (!subscription) return {
       name: 'Free',
@@ -207,6 +227,7 @@ const BillingSettings: React.FC = () => {
       price: formattedPrice
     };
   };
+
   const getCurrentPlanId = () => {
     if (!subscription?.subscription_tier) return 'free';
     const tier = subscription.subscription_tier.toLowerCase();
@@ -215,26 +236,65 @@ const BillingSettings: React.FC = () => {
     if (tier.includes('enterprise')) return 'enterprise';
     return 'free';
   };
+
   const getCurrentCycle = () => {
     if (!subscription?.current_plan) return 'monthly';
     return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
   };
+
+  const handleRetry = () => {
+    checkSubscriptionStatus();
+  };
+
+  const renderErrorState = () => {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          {error}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRetry} 
+            className="ml-2"
+            disabled={refreshing}
+          >
+            {refreshing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+            Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  };
+
   if (loading || pricesLoading) {
     return <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
   }
+
   const planDetails = getPlanDetails();
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
   const currentPlanId = getCurrentPlanId();
   const currentCycle = getCurrentCycle();
   const plans = getPlans(currentCycle as 'monthly' | 'yearly');
   const currentPlan = plans.find(plan => plan.id === currentPlanId);
+
   return <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-medium">Billing and Usage</h2>
-        {subscription?.subscribed}
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleRetry}
+          disabled={refreshing}
+        >
+          {refreshing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+          Refresh
+        </Button>
       </div>
+      
+      {error && renderErrorState()}
       
       {/* Your Plan Section */}
       <div className="space-y-4">
@@ -260,4 +320,5 @@ const BillingSettings: React.FC = () => {
       <BillingInvoices subscription={subscription} />
     </div>;
 };
+
 export default BillingSettings;

@@ -14,21 +14,39 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Extract and verify authentication token
-    const user = await verifyAuth(req);
-    
-    // Get subscription data from Stripe
-    const subscriptionData = await getSubscriptionData(user);
-    
-    // Update database with latest subscription info
-    await updateDatabase(user, subscriptionData);
-    
-    logStep("Completed successfully");
-    
-    return new Response(JSON.stringify(subscriptionData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200
-    });
+    try {
+      // Extract and verify authentication token
+      const user = await verifyAuth(req);
+      
+      // Get subscription data from Stripe
+      const subscriptionData = await getSubscriptionData(user);
+      
+      // Update database with latest subscription info
+      await updateDatabase(user, subscriptionData);
+      
+      logStep("Completed successfully");
+      
+      return new Response(JSON.stringify(subscriptionData), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logStep("ERROR", { message: errorMessage });
+      
+      // Return a more specific error message with 401 status for auth errors
+      if (errorMessage.includes("Authentication error")) {
+        return new Response(JSON.stringify({ 
+          error: errorMessage,
+          subscribed: false
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401
+        });
+      }
+      
+      throw error; // Re-throw for general error handling below
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });

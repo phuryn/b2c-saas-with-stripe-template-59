@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Subscription } from '@/types/subscription';
 import { fetchSubscriptionStatus } from '@/api/subscriptionApi';
@@ -37,7 +37,7 @@ export function useSubscription() {
   /**
    * Fetch subscription status from API
    */
-  const checkSubscriptionStatus = async () => {
+  const checkSubscriptionStatus = useCallback(async () => {
     // Rate limiting protection
     if (shouldSkipRequest(lastAttemptRef.current, errorState)) {
       console.log('Skipping subscription check due to recent error');
@@ -65,11 +65,16 @@ export function useSubscription() {
       return data;
     } catch (err) {
       retryCountRef.current++;
+      
+      // Get more detailed error information
+      const errorDetails = err instanceof Error ? err.message : String(err);
+      console.error(`Error checking subscription status: ${errorDetails}`, err);
+      
       handleSubscriptionError(err, retryCountRef.current, setErrorState, !errorState);
       
       // Only show error toast on initial errors, not on every retry
       if (!errorState) {
-        toast.error('Failed to retrieve subscription information.');
+        toast.error(`Failed to retrieve subscription information. ${errorDetails}`);
       }
       
       return null;
@@ -77,7 +82,7 @@ export function useSubscription() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [errorState]);
 
   /**
    * Refresh subscription data
@@ -95,12 +100,18 @@ export function useSubscription() {
         toast.success('Subscription info refreshed');
       }
     } catch (err) {
+      const errorDetails = err instanceof Error ? err.message : String(err);
       console.error('Error refreshing subscription data:', err);
-      toast.error('Could not refresh subscription information');
+      toast.error(`Could not refresh subscription information: ${errorDetails}`);
     } finally {
       setRefreshing(false);
     }
   };
+
+  // Initial subscription check
+  useEffect(() => {
+    checkSubscriptionStatus();
+  }, [checkSubscriptionStatus]);
 
   return {
     subscription,
