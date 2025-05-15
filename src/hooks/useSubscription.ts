@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { Subscription } from '@/types/subscription';
 import { fetchSubscriptionStatus } from '@/api/subscriptionApi';
 import { useSubscriptionActions } from './useSubscriptionActions';
@@ -95,10 +95,8 @@ export function useSubscription() {
     setRefreshing(true);
     
     try {
-      const data = await checkSubscriptionStatus();
-      if (data) {
-        toast.success('Subscription info refreshed');
-      }
+      await checkSubscriptionStatus();
+      // Removed toast notification as per user request
     } catch (err) {
       const errorDetails = err instanceof Error ? err.message : String(err);
       console.error('Error refreshing subscription data:', err);

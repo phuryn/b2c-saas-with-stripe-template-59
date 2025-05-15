@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -45,12 +44,10 @@ const PlanSettings: React.FC = () => {
   useEffect(() => {
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
-      toast('Subscription Updated', {
-        description: 'Your subscription has been updated successfully.',
-      });
+      toast.success('Subscription updated successfully');
       checkSubscriptionStatus();
     } else if (searchParams.get('canceled') === 'true') {
-      toast('Subscription update canceled');
+      toast.info('Subscription update canceled');
     }
   }, [searchParams]);
 
@@ -58,9 +55,7 @@ const PlanSettings: React.FC = () => {
   const handlePlanSelection = async (planId: string, cycle: 'monthly' | 'yearly') => {
     const success = await handleSelectPlan(planId, cycle);
     if (success) {
-      toast('Plan Updated', {
-        description: 'Your subscription plan has been updated successfully.'
-      });
+      toast.success('Plan updated successfully');
       await refreshSubscriptionData(); // Refresh subscription data after successful plan change
     }
   };
@@ -73,9 +68,7 @@ const PlanSettings: React.FC = () => {
   const confirmDowngrade = async () => {
     const success = await handleDowngrade();
     if (success) {
-      toast('Subscription Cancelled', {
-        description: 'Your subscription has been cancelled and will end at the current billing period.'
-      });
+      toast.success('Subscription cancelled successfully');
       setShowDowngradeDialog(false);
       await refreshSubscriptionData(); // Refresh subscription data after downgrade
     }
@@ -85,9 +78,7 @@ const PlanSettings: React.FC = () => {
   const handleRenewal = async () => {
     const success = await handleRenewSubscription();
     if (success) {
-      toast('Subscription Renewed', {
-        description: 'Your subscription has been renewed successfully.'
-      });
+      toast.success('Subscription renewed successfully');
       await refreshSubscriptionData(); // Refresh subscription data after renewal
     }
     return success;

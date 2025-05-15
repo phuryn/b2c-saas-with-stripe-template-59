@@ -55,7 +55,13 @@ const App = () => {
       <TooltipProvider>
         <AuthProvider>
           <Toaster />
-          <SonnerToaster position="top-right" />
+          <SonnerToaster 
+            position="top-right" 
+            closeButton
+            duration={3000}
+            richColors
+            dismissible
+          />
           <BrowserRouter>
             <Routes>
               {/* Conditional root route - redirect to /app if on app domain */}
