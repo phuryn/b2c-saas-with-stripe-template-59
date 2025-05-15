@@ -26,7 +26,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
         userRole, 
         isLoading, 
         path: location.pathname,
-        redirectCount
+        redirectCount,
+        search: location.search
       });
 
       // Only redirect if not authenticated, not loading, and not already on auth page
@@ -47,6 +48,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
           return;
         }
         
+        // Also check localStorage for a recently completed login
+        const recentLogin = localStorage.getItem('recentLogin');
+        const recentLoginTime = recentLogin ? parseInt(recentLogin) : 0;
+        const now = Date.now();
+        
+        // If user logged in within the last 5 seconds, don't redirect
+        if (now - recentLoginTime < 5000) {
+          console.log("Recent login detected in localStorage, skipping redirect");
+          return;
+        }
+        
         // Check redirect count to prevent infinite loops
         if (redirectCount < 3) {
           setRedirectPath(`/auth?from=${encodeURIComponent(location.pathname)}`);
@@ -62,7 +74,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [user, userRole, isLoading, location.pathname, redirectCount]);
+  }, [user, userRole, isLoading, location.pathname, location.search, redirectCount]);
 
   // Show loading state until we've checked authentication
   if (isLoading || !hasCheckedAuth) {

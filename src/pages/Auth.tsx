@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,7 +58,8 @@ const Auth: React.FC = () => {
       fromPath,
       redirectInProgress,
       authCheckComplete,
-      pathname: location.pathname
+      pathname: location.pathname,
+      search: location.search
     });
     
     // Only redirect if user is authenticated
@@ -67,6 +69,9 @@ const Auth: React.FC = () => {
       // Set redirect flags to prevent multiple redirects
       setRedirectInProgress(true);
       setAuthCheckComplete(true);
+      
+      // Store login timestamp in localStorage to help prevent redirect loops
+      localStorage.setItem('recentLogin', Date.now().toString());
       
       // Use a short delay to avoid potential race conditions
       const timer = setTimeout(() => {
@@ -79,7 +84,7 @@ const Auth: React.FC = () => {
       // Mark auth check as complete even if not authenticated
       setAuthCheckComplete(true);
     }
-  }, [user, isLoading, navigate, fromPath, redirectInProgress, authCheckComplete, location.pathname]);
+  }, [user, isLoading, navigate, fromPath, redirectInProgress, authCheckComplete, location.pathname, location.search]);
 
   // Don't show sign-in form while we're checking authentication
   if (isLoading || (user && !authCheckComplete)) {
@@ -117,6 +122,9 @@ const Auth: React.FC = () => {
         throw error;
       }
 
+      // Store login timestamp in localStorage to help prevent redirect loops
+      localStorage.setItem('recentLogin', Date.now().toString());
+
       console.log("Login successful, will redirect to:", fromPath);
       setRedirectInProgress(true);
       
@@ -144,6 +152,9 @@ const Auth: React.FC = () => {
       
       // Pass the 'from' path as a state parameter so we can redirect back after auth
       const redirectPath = fromPath !== "/app" ? fromPath : "/app";
+      
+      // Store login timestamp in localStorage to help prevent redirect loops
+      localStorage.setItem('recentLogin', Date.now().toString());
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -176,6 +187,9 @@ const Auth: React.FC = () => {
       
       // Pass the 'from' path as a state parameter so we can redirect back after auth
       const redirectPath = fromPath !== "/app" ? fromPath : "/app";
+      
+      // Store login timestamp in localStorage to help prevent redirect loops
+      localStorage.setItem('recentLogin', Date.now().toString());
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin_oidc',
