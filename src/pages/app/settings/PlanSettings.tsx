@@ -48,8 +48,8 @@ const PlanSettings: React.FC = () => {
   useEffect(() => {
     if (subscription?.subscribed) {
       const currentCycle = getCurrentCycle();
-      setSelectedCycle(currentCycle);
       console.log('Setting initial cycle to:', currentCycle);
+      setSelectedCycle(currentCycle);
     }
   }, [subscription]);
 
@@ -71,6 +71,7 @@ const PlanSettings: React.FC = () => {
       
       // Update the cycle in the UI immediately
       if (result.cycle) {
+        console.log('Updating cycle after plan selection to:', result.cycle);
         setSelectedCycle(result.cycle);
       }
       

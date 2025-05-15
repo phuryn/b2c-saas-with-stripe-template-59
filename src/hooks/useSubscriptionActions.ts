@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -45,6 +46,7 @@ export function useSubscriptionActions() {
       // If no client_secret, the update was successful
       if (data?.success) {
         // Return the cycle along with success status for UI updates
+        console.log('Subscription updated successfully with cycle:', cycle);
         return { success: true, cycle };
       }
       

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,11 @@ const BillingCycleSwitch: React.FC<BillingCycleSwitchProps> = ({
   onChange 
 }) => {
   const isMobile = useIsMobile();
+
+  // Log when the selected cycle changes
+  useEffect(() => {
+    console.log('BillingCycleSwitch: selectedCycle prop is', selectedCycle);
+  }, [selectedCycle]);
 
   return (
     <div className={`${isMobile ? 'mb-5' : 'mb-12'}`}>
