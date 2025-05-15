@@ -19,6 +19,7 @@ interface PlanChangeDialogProps {
   onConfirm: () => void;
   loading: boolean;
   newPlanName: string;
+  willTakeEffectAtEndOfCycle?: boolean;
 }
 
 const PlanChangeDialog: React.FC<PlanChangeDialogProps> = ({
@@ -26,7 +27,8 @@ const PlanChangeDialog: React.FC<PlanChangeDialogProps> = ({
   onOpenChange,
   onConfirm,
   loading,
-  newPlanName
+  newPlanName,
+  willTakeEffectAtEndOfCycle = false
 }) => {
   const handleConfirm = () => {
     try {
@@ -48,7 +50,15 @@ const PlanChangeDialog: React.FC<PlanChangeDialogProps> = ({
           <AlertDialogTitle>Change to {newPlanName} Plan?</AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to change to the {newPlanName} plan?
-            <p className="mt-2">This will take effect immediately and you will be charged accordingly.</p>
+            
+            {willTakeEffectAtEndOfCycle ? (
+              <p className="mt-2">
+                This change will take effect at the end of your current billing cycle.
+                You'll continue to have access to your current plan until then.
+              </p>
+            ) : (
+              <p className="mt-2">This will take effect immediately and you will be charged accordingly.</p>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

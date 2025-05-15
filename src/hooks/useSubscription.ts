@@ -157,7 +157,8 @@ export function useSubscription() {
     handleSelectPlan,
     openCustomerPortal,
     handleDowngrade,
-    handleRenewSubscription 
+    handleRenewSubscription,
+    handleCancelPendingChange
   } = useSubscriptionActions();
 
   // Initial subscription check when auth state changes
@@ -191,6 +192,7 @@ export function useSubscription() {
     handleSelectPlan,
     openCustomerPortal,
     handleDowngrade,
-    handleRenewSubscription
+    handleRenewSubscription,
+    handleCancelPendingChange
   };
 }

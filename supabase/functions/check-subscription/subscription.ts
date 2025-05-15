@@ -16,6 +16,12 @@ type SubscriptionData = {
     exp_month?: number;
     exp_year?: number;
   } | null;
+  pending_change?: {
+    type: 'downgrade' | 'plan_change' | 'cycle_change' | null;
+    effective_date: string | null;
+    new_plan_id?: string;
+    new_plan_name?: string;
+  } | null;
   billing_address: {
     line1?: string;
     line2?: string;
@@ -42,6 +48,7 @@ export const getSubscriptionData = async (user: User): Promise<SubscriptionData>
     current_plan: null,
     cancel_at_period_end: false,
     payment_method: null,
+    pending_change: null,
     billing_address: null
   };
   
@@ -170,6 +177,7 @@ async function getActiveSubscription(stripe: Stripe, customerId: string) {
   let subscriptionEnd = null;
   let currentPlan = null;
   let cancelAtPeriodEnd = false;
+  let pendingChange = null;
 
   if (hasActiveSub) {
     const subscription = subscriptions.data[0];
@@ -193,6 +201,37 @@ async function getActiveSubscription(stripe: Stripe, customerId: string) {
       subscriptionTier = 'Standard'; // Default
     }
     logStep("Determined subscription tier", { currentPlan, subscriptionTier });
+    
+    // Check for pending changes in metadata
+    if (subscription.metadata?.pending_change === "true") {
+      const pendingChangeType = subscription.metadata.pending_change_type as 'downgrade' | 'plan_change' | 'cycle_change';
+      const effectiveDate = subscription.metadata.pending_effective_date;
+      const newPlanId = subscription.metadata.pending_new_price_id;
+      
+      // Get new plan name if available
+      let newPlanName = "Updated Plan";
+      if (newPlanId) {
+        try {
+          const newPrice = await stripe.prices.retrieve(newPlanId, { expand: ['product'] });
+          // @ts-ignore - product may be expanded
+          if (newPrice.product && typeof newPrice.product !== 'string') {
+            // @ts-ignore - product may be expanded
+            newPlanName = newPrice.product.name || "Updated Plan";
+          }
+        } catch (e) {
+          logStep("Error retrieving new plan details", { error: String(e) });
+        }
+      }
+      
+      pendingChange = {
+        type: pendingChangeType,
+        effective_date: effectiveDate,
+        new_plan_id: newPlanId,
+        new_plan_name: newPlanName
+      };
+      
+      logStep("Found pending subscription change", pendingChange);
+    }
   }
   
   return {
@@ -201,5 +240,6 @@ async function getActiveSubscription(stripe: Stripe, customerId: string) {
     subscription_end: subscriptionEnd,
     current_plan: currentPlan,
     cancel_at_period_end: cancelAtPeriodEnd,
+    pending_change: pendingChange
   };
 }

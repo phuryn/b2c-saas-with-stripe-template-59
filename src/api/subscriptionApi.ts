@@ -38,7 +38,12 @@ export const createCheckoutSession = async (planId: string): Promise<{ url: stri
 export const updateSubscription = async (
   newPriceId?: string, 
   cycle?: 'monthly' | 'yearly',
-  options?: { cancel?: boolean; renew?: boolean }
+  options?: { 
+    cancel?: boolean; 
+    renew?: boolean;
+    scheduleForEndOfCycle?: boolean;
+    cancelPendingChanges?: boolean;
+  }
 ): Promise<{ success?: boolean; subscription?: { client_secret?: string } } | null> => {
   const { data, error } = await supabase.functions.invoke('update-subscription', {
     body: { 
@@ -76,4 +81,29 @@ export const openCustomerPortalApi = async (): Promise<{ url: string } | null> =
   if (error) throw new Error(error.message || 'Failed to open customer portal');
   
   return data;
+};
+
+/**
+ * Cancel a pending subscription change
+ */
+export const cancelPendingChange = async (): Promise<{ success: boolean } | null> => {
+  const { data, error } = await supabase.functions.invoke('update-subscription', {
+    body: { 
+      cancelPendingChanges: true
+    }
+  });
+  
+  if (error) {
+    console.error('Error cancelling pending change:', error);
+    throw new Error(error.message || 'Could not cancel pending change');
+  }
+  
+  // Clear cache to force a fresh check
+  try {
+    localStorage.removeItem('last_subscription_check');
+  } catch (e) {
+    console.warn('Could not clear subscription check timestamp:', e);
+  }
+  
+  return { success: Boolean(data?.success) };
 };

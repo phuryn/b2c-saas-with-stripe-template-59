@@ -3,10 +3,12 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Subscription, PaymentMethod } from '@/types/subscription';
 import { toast } from '@/hooks/use-toast';
+import PendingChangeInfo from './PendingChangeInfo';
 
 interface SubscriptionInfoProps {
   subscription: Subscription | null;
   onRenewSubscription?: () => void;
+  onCancelPendingChange?: () => Promise<boolean>;
   subscriptionLoading: boolean;
 }
 
@@ -38,10 +40,12 @@ const getFormattedCardInfo = (paymentMethod?: PaymentMethod | null) => {
 const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
   subscription,
   onRenewSubscription,
+  onCancelPendingChange,
   subscriptionLoading
 }) => {
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
   const cardInfo = getFormattedCardInfo(subscription?.payment_method);
+  const hasPendingChange = subscription?.pending_change && subscription.pending_change.type;
   
   if (!subscription) return null;
   
@@ -52,33 +56,45 @@ const SubscriptionInfo: React.FC<SubscriptionInfoProps> = ({
   };
   
   return (
-    <div className="bg-muted/50 rounded-lg p-4 border border-muted-foreground/20">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          {isSubscriptionCanceling ? (
-            <p className="text-sm text-muted-foreground">
-              Your subscription cancels on {formatDate(subscription.subscription_end)}.
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Your subscription will auto-renew on {formatDate(subscription.subscription_end)}.
-              {cardInfo && ` On that date, the ${cardInfo.name} card (ending in ${cardInfo.last4}) will be charged.`}
-            </p>
-          )}
-        </div>
-        
-        <div className="flex gap-2">
-          {isSubscriptionCanceling && onRenewSubscription && (
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={handleRenewSubscription} 
-              disabled={subscriptionLoading} 
-              className="shrink-0"
-            >
-              Renew Subscription
-            </Button>
-          )}
+    <div className="space-y-4">
+      {/* Show pending change info if there's a pending change */}
+      {hasPendingChange && onCancelPendingChange && (
+        <PendingChangeInfo 
+          pendingChange={subscription.pending_change!}
+          onCancelPendingChange={onCancelPendingChange}
+          isLoading={subscriptionLoading}
+        />
+      )}
+      
+      {/* Current subscription info */}
+      <div className="bg-muted/50 rounded-lg p-4 border border-muted-foreground/20">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            {isSubscriptionCanceling ? (
+              <p className="text-sm text-muted-foreground">
+                Your subscription cancels on {formatDate(subscription.subscription_end)}.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Your subscription will auto-renew on {formatDate(subscription.subscription_end)}.
+                {cardInfo && ` On that date, the ${cardInfo.name} card (ending in ${cardInfo.last4}) will be charged.`}
+              </p>
+            )}
+          </div>
+          
+          <div className="flex gap-2">
+            {isSubscriptionCanceling && onRenewSubscription && !hasPendingChange && (
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={handleRenewSubscription} 
+                disabled={subscriptionLoading || hasPendingChange} 
+                className="shrink-0"
+              >
+                Renew Subscription
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

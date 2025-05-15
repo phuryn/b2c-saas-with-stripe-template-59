@@ -24,6 +24,7 @@ interface PlanSelectorProps {
   onDowngrade?: () => void;
   isPublicPage?: boolean;
   onCycleChange?: (cycle: 'monthly' | 'yearly') => void;
+  disableControls?: boolean;
 }
 
 const PlanSelector: React.FC<PlanSelectorProps> = ({ 
@@ -35,7 +36,8 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   showDowngrade = false,
   onDowngrade,
   isPublicPage = false,
-  onCycleChange
+  onCycleChange,
+  disableControls = false
 }) => {
   const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>(cycle);
   const [showPlanChangeDialog, setShowPlanChangeDialog] = useState(false);
@@ -53,6 +55,12 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   }, [cycle]);
 
   const handlePlanSelection = (plan: Plan) => {
+    // If controls are disabled due to pending change, don't allow selection
+    if (disableControls) {
+      toast.info("You have a pending plan change. Please cancel it first before making new changes.");
+      return;
+    }
+    
     // On public page, redirect to appropriate location based on user and plan
     if (isPublicPage) {
       if (plan.id === 'enterprise') {
@@ -141,12 +149,19 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
           buttonText={buttonText}
           onSelect={() => handlePlanSelection(plan)}
           isLoading={isLoading}
+          disabled={disableControls && !isActive}
         />
       );
     });
   };
 
   const handleCycleChange = (cycle: 'monthly' | 'yearly') => {
+    // If controls are disabled due to pending changes, don't allow cycle changes
+    if (disableControls) {
+      toast.info("You have a pending plan change. Please cancel it first before changing billing cycle.");
+      return;
+    }
+    
     console.log('BillingCycleSwitch: Cycle changed to', cycle);
     setSelectedCycle(cycle);
     // Call the parent's onCycleChange if provided
@@ -160,7 +175,14 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       <BillingCycleSwitch 
         selectedCycle={selectedCycle}
         onChange={handleCycleChange}
+        disabled={disableControls}
       />
+      
+      {disableControls && (
+        <div className="mt-2 mb-4 text-sm text-warning-foreground bg-warning/20 p-2 rounded">
+          Plan changes are disabled while you have a pending change scheduled. Cancel the pending change first to make new changes.
+        </div>
+      )}
       
       {/* Updated grid with responsive layout for mobile and desktop */}
       <div 
@@ -174,7 +196,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
         {renderPlans()}
       </div>
       
-      {showDowngrade && !isPublicPage && (
+      {showDowngrade && !isPublicPage && !disableControls && (
         <div className="mt-10 text-center">
           <button
             onClick={onDowngrade}

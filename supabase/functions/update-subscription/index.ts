@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -8,7 +7,11 @@ import {
   cancelSubscription, 
   renewSubscription, 
   updateSubscriptionPrice, 
-  checkIfPriceChanged 
+  checkIfPriceChanged,
+  scheduleSubscriptionUpdate,
+  scheduleCycleChange,
+  cancelPendingChanges,
+  hasPendingChanges
 } from "./subscription.ts";
 
 serve(async (req) => {
@@ -87,10 +90,31 @@ serve(async (req) => {
       });
     }
     
-    // Handle price update case
-    const { newPriceId } = requestBody;
+    // Handle cancellation of pending changes
+    if (requestBody.cancelPendingChanges === true) {
+      logStep("Processing request to cancel pending changes");
+      const customerId = await getStripeCustomer(stripe, user.email);
+      const subscription = await getActiveSubscription(stripe, customerId);
+      
+      if (!subscription) {
+        throw new Error("No active subscription found");
+      }
+      
+      const result = await cancelPendingChanges(stripe, subscription.id);
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        subscription: result
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+    
+    // Handle plan update case
+    const { newPriceId, cycle, scheduleForEndOfCycle } = requestBody;
     if (!newPriceId) throw new Error("New price ID is required");
-    logStep("Request data parsed", { newPriceId });
+    logStep("Request data parsed", { newPriceId, cycle, scheduleForEndOfCycle });
     
     const customerId = await getStripeCustomer(stripe, user.email);
     const subscription = await getActiveSubscription(stripe, customerId);
@@ -104,6 +128,18 @@ serve(async (req) => {
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
+      });
+    }
+    
+    // If there are pending changes, don't allow new changes until they're cancelled
+    if (hasPendingChanges(subscription)) {
+      logStep("Cannot make new changes while pending changes exist");
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Cannot make new changes while pending changes exist. Please cancel pending changes first."
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
       });
     }
 
@@ -124,14 +160,53 @@ serve(async (req) => {
       });
     }
 
-    // Update subscription with new price
+    // Get subscription item ID
     const subscriptionItemId = subscription.items.data[0].id;
-    const result = await updateSubscriptionPrice(
-      stripe, 
-      subscription.id, 
-      subscriptionItemId, 
-      newPriceId
-    );
+    let result;
+    
+    // If it's a downgrade or the user specifically requests to schedule for end of cycle
+    // Schedule the change for the end of the billing cycle
+    const currentPriceId = subscription.items.data[0].price.id;
+    const currentPrice = await stripe.prices.retrieve(currentPriceId);
+    const newPrice = await stripe.prices.retrieve(newPriceId);
+    
+    // Check if this is a cycle change (monthly to yearly or vice versa)
+    const isCycleChange = 
+      currentPrice.recurring?.interval !== newPrice.recurring?.interval;
+    
+    // Check if it's a downgrade (premium to standard)
+    const isDowngrade = 
+      (currentPriceId.includes('premium') && newPriceId.includes('standard')) ||
+      (currentPrice.unit_amount || 0) > (newPrice.unit_amount || 0);
+    
+    // For cycle changes, downgrades, or when explicitly requested, schedule for end of cycle
+    if (scheduleForEndOfCycle || isDowngrade || isCycleChange) {
+      if (isCycleChange) {
+        // Handle billing cycle change
+        result = await scheduleCycleChange(
+          stripe, 
+          subscription.id, 
+          subscriptionItemId, 
+          newPriceId
+        );
+      } else {
+        // Handle plan change or downgrade
+        result = await scheduleSubscriptionUpdate(
+          stripe, 
+          subscription.id, 
+          subscriptionItemId, 
+          newPriceId
+        );
+      }
+    } else {
+      // Otherwise, perform immediate change with prorations
+      result = await updateSubscriptionPrice(
+        stripe, 
+        subscription.id, 
+        subscriptionItemId, 
+        newPriceId
+      );
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 

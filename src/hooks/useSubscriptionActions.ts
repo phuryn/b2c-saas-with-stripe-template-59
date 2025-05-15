@@ -4,7 +4,8 @@ import { toast } from '@/hooks/use-toast';
 import { 
   updateSubscription, 
   openCustomerPortalApi, 
-  createCheckoutSession 
+  createCheckoutSession,
+  cancelPendingChange
 } from '@/api/subscriptionApi';
 
 /**
@@ -16,7 +17,7 @@ export function useSubscriptionActions() {
   /**
    * Handle plan selection or change
    */
-  const handleSelectPlan = async (planId: string, cycle: 'monthly' | 'yearly') => {
+  const handleSelectPlan = async (planId: string, cycle: 'monthly' | 'yearly', options?: { scheduleForEndOfCycle?: boolean }) => {
     try {
       setSubscriptionLoading(true);
       
@@ -34,7 +35,9 @@ export function useSubscriptionActions() {
       }
       
       // For existing subscriptions, use update-subscription as before
-      const data = await updateSubscription(planId, cycle);
+      const data = await updateSubscription(planId, cycle, {
+        scheduleForEndOfCycle: options?.scheduleForEndOfCycle
+      });
       
       // If we got client_secret back, the user needs to complete payment setup
       if (data?.subscription?.client_secret) {
@@ -131,11 +134,31 @@ export function useSubscriptionActions() {
     }
   };
 
+  /**
+   * Handle cancellation of pending changes
+   */
+  const handleCancelPendingChange = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const result = await cancelPendingChange();
+      
+      return Boolean(result?.success);
+    } catch (err) {
+      console.error('Error cancelling pending change:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Could not cancel pending change';
+      toast.error(errorMessage);
+      return false;
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
   return {
     subscriptionLoading,
     handleSelectPlan,
     openCustomerPortal,
     handleDowngrade,
-    handleRenewSubscription
+    handleRenewSubscription,
+    handleCancelPendingChange
   };
 }
