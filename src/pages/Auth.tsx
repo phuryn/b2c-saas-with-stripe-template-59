@@ -34,6 +34,7 @@ const Auth: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [redirectInProgress, setRedirectInProgress] = useState(false);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -58,25 +59,34 @@ const Auth: React.FC = () => {
       fromPath,
       redirectInProgress,
       authCheckComplete,
+      redirectAttempted,
       pathname: location.pathname,
       search: location.search
     });
     
     // Only redirect if user is authenticated
-    if (user && !redirectInProgress) {
+    if (user && !redirectInProgress && !redirectAttempted) {
       console.log(`User is already authenticated, will redirect to: ${fromPath}`);
       
       // Set redirect flags to prevent multiple redirects
       setRedirectInProgress(true);
       setAuthCheckComplete(true);
+      setRedirectAttempted(true);
       
       // Store login timestamp in localStorage to help prevent redirect loops
       localStorage.setItem('recentLogin', Date.now().toString());
       
       // Use a short delay to avoid potential race conditions
       const timer = setTimeout(() => {
-        navigate(`${fromPath}?directLogin=true`, { replace: true });  // Add directLogin parameter
-        toast.success("You are already signed in");
+        // Check if we need to force a full page reload
+        // This ensures we break any potential redirect loops
+        if (location.pathname === '/auth' && !location.search.includes('directLogin')) {
+          console.log("Forcing a full page reload to break potential redirect loop");
+          window.location.href = `${fromPath}?directLogin=true`;
+        } else {
+          navigate(`${fromPath}?directLogin=true`, { replace: true });
+          toast.success("You are already signed in");
+        }
       }, 500);
       
       return () => clearTimeout(timer);
@@ -84,7 +94,7 @@ const Auth: React.FC = () => {
       // Mark auth check as complete even if not authenticated
       setAuthCheckComplete(true);
     }
-  }, [user, isLoading, navigate, fromPath, redirectInProgress, authCheckComplete, location.pathname, location.search]);
+  }, [user, isLoading, navigate, fromPath, redirectInProgress, redirectAttempted, authCheckComplete, location.pathname, location.search]);
 
   // Don't show sign-in form while we're checking authentication
   if (isLoading || (user && !authCheckComplete)) {
@@ -103,6 +113,12 @@ const Auth: React.FC = () => {
           <h2 className="text-xl font-semibold mb-2">You are already signed in</h2>
           <p className="text-gray-500 mb-4">Redirecting you to the application...</p>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-blue mx-auto"></div>
+          <Button 
+            onClick={() => window.location.href = "/app"} 
+            className="mt-6 bg-primary-blue hover:bg-primary-blue/90"
+          >
+            Go to App Now
+          </Button>
         </div>
       </div>
     );
