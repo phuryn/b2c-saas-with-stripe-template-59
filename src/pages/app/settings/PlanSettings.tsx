@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -10,11 +11,13 @@ import SubscriptionHeader from '@/components/billing/SubscriptionHeader';
 import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
 import DowngradeDialog from '@/components/billing/DowngradeDialog';
 import { BillingCycle } from '@/types/subscription';
+import { getPlans } from '@/config/plans';
 
 const PlanSettings: React.FC = () => {
   const { user, session } = useAuth();
   const [searchParams] = useSearchParams();
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
+  const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly');
   
   // Use our custom hooks
   const {
@@ -40,6 +43,14 @@ const PlanSettings: React.FC = () => {
       checkSubscriptionStatus();
     }
   }, [session]);
+
+  // Set the initial cycle based on subscription data
+  useEffect(() => {
+    if (subscription?.subscribed) {
+      const currentCycle = getCurrentCycle();
+      setSelectedCycle(currentCycle);
+    }
+  }, [subscription]);
 
   useEffect(() => {
     // Check URL parameters for subscription status messages
@@ -98,6 +109,11 @@ const PlanSettings: React.FC = () => {
     return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
   };
 
+  // Handler for cycle changes in PlanSelector
+  const handleCycleChange = (cycle: 'monthly' | 'yearly') => {
+    setSelectedCycle(cycle);
+  };
+
   if (subscriptionLoading || pricesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -133,11 +149,12 @@ const PlanSettings: React.FC = () => {
         <PlanSelector
           currentPlan={subscription?.current_plan}
           isLoading={actionLoading || isSubscriptionCanceling}
-          cycle={currentCycle}
+          cycle={selectedCycle}
           onSelect={handlePlanSelection}
           priceData={stripePrices}
           showDowngrade={Boolean(subscription?.subscribed) && !isSubscriptionCanceling}
           onDowngrade={handleDowngradeClick}
+          onCycleChange={handleCycleChange}
         />
       </div>
       

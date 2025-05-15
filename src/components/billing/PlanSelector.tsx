@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plan, getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
 import BillingCycleSwitch from './BillingCycleSwitch';
@@ -7,6 +7,7 @@ import PlanCard from './PlanCard';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import PlanChangeDialog from './PlanChangeDialog';
 
 interface PlanSelectorProps {
   currentPlan?: string | null;
@@ -22,6 +23,7 @@ interface PlanSelectorProps {
   showDowngrade?: boolean;
   onDowngrade?: () => void;
   isPublicPage?: boolean;
+  onCycleChange?: (cycle: 'monthly' | 'yearly') => void;
 }
 
 const PlanSelector: React.FC<PlanSelectorProps> = ({ 
@@ -32,12 +34,22 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   priceData = {},
   showDowngrade = false,
   onDowngrade,
-  isPublicPage = false
+  isPublicPage = false,
+  onCycleChange
 }) => {
-  const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>(cycle);
+  const [showPlanChangeDialog, setShowPlanChangeDialog] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const plans = getPlans(selectedCycle);
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  
+  // Effect to update the selected cycle if the prop changes
+  useEffect(() => {
+    if (cycle) {
+      setSelectedCycle(cycle);
+    }
+  }, [cycle]);
 
   const handlePlanSelection = (plan: Plan) => {
     // On public page, redirect to appropriate location based on user and plan
@@ -69,7 +81,22 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       return;
     }
     
-    onSelect && onSelect(plan.priceId, selectedCycle);
+    // Show confirmation dialog for plan changes if not currently on this plan
+    const currentPlanIncludesId = currentPlan && currentPlan.includes(plan.id);
+    const isCurrentPlan = currentPlan === plan.priceId || currentPlanIncludesId;
+    
+    if (!isCurrentPlan) {
+      setSelectedPlan(plan);
+      setShowPlanChangeDialog(true);
+    }
+  };
+  
+  const confirmPlanChange = () => {
+    if (selectedPlan && onSelect) {
+      onSelect(selectedPlan.priceId, selectedCycle);
+    }
+    setShowPlanChangeDialog(false);
+    setSelectedPlan(null);
   };
 
   const renderPlans = () => {
@@ -120,6 +147,10 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
 
   const handleCycleChange = (cycle: 'monthly' | 'yearly') => {
     setSelectedCycle(cycle);
+    // Call the parent's onCycleChange if provided
+    if (onCycleChange) {
+      onCycleChange(cycle);
+    }
   };
 
   return (
@@ -150,6 +181,17 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
             Downgrade to free
           </button>
         </div>
+      )}
+      
+      {/* Plan Change Confirmation Dialog */}
+      {selectedPlan && (
+        <PlanChangeDialog
+          open={showPlanChangeDialog}
+          onOpenChange={setShowPlanChangeDialog}
+          onConfirm={confirmPlanChange}
+          loading={isLoading || false}
+          newPlanName={selectedPlan.name}
+        />
       )}
     </div>
   );
