@@ -160,9 +160,8 @@ function useIsMobile() {
 
 import { cn } from "@/lib/utils"
 
+// Export constants but remove duplicate exports of components/hooks
 export { 
-  SidebarProvider, 
-  useSidebar, 
   useIsMobile, 
   // Constants for use in other components
   SIDEBAR_WIDTH,

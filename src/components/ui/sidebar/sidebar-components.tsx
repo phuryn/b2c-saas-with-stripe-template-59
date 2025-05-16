@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
@@ -17,6 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
+// Import from sidebar-context instead of re-exporting
 import {
   useSidebar,
   useIsMobile,
@@ -620,7 +620,7 @@ const SidebarMenuSubButton = React.forwardRef<
 })
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
-// Export all sidebar components
+// Export only components from this file, not context or hooks
 export {
   Sidebar,
   SidebarContent,
@@ -643,6 +643,5 @@ export {
   SidebarMenuSubItem,
   SidebarRail,
   SidebarSeparator,
-  SidebarTrigger,
-  useSidebar
+  SidebarTrigger
 }

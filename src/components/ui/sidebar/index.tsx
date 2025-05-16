@@ -20,9 +20,17 @@ export {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarProvider,
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar,
 } from "./sidebar-components";
+
+// Export context and utilities from sidebar-context
+export {
+  SidebarProvider,
+  useSidebar,
+  useIsMobile,
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_MOBILE,
+  SIDEBAR_WIDTH_ICON
+} from "./sidebar-context";
