@@ -1,6 +1,5 @@
 
-// This file re-exports the sidebar components from the sidebar folder
-// This maintains backward compatibility with existing imports
+// Export all sidebar components from this index file
 export {
   Sidebar,
   SidebarContent,
@@ -26,4 +25,4 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
-} from "./sidebar/index"
+} from "./sidebar-components";
