@@ -9,9 +9,14 @@ const CounterSection: React.FC = () => {
   const animationDuration = 2000; // milliseconds
   
   useEffect(() => {
+    // Initialize visibility state
+    setIsVisible(false);
+    
     const observer = new IntersectionObserver((entries) => {
       const [entry] = entries;
-      setIsVisible(entry.isIntersecting);
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+      }
     }, { threshold: 0.2 });
     
     if (sectionRef.current) {
@@ -52,10 +57,13 @@ const CounterSection: React.FC = () => {
     <section className="section-padding bg-primary-blue text-white" ref={sectionRef}>
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-3xl mx-auto">
-          <div className="text-5xl md:text-7xl font-bold mb-6 animate-count-up">
+          <div className={`text-5xl md:text-7xl font-bold mb-6 animate-count-up ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
             {formattedCount}
           </div>
-          <p className="text-xl md:text-2xl">
+          <p className={`text-xl md:text-2xl ${isVisible ? 'opacity-100' : 'opacity-0'}`} style={{ 
+            transition: "opacity 0.5s ease-in-out", 
+            transitionDelay: "0.3s" 
+          }}>
             subscribers from companies like Amazon, Google, and Meta
           </p>
         </div>

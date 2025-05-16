@@ -133,4 +133,9 @@
     width: auto !important;
     height: auto !important;
   }
+
+  /* Fix for animations - ensure elements start invisible */
+  .animate-fade-up {
+    opacity: 0;
+  }
 }
