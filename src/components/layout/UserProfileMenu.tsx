@@ -115,8 +115,8 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ onSignOut, onUpgrade 
   if (isMobile) {
     return (
       <div className="flex items-center gap-3 p-3">
-        {/* Upgrade button for free plans on mobile - only visible on desktop now */}
-        {!isMobile && isFreePlan() && shouldShowUpgradeButton() && (
+        {/* Show Upgrade button on mobile too */}
+        {isFreePlan() && shouldShowUpgradeButton() && (
           <Button 
             onClick={onUpgrade} 
             size="sm" 
