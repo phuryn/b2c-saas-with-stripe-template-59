@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
@@ -8,7 +7,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/context/AuthContext';
-
 const AppSidebar: React.FC = () => {
   const location = useLocation();
   const {
@@ -20,37 +18,32 @@ const AppSidebar: React.FC = () => {
   const {
     user
   } = useAuth();
-  
   const isActive = (path: string) => {
     if (path === '/app') {
       return location.pathname === '/app' || location.pathname === '/app/home';
     }
     return location.pathname.startsWith(path);
   };
-  
   const renderSidebarContent = () => <>
-      {/* App Logo and trigger in one line */}
-      <SidebarHeader className="flex items-center justify-between p-3">
-        {state !== 'collapsed' && (
-          <Link to="/app" className="flex-grow">
-            <img src="/primary-logo.svg" alt="TRUSTY" width={120} height={28} className="h-5 w-auto" />
+      {/* App Logo - conditional based on sidebar state */}
+      <SidebarHeader className="flex items-center justify-between">
+        <div className="flex items-center py-3">
+          <Link to="/app">
+            {state === 'collapsed' ? <img src="/small-logo.svg" alt="TRUSTY" width={28} height={28} className="h-5 w-auto object-contain" /> : <img src="/primary-logo.svg" alt="TRUSTY" width={120} height={28} className="h-5 w-auto" />}
           </Link>
-        )}
-        
-        {!isMobile && (
-          <TooltipProvider>
+        </div>
+        {!isMobile && <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <SidebarTrigger className="text-neutral-500">
-                  {/* The SidebarTrigger component handles the icon internally */}
+                <SidebarTrigger className="ml-auto text-neutral-500">
+                  {/* The SidebarTrigger component now handles the icon internally */}
                 </SidebarTrigger>
               </TooltipTrigger>
               <TooltipContent side="right">
                 {state === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        )}
+          </TooltipProvider>}
       </SidebarHeader>
       
       <SidebarContent className="bg-white">
@@ -74,7 +67,6 @@ const AppSidebar: React.FC = () => {
         </SidebarGroup>
       </SidebarContent>
     </>;
-
   if (isMobile) {
     return <>
         <div className="fixed top-4 left-4 z-40">
@@ -90,7 +82,6 @@ const AppSidebar: React.FC = () => {
         </Sheet>
       </>;
   }
-
   return <Sidebar collapsible="icon" className="bg-white" style={{
     '--sidebar-width': '13rem',
     '--sidebar-width-icon': '2.75rem'
@@ -98,5 +89,4 @@ const AppSidebar: React.FC = () => {
     {renderSidebarContent()}
   </Sidebar>;
 };
-
 export default AppSidebar;
