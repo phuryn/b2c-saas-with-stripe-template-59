@@ -2,6 +2,21 @@
 import { Plan } from "@/config/plans";
 
 /**
+ * Formats a date for display in a consistent format
+ */
+export const formatDate = (dateString: string | number): string => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(date);
+};
+
+/**
  * Formats a price for display based on price data and cycle
  */
 export const formatPrice = (
@@ -54,3 +69,4 @@ export const formatPrice = (
     currency: currency,
   }).format(amount) + `/${interval}`;
 };
+
