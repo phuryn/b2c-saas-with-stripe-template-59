@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -113,11 +114,22 @@
     @apply absolute left-0 text-gray-500;
   }
 
-  /* Extremely specific selector for collapsed sidebar menu buttons */
-  html body [data-collapsible="icon"] [data-sidebar="menu-button"],
-  [data-collapsible="icon"] .group-data-\[collapsible\=icon\]\:\!size-8,
-  [data-collapsible="icon"] .group-data-\[collapsible\=icon\]\:\!p-2 {
-    padding: 0.375rem !important; /* 6px */
+  /* Direct targeting of the collapsed sidebar menu buttons based on the dev tools inspection */
+  .group[data-collapsible="icon"] .group-data-\[collapsible\=icon\]\:\!p-2 {
+    padding: 0.5rem !important;
+  }
+  
+  .group[data-collapsible="icon"] .group-data-\[collapsible\=icon\]\:\!size-8 {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+  
+  [data-collapsible="icon"] [data-sidebar="menu-button"] {
+    padding: 0.375rem !important;
+  }
+  
+  html body .group[data-collapsible="icon"] [data-sidebar="menu-button"] {
+    padding: 0.375rem !important;
     width: auto !important;
     height: auto !important;
   }
