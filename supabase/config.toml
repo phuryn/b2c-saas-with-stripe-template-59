@@ -12,3 +12,7 @@ project_id = "bnwvnlgspaxuzbfiphik"
 [functions.get-prices]
 
 [functions.get-invoices]
+
+[functions.initialize-stripe-products]
+
+[functions.initialize-stripe-portal]
