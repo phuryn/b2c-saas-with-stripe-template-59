@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -155,18 +154,18 @@ const PlanSettings: React.FC = () => {
   const getCurrentPlanId = () => {
     if (!subscription?.current_plan) return null;
     
-    // Check for premium plan (using the proper price IDs)
-    if (subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly ||
-        subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) {
-        console.log("Detected premium plan based on price ID match with config");
-        return 'premium'; 
-    }
-    
     // Check for standard plan (using the proper price IDs)
     if (subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly ||
         subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) {
         console.log("Detected standard plan based on price ID match with config");
-        return 'standard';
+        return 'standard'; 
+    }
+    
+    // Check for premium plan (using the proper price IDs)
+    if (subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly ||
+        subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) {
+        console.log("Detected premium plan based on price ID match with config");
+        return 'premium';
     }
     
     if (subscription.current_plan.includes('enterprise')) return 'enterprise';

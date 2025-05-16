@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -74,18 +73,18 @@ const BillingSettings: React.FC = () => {
   const getCurrentPlanId = () => {
     if (!subscription?.current_plan) return 'free';
     
-    // Check for premium plan first (using correct price IDs)
-    if (subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly || 
-        subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) {
-      console.log("Detected premium plan based on price ID match with config");
-      return 'premium';
-    }
-    
-    // Check for standard plan (using correct price IDs)
+    // Check for standard plan first (using correct price IDs)
     if (subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly || 
         subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) {
       console.log("Detected standard plan based on price ID match with config");
       return 'standard';
+    }
+    
+    // Check for premium plan (using correct price IDs)
+    if (subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly || 
+        subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) {
+      console.log("Detected premium plan based on price ID match with config");
+      return 'premium';
     }
     
     if (subscription.current_plan.includes('enterprise')) return 'enterprise';
