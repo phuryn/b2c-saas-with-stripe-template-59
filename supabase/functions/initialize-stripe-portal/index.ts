@@ -26,9 +26,21 @@ serve(async (req) => {
     // Parse request data
     const requestData = await req.json();
     const appUrl = requestData.appUrl || "https://app.example.com";
-    const stripeSecretKey = requestData.stripeSecretKey || Deno.env.get("STRIPE_SECRET_KEY");
     
-    logStep("Request data", { appUrl });
+    // Get Stripe secret key from request or from environment variable
+    let stripeSecretKey = requestData.stripeSecretKey || Deno.env.get("STRIPE_SECRET_KEY");
+    
+    logStep("Request data", { appUrl, hasProvidedStripeKey: !!requestData.stripeSecretKey });
+    
+    // Check if this is just a check for if the secrets are ready
+    if (requestData.checkSecretOnly) {
+      const secretsReady = !!Deno.env.get("STRIPE_SECRET_KEY");
+      logStep("Checking secrets only", { secretsReady });
+      return new Response(JSON.stringify({ secretsReady }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     
     // Authenticate user and verify admin role
     const supabaseClient = createClient(
