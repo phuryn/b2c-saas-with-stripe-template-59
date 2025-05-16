@@ -41,9 +41,9 @@ const HeroSection: React.FC = () => {
                 </Button>
               </Link>
             </div>}
-          <div className="mt-12 w-full max-w-4xl animate-fade-in" style={{
+          <div style={{
           animationDelay: "0.6s"
-        }}>
+        }} className="mt-12 w-full max-w-4xl">
             <img alt="TRUSTY Dashboard Preview" className="w-full h-auto rounded-lg shadow-xl" src="/lovable-uploads/58997b93-31dd-4c45-87e8-379dbe417a75.png" />
           </div>
         </div>
