@@ -73,8 +73,8 @@ const AppLayout: React.FC = () => {
             <UserProfileMenu onSignOut={handleSignOut} onUpgrade={handleUpgrade} />
           </div>
           
-          {/* Apply padding for mobile view to all app pages via wrapper */}
-          <div className={isMobile ? "pt-16" : ""}>
+          {/* Apply proper spacing for mobile view to all app pages */}
+          <div className={isMobile ? "pt-2" : ""}>
             <Outlet />
           </div>
         </div>
