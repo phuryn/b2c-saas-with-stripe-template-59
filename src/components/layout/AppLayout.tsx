@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -10,6 +11,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { getPlans } from '@/config/plans';
+import { Button } from '@/components/ui/button';
+import { ChevronUp } from 'lucide-react';
 
 const AppLayout: React.FC = () => {
   const {
@@ -55,6 +58,17 @@ const AppLayout: React.FC = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  // Check if the user is on a free plan
+  const isFreePlan = () => {
+    if (subscriptionLoading) return false;
+    return !subscription?.subscribed || !subscription?.subscription_tier;
+  };
+
+  // Navigate to the upgrade page
+  const handleUpgrade = () => {
+    navigate('/app/settings/plan');
   };
 
   // Redirect to login if not authenticated
@@ -159,7 +173,18 @@ const AppLayout: React.FC = () => {
         <div className="flex-1 min-h-screen relative">
           {/* User Profile Dropdown for Desktop */}
           {!isMobile && (
-            <div className="absolute top-4 right-4 z-10">
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+              {/* Upgrade button for free plans */}
+              {isFreePlan() && shouldShowUpgradeButton() && (
+                <Button 
+                  onClick={handleUpgrade} 
+                  size="sm" 
+                  className="bg-primary-blue hover:bg-primary-blue/90 text-white"
+                >
+                  Upgrade
+                </Button>
+              )}
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="focus:outline-none">
@@ -180,7 +205,18 @@ const AppLayout: React.FC = () => {
           
           {/* User Profile Dropdown for Mobile */}
           {isMobile && (
-            <div className="fixed top-4 right-4 z-40">
+            <div className="fixed top-4 right-4 z-40 flex items-center gap-3">
+              {/* Upgrade button for free plans on mobile */}
+              {isFreePlan() && shouldShowUpgradeButton() && (
+                <Button 
+                  onClick={handleUpgrade} 
+                  size="sm" 
+                  className="bg-primary-blue hover:bg-primary-blue/90 text-white"
+                >
+                  Upgrade
+                </Button>
+              )}
+              
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="focus:outline-none">
