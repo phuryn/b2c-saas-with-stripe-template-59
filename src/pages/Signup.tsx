@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ const Signup: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupFormSchema),
@@ -39,17 +41,21 @@ const Signup: React.FC = () => {
     },
   });
 
-  // Only redirect if user explicitly signed up through this page, not for existing sessions
+  // Redirect logic - enhanced to ensure it happens only once and reliably
   useEffect(() => {
-    // Checking URL parameter for direct signup attempt
-    const params = new URLSearchParams(window.location.search);
-    const directSignup = params.get('directSignup') === 'true';
+    if (isLoading || hasRedirected) return;
     
-    // Only redirect if this is a direct signup attempt and user is authenticated
-    if (directSignup && user && !isLoading) {
-      navigate("/app");
+    if (user && !hasRedirected) {
+      setHasRedirected(true);
+      console.log("User authenticated, redirecting to app");
+      
+      // Store login timestamp to prevent redirect loops
+      localStorage.setItem('recentLogin', Date.now().toString());
+      
+      // Force navigation to app with window.location for a clean state
+      window.location.href = "/app";
     }
-  }, [user, navigate, isLoading]);
+  }, [user, isLoading, navigate, hasRedirected]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -153,6 +159,15 @@ const Signup: React.FC = () => {
   };
 
   if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
+      </div>
+    );
+  }
+
+  // If user is already authenticated and we're waiting for redirect, show loading
+  if (user && !hasRedirected) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>

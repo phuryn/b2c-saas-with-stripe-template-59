@@ -43,13 +43,14 @@ const Auth: React.FC = () => {
     },
   });
 
-  // Handle auth state and redirection
+  // Enhanced redirect logic to ensure it happens only once and reliably
   useEffect(() => {
     if (isLoading || hasRedirected) return;
     
     if (user && !hasRedirected) {
       // Set redirect flag to prevent multiple redirects
       setHasRedirected(true);
+      console.log("User authenticated, redirecting to app");
       
       // Store login timestamp in localStorage to help prevent redirect loops
       localStorage.setItem('recentLogin', Date.now().toString());
@@ -59,9 +60,13 @@ const Auth: React.FC = () => {
     }
   }, [user, isLoading, navigate, fromPath, hasRedirected, location.pathname, location.search]);
 
-  // If auth is loading or user is authenticated, show nothing (will redirect right away)
-  if (isLoading || user) {
-    return null;
+  // If auth is loading or user is authenticated and we're waiting for redirect, show loading
+  if (isLoading || (user && !hasRedirected)) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
+      </div>
+    );
   }
 
   const handleEmailLogin = async (values: LoginFormValues) => {
@@ -80,8 +85,11 @@ const Auth: React.FC = () => {
 
       // Store login timestamp in localStorage to help prevent redirect loops
       localStorage.setItem('recentLogin', Date.now().toString());
-
+      
       console.log("Login successful, will redirect to app");
+      
+      // Let the useEffect handle the redirect
+      setHasRedirected(true);
       
       // Force navigation to app with window.location for a clean state
       window.location.href = `/app`;

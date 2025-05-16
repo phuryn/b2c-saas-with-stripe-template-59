@@ -163,9 +163,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
           setAuthProvider(null);
           
-          // Show sign-out toast
+          // Remove "You have been signed out" toast - This is the first part we're removing
           if (event === 'SIGNED_OUT') {
-            toast.info("You have been signed out");
             // Clear any stored login timestamps
             localStorage.removeItem('recentLogin');
             
@@ -292,8 +291,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Continue with navigation anyway
       }
       
+      // Remove "You have been signed out" toast here as well
       // Force navigation after sign out regardless of API response
-      toast.info("You have been signed out");
       setTimeout(() => {
         window.location.replace('/');
       }, 500);
