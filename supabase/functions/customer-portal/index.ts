@@ -25,23 +25,27 @@ serve(async (req) => {
     // Parse request body if present
     let requestData = {};
     let flow = null;
+    let stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     
     if (req.body) {
       try {
         const body = await req.json();
         requestData = body;
         flow = body?.flow;
+        
+        // If a Stripe secret key was provided in the request, use it
+        if (body?.stripeSecretKey) {
+          stripeSecretKey = body.stripeSecretKey;
+          logStep("Using Stripe key from request");
+        }
+        
         logStep("Request body parsed", { flow });
       } catch (e) {
         logStep("No valid JSON body or empty body");
       }
     }
 
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeSecretKey) {
-      logStep("ERROR", { message: "STRIPE_SECRET_KEY is not set in Supabase Functions secrets" });
-      throw new Error("STRIPE_SECRET_KEY is not set in Supabase Functions secrets");
-    }
+    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set");
     logStep("Stripe key verified");
 
     // Initialize Supabase client
@@ -51,88 +55,52 @@ serve(async (req) => {
     );
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      logStep("ERROR", { message: "No authorization header provided" });
-      throw new Error("No authorization header provided");
-    }
+    if (!authHeader) throw new Error("No authorization header provided");
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) {
-      logStep("ERROR", { message: `Authentication error: ${userError.message}` });
-      throw new Error(`Authentication error: ${userError.message}`);
-    }
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
-    if (!user?.email) {
-      logStep("ERROR", { message: "User not authenticated or email not available" });
-      throw new Error("User not authenticated or email not available");
-    }
+    if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    try {
-      const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
-      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-      if (customers.data.length === 0) {
-        logStep("ERROR", { message: "No Stripe customer found for this user" });
-        throw new Error("No Stripe customer found for this user");
-      }
-      const customerId = customers.data[0].id;
-      logStep("Found Stripe customer", { customerId });
-
-      const origin = req.headers.get("origin") || "http://localhost:3000";
-      
-      // Set up portal configuration
-      const portalOptions: any = {
-        customer: customerId,
-        return_url: `${origin}/app/settings/billing`,
-      };
-      
-      // If specific flow was requested, configure session accordingly
-      if (flow === 'payment_method_update') {
-        logStep("Setting up payment method update flow");
-        portalOptions.flow_data = {
-          type: 'payment_method_update',
-        };
-      } else if (flow === 'billing_address_update') {
-        // Since Stripe doesn't support billing_address_update as a direct flow type,
-        // we'll just create a regular portal session without specifying a flow
-        logStep("Creating general portal session for billing address update");
-        // No specific flow_data needed here, the standard portal allows billing address updates
-      }
-      
-      // Fetch the most recent portal configuration
-      logStep("Fetching available portal configurations");
-      const configurations = await stripe.billingPortal.configurations.list({
-        limit: 1,
-        active: true,
-      });
-      
-      // Use the configuration if available
-      if (configurations.data.length > 0) {
-        const configId = configurations.data[0].id;
-        logStep("Using existing portal configuration", { configId });
-        portalOptions.configuration = configId;
-      } else {
-        logStep("No existing portal configuration found, using default");
-      }
-      
-      const portalSession = await stripe.billingPortal.sessions.create(portalOptions);
-      logStep("Customer portal session created", { sessionId: portalSession.id });
-
-      return new Response(JSON.stringify({ url: portalSession.url }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    } catch (stripeError) {
-      // Specific error handling for Stripe API errors
-      logStep("STRIPE ERROR", { 
-        message: stripeError instanceof Error ? stripeError.message : String(stripeError),
-        type: stripeError instanceof Stripe.errors.StripeError ? stripeError.type : 'unknown'
-      });
-      
-      throw stripeError;
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    if (customers.data.length === 0) {
+      throw new Error("No Stripe customer found for this user");
     }
+    const customerId = customers.data[0].id;
+    logStep("Found Stripe customer", { customerId });
+
+    const origin = req.headers.get("origin") || "http://localhost:3000";
+    
+    // Set up portal configuration
+    const portalOptions: any = {
+      customer: customerId,
+      return_url: `${origin}/app/settings/billing`,
+    };
+    
+    // If specific flow was requested, configure session accordingly
+    if (flow === 'payment_method_update') {
+      logStep("Setting up payment method update flow");
+      portalOptions.flow_data = {
+        type: 'payment_method_update',
+      };
+    } else if (flow === 'billing_address_update') {
+      // Since Stripe doesn't support billing_address_update as a direct flow type,
+      // we'll just create a regular portal session without specifying a flow
+      logStep("Creating general portal session for billing address update");
+      // No specific flow_data needed here, the standard portal allows billing address updates
+    }
+    
+    const portalSession = await stripe.billingPortal.sessions.create(portalOptions);
+    logStep("Customer portal session created", { sessionId: portalSession.id });
+
+    return new Response(JSON.stringify({ url: portalSession.url }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });

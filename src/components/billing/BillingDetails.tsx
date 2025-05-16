@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ interface BillingDetailsProps {
     } | null;
   } | null;
   loading: boolean;
-  onOpenCustomerPortal: (flow?: 'payment_method_update' | 'billing_address_update') => void;
+  onOpenCustomerPortal: () => void;
 }
 
 const BillingDetails: React.FC<BillingDetailsProps> = ({ 
@@ -76,14 +75,6 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({
                     </span>
                   )}
                 </p>
-                <Button 
-                  variant="link" 
-                  size="sm" 
-                  className="px-0 h-6 text-blue-500"
-                  onClick={() => onOpenCustomerPortal('payment_method_update')}
-                >
-                  Update payment method
-                </Button>
               </div>
             )}
             
@@ -104,7 +95,7 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({
           <div className="flex justify-end">
             <Button 
               variant="outline" 
-              onClick={() => onOpenCustomerPortal()}
+              onClick={onOpenCustomerPortal}
               disabled={loading}
             >
               Manage Subscription
@@ -130,7 +121,7 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({
           <div className="flex justify-end">
             <Button 
               variant="outline" 
-              onClick={() => onOpenCustomerPortal()}
+              onClick={onOpenCustomerPortal}
               disabled={loading}
             >
               Access Customer Portal

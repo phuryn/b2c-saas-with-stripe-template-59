@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -84,10 +83,10 @@ export function useSubscriptionActions() {
   /**
    * Open customer portal
    */
-  const openCustomerPortal = async (flow?: 'payment_method_update' | 'billing_address_update') => {
+  const openCustomerPortal = async () => {
     try {
       setSubscriptionLoading(true);
-      const data = await openCustomerPortalApi(flow);
+      const data = await openCustomerPortalApi();
       
       if (data?.url) {
         window.location.href = data.url;

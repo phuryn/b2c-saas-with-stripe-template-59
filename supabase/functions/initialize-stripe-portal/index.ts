@@ -27,14 +27,14 @@ serve(async (req) => {
     const requestData = await req.json();
     const appUrl = requestData.appUrl || "https://app.example.com";
     
-    // Get Stripe secret key from environment variable
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    // Get Stripe secret key from request or from environment variable
+    let stripeSecretKey = requestData.stripeSecretKey || Deno.env.get("STRIPE_SECRET_KEY");
     
-    logStep("Request data", { appUrl });
+    logStep("Request data", { appUrl, hasProvidedStripeKey: !!requestData.stripeSecretKey });
     
     // Check if this is just a check for if the secrets are ready
     if (requestData.checkSecretOnly) {
-      const secretsReady = !!stripeSecretKey;
+      const secretsReady = !!Deno.env.get("STRIPE_SECRET_KEY");
       logStep("Checking secrets only", { secretsReady });
       return new Response(JSON.stringify({ secretsReady }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -49,24 +49,15 @@ serve(async (req) => {
     );
     
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      logStep("ERROR", { message: "No authorization header provided" });
-      throw new Error("No authorization header provided");
-    }
+    if (!authHeader) throw new Error("No authorization header provided");
     logStep("Authorization header found");
     
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) {
-      logStep("ERROR", { message: `Authentication error: ${userError.message}` });
-      throw new Error(`Authentication error: ${userError.message}`);
-    }
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
     
     const user = userData.user;
-    if (!user?.id) {
-      logStep("ERROR", { message: "User not authenticated" });
-      throw new Error("User not authenticated");
-    }
+    if (!user?.id) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
     
     // Verify user has administrator role
@@ -81,95 +72,84 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
     
-    if (roleError) {
-      logStep("ERROR", { message: `Failed to verify role: ${roleError.message}` });
-      throw new Error(`Failed to verify role: ${roleError.message}`);
-    }
-    if (roleData?.role !== "administrator") {
-      logStep("ERROR", { message: "Only administrators can perform this action" });
-      throw new Error("Only administrators can perform this action");
-    }
+    if (roleError) throw new Error(`Failed to verify role: ${roleError.message}`);
+    if (roleData?.role !== "administrator") throw new Error("Only administrators can perform this action");
     logStep("User is administrator");
     
-    // Initialize Stripe client with the secret key from env
-    if (!stripeSecretKey) {
-      logStep("ERROR", { message: "STRIPE_SECRET_KEY is not set in Supabase Functions secrets" });
-      throw new Error("STRIPE_SECRET_KEY is not set in Supabase Functions secrets");
+    // If a Stripe secret key was provided in the request, store it as a secret
+    if (requestData.stripeSecretKey) {
+      try {
+        // Store the secret using the Supabase Functions API
+        const supabaseUrl = Deno.env.get("SUPABASE_URL");
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        
+        if (!supabaseUrl || !serviceRoleKey) {
+          throw new Error("Missing Supabase URL or service role key");
+        }
+        
+        const secretsUrl = `${supabaseUrl}/functions/v1/secrets`;
+        const response = await fetch(secretsUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${serviceRoleKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            secrets: {
+              "STRIPE_SECRET_KEY": requestData.stripeSecretKey
+            }
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to store Stripe secret key: ${await response.text()}`);
+        }
+        
+        logStep("Stored Stripe secret key successfully");
+        
+        // Use the provided key for the rest of the function
+        stripeSecretKey = requestData.stripeSecretKey;
+      } catch (secretError) {
+        logStep("ERROR storing secret", { message: secretError.message });
+        // Continue with the provided key even if storing failed
+      }
     }
+    
+    // Initialize Stripe client with the secret key from env or request
+    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set");
     
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
     logStep("Stripe initialized");
     
-    try {
-      // Extract portal configuration settings from request
-      const features = requestData.features || {
-        invoice_history: { enabled: true },
+    // Configure the Stripe customer portal
+    const portalConfiguration = await stripe.billingPortal.configurations.create({
+      business_profile: {
+        headline: "Manage your subscription",
+        privacy_policy_url: `${appUrl}/privacy_policy`,
+        terms_of_service_url: `${appUrl}/terms`,
+      },
+      features: {
+        invoice_history: { enabled: false },
         payment_method_update: { enabled: true },
         customer_update: {
           enabled: true,
           allowed_updates: ['email', 'address', 'tax_id'],
         },
-        subscription_cancel: { enabled: true },
+        subscription_cancel: { enabled: false },
         subscription_update: { enabled: false },
-      };
-      
-      // Configure the Stripe customer portal
-      logStep("Creating portal configuration with app URL", { appUrl, features });
-      
-      const portalConfiguration = await stripe.billingPortal.configurations.create({
-        business_profile: {
-          headline: "Manage your subscription",
-          privacy_policy_url: `${appUrl}/privacy_policy`,
-          terms_of_service_url: `${appUrl}/terms`,
-        },
-        features: features,
-      });
-      
-      logStep("Customer portal configured", { configId: portalConfiguration.id });
-      
-      // Store the configuration in the database for admin reference
-      const configData = {
-        config_id: portalConfiguration.id,
-        app_url: appUrl,
-        features: features,
-        created_at: new Date().toISOString(),
-        created_by: user.id,
-        is_active: true
-      };
-      
-      const { error: insertError } = await adminClient
-        .from("stripe_portal_config")
-        .upsert([configData], { onConflict: 'is_active' });
-      
-      if (insertError) {
-        logStep("ERROR", { message: `Failed to save configuration to database: ${insertError.message}` });
-        // Continue even if saving to DB fails, as the Stripe config was created successfully
-      } else {
-        logStep("Configuration saved to database");
-      }
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: "Customer portal configured successfully",
-        configId: portalConfiguration.id,
-        config: {
-          app_url: appUrl,
-          features: features,
-          created_at: configData.created_at,
-        }
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    } catch (stripeError) {
-      // Specific error handling for Stripe API errors
-      logStep("STRIPE ERROR", { 
-        message: stripeError instanceof Error ? stripeError.message : String(stripeError),
-        type: stripeError instanceof Stripe.errors.StripeError ? stripeError.type : 'unknown'
-      });
-      
-      throw stripeError;
-    }
+      },
+    });
+    
+    logStep("Customer portal configured", { configId: portalConfiguration.id });
+    
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "Customer portal configured successfully",
+      configId: portalConfiguration.id
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
     
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

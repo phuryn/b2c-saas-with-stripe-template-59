@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,68 +8,18 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getPlans } from '@/config/plans';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { AlertCircle, CheckCircle2, Copy, File, InfoIcon } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  configureStripeCustomerPortal, 
-  checkStripeSecretConfigured,
-  getStripePortalConfig 
-} from '@/api/stripePortalConfig';
-import { initializeStripeProducts } from '@/api/stripeProductsConfig';
-import PortalConfigView from '@/components/admin/PortalConfigView';
-import PortalConfigForm from '@/components/admin/PortalConfigForm';
+import { AlertCircle, CheckCircle2, Copy, File, Key } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 const AdminHome: React.FC = () => {
+  const [appUrl, setAppUrl] = useState('https://yourapp.com'); 
+  const [stripeSecretKey, setStripeSecretKey] = useState('');
+  const [loading, setLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [resultPriceIds, setResultPriceIds] = useState<Record<string, string>>({});
-  const [isSecretKeySet, setIsSecretKeySet] = useState<boolean | null>(null);
   const { userRole } = useAuth();
-  
-  // Portal configuration state
-  const [portalConfigLoading, setPortalConfigLoading] = useState(true);
-  const [portalConfig, setPortalConfig] = useState<any>(null);
-  const [isEditingPortalConfig, setIsEditingPortalConfig] = useState(false);
-  const [isSavingPortalConfig, setIsSavingPortalConfig] = useState(false);
-  
-  // Check if Stripe secret key is set and load portal configuration
-  useEffect(() => {
-    async function initialize() {
-      try {
-        const isConfigured = await checkStripeSecretConfigured();
-        setIsSecretKeySet(isConfigured);
-        
-        if (isConfigured) {
-          await loadPortalConfig();
-        }
-      } catch (err) {
-        console.error('Failed to initialize admin panel:', err);
-      }
-    }
-    
-    if (userRole === 'administrator') {
-      initialize();
-    }
-  }, [userRole]);
-  
-  // Load portal configuration
-  const loadPortalConfig = async () => {
-    setPortalConfigLoading(true);
-    try {
-      const result = await getStripePortalConfig();
-      
-      if (result.success && result.configExists) {
-        setPortalConfig(result.config);
-      } else {
-        setPortalConfig(null);
-      }
-    } catch (err) {
-      console.error('Error loading portal configuration:', err);
-      toast.error('Failed to load portal configuration');
-    } finally {
-      setPortalConfigLoading(false);
-    }
-  };
   
   // Function to initialize Stripe products and prices
   const handleInitializeProducts = async () => {
@@ -78,20 +28,21 @@ const AdminHome: React.FC = () => {
       return;
     }
 
-    if (!isSecretKeySet) {
-      toast.error("Stripe Secret Key is not set in Supabase");
+    if (!stripeSecretKey.trim()) {
+      toast.error("Please enter your Stripe Secret Key");
       return;
     }
 
     setProductsLoading(true);
     try {
-      const result = await initializeStripeProducts();
+      const { data, error } = await supabase.functions.invoke('initialize-stripe-products', {
+        body: { stripeSecretKey }
+      });
       
-      if (!result.success) {
-        throw new Error(result.error || "Failed to initialize products");
-      }
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error("No data returned from the function");
       
-      setResultPriceIds(result.priceIds || {});
+      setResultPriceIds(data.priceIds || {});
       toast.success("Products and prices initialized successfully!");
     } catch (err) {
       console.error('Error initializing products:', err);
@@ -101,38 +52,37 @@ const AdminHome: React.FC = () => {
     }
   };
   
-  // Function to save portal configuration
-  const handleSavePortalConfig = async (config: any) => {
+  // Function to initialize Stripe customer portal
+  const handleInitializePortal = async () => {
     if (userRole !== 'administrator') {
       toast.error("Only administrators can perform this action");
       return;
     }
 
-    if (!isSecretKeySet) {
-      toast.error("Stripe Secret Key is not set in Supabase");
+    if (!stripeSecretKey.trim()) {
+      toast.error("Please enter your Stripe Secret Key");
       return;
     }
 
-    setIsSavingPortalConfig(true);
+    setLoading(true);
     try {
-      const result = await configureStripeCustomerPortal(config.app_url, config.features);
+      const { data, error } = await supabase.functions.invoke('initialize-stripe-portal', {
+        body: { appUrl, stripeSecretKey }
+      });
       
-      if (!result.success) {
-        throw new Error(result.error || "Failed to configure customer portal");
-      }
+      if (error) throw new Error(error.message);
       
-      setPortalConfig(result.config);
-      setIsEditingPortalConfig(false);
       toast.success("Customer portal configured successfully!");
     } catch (err) {
       console.error('Error configuring portal:', err);
       toast.error(err instanceof Error ? err.message : "Failed to configure customer portal");
     } finally {
-      setIsSavingPortalConfig(false);
+      setLoading(false);
     }
   };
   
   // Format plans data for display
+  const plans = getPlans('monthly');
   const formatPlansForDisplay = () => {
     const plansCopy = JSON.parse(JSON.stringify(getPlans('monthly')));
     // Replace price IDs with asterisks for display
@@ -199,92 +149,36 @@ const AdminHome: React.FC = () => {
         <CardHeader>
           <CardTitle>Stripe Configuration</CardTitle>
           <CardDescription>
-            Manage Stripe integration for your application
+            Enter your Stripe Secret Key to initialize products and portal
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert className="mb-4">
-            <InfoIcon className="h-4 w-4" />
-            <AlertDescription>
-              <div className="space-y-2">
-                <p className="font-medium">Your Stripe secret key must be configured in Supabase before using this page.</p>
-                <p className="text-sm text-muted-foreground">
-                  Go to Supabase Dashboard → Project Settings → Functions → Secrets and add your 
-                  <code className="bg-muted px-1 py-0.5 rounded mx-1">STRIPE_SECRET_KEY</code>
-                </p>
-                <div className="flex items-center mt-1">
-                  {isSecretKeySet === true && (
-                    <span className="flex items-center text-green-600">
-                      <CheckCircle2 className="h-4 w-4 mr-1" /> 
-                      Secret key is configured
-                    </span>
-                  )}
-                  {isSecretKeySet === false && (
-                    <span className="flex items-center text-red-500">
-                      <AlertCircle className="h-4 w-4 mr-1" /> 
-                      Secret key is not configured
-                    </span>
-                  )}
-                  {isSecretKeySet === null && (
-                    <span className="text-muted-foreground text-sm">Checking secret configuration...</span>
-                  )}
-                </div>
-              </div>
-            </AlertDescription>
-          </Alert>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="stripe-key" className="flex items-center">
+                <Key className="h-4 w-4 mr-2" /> 
+                Stripe Secret Key
+              </Label>
+              <Textarea 
+                id="stripe-key"
+                value={stripeSecretKey}
+                onChange={(e) => setStripeSecretKey(e.target.value)}
+                placeholder="sk_test_..."
+                className="font-mono"
+              />
+              <p className="text-sm text-muted-foreground">
+                Your Stripe Secret Key is required for initializing products and portal configuration
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
       
-      <Tabs defaultValue="portal">
+      <Tabs defaultValue="products">
         <TabsList className="mb-6">
-          <TabsTrigger value="portal">Customer Portal</TabsTrigger>
           <TabsTrigger value="products">Products & Prices</TabsTrigger>
+          <TabsTrigger value="portal">Customer Portal</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="portal" className="space-y-6">
-          <div className="flex justify-end mb-4">
-            {!isEditingPortalConfig && (
-              <Button 
-                onClick={() => setIsEditingPortalConfig(true)}
-                variant="outline"
-                disabled={!isSecretKeySet}
-              >
-                {portalConfig ? "Edit Configuration" : "Create Configuration"}
-              </Button>
-            )}
-            {isEditingPortalConfig && (
-              <Button 
-                onClick={() => setIsEditingPortalConfig(false)}
-                variant="ghost"
-              >
-                Cancel
-              </Button>
-            )}
-          </div>
-          
-          {isEditingPortalConfig ? (
-            <PortalConfigForm 
-              defaultConfig={portalConfig} 
-              onSubmit={handleSavePortalConfig}
-              isSubmitting={isSavingPortalConfig}
-            />
-          ) : (
-            <PortalConfigView 
-              config={portalConfig}
-              isLoading={portalConfigLoading}
-            />
-          )}
-          
-          <div className="text-sm text-muted-foreground mt-4 bg-muted p-4 rounded-md">
-            <p className="mb-2 font-medium">Technical details:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>These settings configure what customers can do in the Stripe Customer Portal</li>
-              <li>The configuration is stored in Stripe and cached in your database</li>
-              <li>Changes take effect immediately for all new portal sessions</li>
-              <li>Your customer-portal edge function automatically uses this configuration</li>
-            </ul>
-          </div>
-        </TabsContent>
         
         <TabsContent value="products">
           <Card>
@@ -357,10 +251,58 @@ const AdminHome: React.FC = () => {
             <CardFooter>
               <Button 
                 onClick={handleInitializeProducts} 
-                disabled={productsLoading || !isSecretKeySet}
+                disabled={productsLoading}
                 className="mr-2"
               >
                 {productsLoading ? "Initializing..." : "Initialize Products and Prices"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="portal">
+          <Card>
+            <CardHeader>
+              <CardTitle>Initialize Customer Portal Configuration</CardTitle>
+              <CardDescription>
+                Configure the Stripe Customer Portal settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="app-url">Application URL</Label>
+                <Input 
+                  id="app-url"
+                  value={appUrl} 
+                  onChange={(e) => setAppUrl(e.target.value)}
+                  placeholder="https://yourdomain.com"
+                />
+                <p className="text-sm text-muted-foreground">
+                  This URL will be used to construct the terms of service and privacy policy links
+                </p>
+              </div>
+              
+              <Separator className="my-4" />
+              
+              <div className="space-y-2">
+                <h3 className="font-medium">Portal Configuration Details:</h3>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Allow customers to view invoices: <span className="font-medium">No</span></li>
+                  <li>Allow update billing information: <span className="font-medium">Yes</span> (Name, Address, Tax ID)</li>
+                  <li>Allow cancel subscriptions: <span className="font-medium">No</span></li>
+                  <li>Allow manage subscriptions: <span className="font-medium">No</span></li>
+                  <li>Terms of service: <span className="font-medium">{appUrl}/terms</span></li>
+                  <li>Privacy policy: <span className="font-medium">{appUrl}/privacy_policy</span></li>
+                </ul>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleInitializePortal} 
+                disabled={loading}
+                className="mr-2"
+              >
+                {loading ? "Initializing..." : "Initialize Customer Portal"}
               </Button>
             </CardFooter>
           </Card>
