@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger } from '@/components/ui/sidebar';
@@ -58,7 +59,7 @@ const AppSidebar: React.FC = () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive('/app')}>
-                  <Link to="/app" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app') && "text-primary-blue bg-primary-blue/10", "text-base")}>
+                  <Link to="/app" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app') && "text-primary-blue bg-primary-blue/10", "text-base", isMobile && "p-1.5")}>
                     <Home className={cn("h-5 w-5", isActive('/app') ? "text-primary-blue" : "text-gray-800")} />
                     <span className={cn(isActive('/app') && "text-primary-blue")}>Home</span>
                   </Link>
@@ -67,7 +68,7 @@ const AppSidebar: React.FC = () => {
               
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive('/app/links')}>
-                  <Link to="/app/links" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app/links') && "text-primary-blue bg-primary-blue/10", "text-base")}>
+                  <Link to="/app/links" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app/links') && "text-primary-blue bg-primary-blue/10", "text-base", isMobile && "p-1.5")}>
                     <Link2 className={cn("h-5 w-5", isActive('/app/links') ? "text-primary-blue" : "text-gray-800")} />
                     <span className={cn(isActive('/app/links') && "text-primary-blue")}>Links</span>
                   </Link>
