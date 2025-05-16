@@ -41,6 +41,7 @@ export const formatPrice = (
     if (plan?.price) {
       const amount = cycle === 'monthly' ? plan.price.monthly : plan.price.yearly;
       const currency = plan.price.currency || 'USD';
+      // Use the actual cycle for the interval
       const interval = cycle === 'monthly' ? 'month' : 'year';
 
       return new Intl.NumberFormat('en-US', {
@@ -64,6 +65,7 @@ export const formatPrice = (
 
   const amount = price.unit_amount / 100;
   const currency = price.currency.toUpperCase();
+  // Use the actual cycle for the interval
   const interval = cycle === 'monthly' ? 'month' : 'year';
 
   return new Intl.NumberFormat('en-US', {
