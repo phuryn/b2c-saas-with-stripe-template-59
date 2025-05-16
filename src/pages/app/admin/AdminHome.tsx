@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,10 +7,11 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getPlans } from '@/config/plans';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { AlertCircle, CheckCircle2, Copy, File, InfoIcon } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { configureStripeCustomerPortal, checkStripeSecretConfigured } from '@/api/stripePortalConfig';
+import { initializeStripeProducts } from '@/api/stripeProductsConfig';
 
 const AdminHome: React.FC = () => {
   const [appUrl, setAppUrl] = useState('https://yourapp.com'); 
@@ -26,16 +26,8 @@ const AdminHome: React.FC = () => {
   useEffect(() => {
     async function checkSecretKey() {
       try {
-        const { data, error } = await supabase.functions.invoke('initialize-stripe-portal', {
-          body: { checkSecretOnly: true }
-        });
-        
-        if (error) {
-          console.error('Error checking secret key:', error);
-          return;
-        }
-        
-        setIsSecretKeySet(data?.secretsReady || false);
+        const isConfigured = await checkStripeSecretConfigured();
+        setIsSecretKeySet(isConfigured);
       } catch (err) {
         console.error('Failed to check if secret key is set:', err);
       }
@@ -60,14 +52,13 @@ const AdminHome: React.FC = () => {
 
     setProductsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('initialize-stripe-products', {
-        body: { }
-      });
+      const result = await initializeStripeProducts();
       
-      if (error) throw new Error(error.message);
-      if (!data) throw new Error("No data returned from the function");
+      if (!result.success) {
+        throw new Error(result.error || "Failed to initialize products");
+      }
       
-      setResultPriceIds(data.priceIds || {});
+      setResultPriceIds(result.priceIds || {});
       toast.success("Products and prices initialized successfully!");
     } catch (err) {
       console.error('Error initializing products:', err);
@@ -93,16 +84,16 @@ const AdminHome: React.FC = () => {
     setInitializationResult(null);
     
     try {
-      const { data, error } = await supabase.functions.invoke('initialize-stripe-portal', {
-        body: { appUrl }
-      });
+      const result = await configureStripeCustomerPortal(appUrl);
       
-      if (error) throw new Error(error.message);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to configure customer portal");
+      }
       
       setInitializationResult({
-        success: data.success,
-        message: data.message,
-        configId: data.configId
+        success: result.success,
+        message: result.message,
+        configId: result.configId
       });
       
       toast.success("Customer portal configured successfully!");
