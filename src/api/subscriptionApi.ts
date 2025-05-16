@@ -88,8 +88,10 @@ export const updateSubscription = async (
 /**
  * Open customer portal
  */
-export const openCustomerPortalApi = async (): Promise<{ url: string } | null> => {
-  const { data, error } = await supabase.functions.invoke('customer-portal');
+export const openCustomerPortalApi = async (flow?: 'payment_method_update' | 'billing_address_update'): Promise<{ url: string } | null> => {
+  const { data, error } = await supabase.functions.invoke('customer-portal', {
+    body: flow ? { flow } : undefined
+  });
   
   if (error) throw new Error(error.message || 'Failed to open customer portal');
   
