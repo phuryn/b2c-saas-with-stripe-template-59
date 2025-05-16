@@ -1,12 +1,14 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuButtonProps, SidebarSeparator, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { Home, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/context/AuthContext';
+
 const AppSidebar: React.FC = () => {
   const location = useLocation();
   const {
@@ -18,32 +20,42 @@ const AppSidebar: React.FC = () => {
   const {
     user
   } = useAuth();
+
   const isActive = (path: string) => {
     if (path === '/app') {
       return location.pathname === '/app' || location.pathname === '/app/home';
     }
     return location.pathname.startsWith(path);
   };
-  const renderSidebarContent = () => <>
-      {/* App Logo - conditional based on sidebar state */}
+
+  const renderSidebarContent = () => (
+    <>
+      {/* App Logo and Toggle - Modified to be on one line in desktop mode */}
       <SidebarHeader className="flex items-center justify-between">
-        <div className="flex items-center py-3">
-          <Link to="/app">
-            {state === 'collapsed' ? <img src="/small-logo.svg" alt="TRUSTY" width={28} height={28} className="h-5 w-auto object-contain" /> : <img src="/primary-logo.svg" alt="TRUSTY" width={120} height={28} className="h-5 w-auto" />}
-          </Link>
+        <div className="flex items-center justify-between w-full py-3">
+          {/* Show logo only in expanded state */}
+          {state !== 'collapsed' && (
+            <Link to="/app">
+              <img src="/primary-logo.svg" alt="TRUSTY" width={120} height={28} className="h-5 w-auto" />
+            </Link>
+          )}
+          
+          {/* Toggle button - kept at the right side */}
+          {!isMobile && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarTrigger className="text-neutral-500">
+                    {/* The SidebarTrigger component handles the icon internally */}
+                  </SidebarTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {state === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
-        {!isMobile && <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarTrigger className="ml-auto text-neutral-500">
-                  {/* The SidebarTrigger component now handles the icon internally */}
-                </SidebarTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {state === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>}
       </SidebarHeader>
       
       <SidebarContent className="bg-white">
@@ -66,9 +78,12 @@ const AppSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-    </>;
+    </>
+  );
+
   if (isMobile) {
-    return <>
+    return (
+      <>
         <div className="fixed top-4 left-4 z-40">
           <button className="p-2 rounded-md bg-white shadow-md flex items-center justify-center" onClick={() => setMobileOpen(true)} aria-label="Open menu">
             <Menu className="h-5 w-5 text-gray-700" />
@@ -80,13 +95,18 @@ const AppSidebar: React.FC = () => {
             {renderSidebarContent()}
           </SheetContent>
         </Sheet>
-      </>;
+      </>
+    );
   }
-  return <Sidebar collapsible="icon" className="bg-white" style={{
-    '--sidebar-width': '13rem',
-    '--sidebar-width-icon': '2.75rem'
-  } as React.CSSProperties}>
-    {renderSidebarContent()}
-  </Sidebar>;
+
+  return (
+    <Sidebar collapsible="icon" className="bg-white" style={{
+      '--sidebar-width': '13rem',
+      '--sidebar-width-icon': '2.75rem'
+    } as React.CSSProperties}>
+      {renderSidebarContent()}
+    </Sidebar>
+  );
 };
+
 export default AppSidebar;
