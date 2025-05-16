@@ -65,6 +65,9 @@ const Signup: React.FC = () => {
         ? currentUrl.split('/signup')[0]
         : currentUrl.split('/signup')[0].replace('://', '://app.');
       
+      // Store login timestamp to prevent redirect loops
+      localStorage.setItem('recentLogin', Date.now().toString());
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -78,6 +81,9 @@ const Signup: React.FC = () => {
       if (error) {
         throw error;
       }
+      
+      // No need to redirect here - the OAuth flow will handle it
+      // The directSignup=true parameter will be used to show success toast after redirect
     } catch (error) {
       console.error("Error with Google sign in:", error);
       toast({
@@ -95,6 +101,9 @@ const Signup: React.FC = () => {
         ? currentUrl.split('/signup')[0]
         : currentUrl.split('/signup')[0].replace('://', '://app.');
       
+      // Store login timestamp to prevent redirect loops
+      localStorage.setItem('recentLogin', Date.now().toString());
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "linkedin_oidc",
         options: {
@@ -108,6 +117,8 @@ const Signup: React.FC = () => {
       if (error) {
         throw error;
       }
+      
+      // No need to redirect here - the OAuth flow will handle it
     } catch (error) {
       console.error("Error with LinkedIn sign in:", error);
       toast({

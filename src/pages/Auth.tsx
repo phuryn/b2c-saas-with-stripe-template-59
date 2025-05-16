@@ -106,14 +106,13 @@ const Auth: React.FC = () => {
     try {
       console.log("Attempting Google sign-in");
       
-      // Add directLogin parameter to track explicit login attempts
+      // Store login timestamp in localStorage to help prevent redirect loops
+      localStorage.setItem('recentLogin', Date.now().toString());
+      
       const currentUrl = window.location.href;
       const baseUrl = window.location.hostname.startsWith('app.')
         ? currentUrl.split('/auth')[0]
         : currentUrl.split('/auth')[0].replace('://', '://app.');
-      
-      // Store login timestamp in localStorage to help prevent redirect loops
-      localStorage.setItem('recentLogin', Date.now().toString());
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -129,6 +128,9 @@ const Auth: React.FC = () => {
       if (error) {
         throw error;
       }
+
+      // No need to redirect here - the OAuth flow will handle it
+      // The directLogin=true parameter will be used to show success toast after redirect
     } catch (error: any) {
       console.error('Error with Google sign in:', error);
       toast.error("Could not sign in with Google. Please try again.");
@@ -160,6 +162,8 @@ const Auth: React.FC = () => {
       if (error) {
         throw error;
       }
+
+      // No need to redirect here - the OAuth flow will handle it
     } catch (error: any) {
       console.error('Error with LinkedIn sign in:', error);
       toast.error("Could not sign in with LinkedIn. Please try again.");
