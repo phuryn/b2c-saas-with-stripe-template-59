@@ -26,6 +26,8 @@ serve(async (req) => {
     // Parse request data
     const requestData = await req.json();
     const appUrl = requestData.appUrl || "https://app.example.com";
+    const stripeSecretKey = requestData.stripeSecretKey || Deno.env.get("STRIPE_SECRET_KEY");
+    
     logStep("Request data", { appUrl });
     
     // Authenticate user and verify admin role
@@ -62,11 +64,10 @@ serve(async (req) => {
     if (roleData?.role !== "administrator") throw new Error("Only administrators can perform this action");
     logStep("User is administrator");
     
-    // Initialize Stripe client with the secret key from env
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    // Initialize Stripe client with the secret key from env or request
+    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set");
     
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
     logStep("Stripe initialized");
     
     // Configure the Stripe customer portal

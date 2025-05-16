@@ -10,10 +10,12 @@ import { toast } from "sonner";
 import { getPlans } from '@/config/plans';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { AlertCircle, CheckCircle2, Copy, File } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Copy, File, Key } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 const AdminHome: React.FC = () => {
   const [appUrl, setAppUrl] = useState('https://yourapp.com'); 
+  const [stripeSecretKey, setStripeSecretKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [resultPriceIds, setResultPriceIds] = useState<Record<string, string>>({});
@@ -26,9 +28,16 @@ const AdminHome: React.FC = () => {
       return;
     }
 
+    if (!stripeSecretKey.trim()) {
+      toast.error("Please enter your Stripe Secret Key");
+      return;
+    }
+
     setProductsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('initialize-stripe-products');
+      const { data, error } = await supabase.functions.invoke('initialize-stripe-products', {
+        body: { stripeSecretKey }
+      });
       
       if (error) throw new Error(error.message);
       if (!data) throw new Error("No data returned from the function");
@@ -50,10 +59,15 @@ const AdminHome: React.FC = () => {
       return;
     }
 
+    if (!stripeSecretKey.trim()) {
+      toast.error("Please enter your Stripe Secret Key");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('initialize-stripe-portal', {
-        body: { appUrl }
+        body: { appUrl, stripeSecretKey }
       });
       
       if (error) throw new Error(error.message);
@@ -130,6 +144,35 @@ const AdminHome: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Stripe Administration</h1>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Stripe Configuration</CardTitle>
+          <CardDescription>
+            Enter your Stripe Secret Key to initialize products and portal
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="stripe-key" className="flex items-center">
+                <Key className="h-4 w-4 mr-2" /> 
+                Stripe Secret Key
+              </Label>
+              <Textarea 
+                id="stripe-key"
+                value={stripeSecretKey}
+                onChange={(e) => setStripeSecretKey(e.target.value)}
+                placeholder="sk_test_..."
+                className="font-mono"
+              />
+              <p className="text-sm text-muted-foreground">
+                Your Stripe Secret Key is required for initializing products and portal configuration
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
       <Tabs defaultValue="products">
         <TabsList className="mb-6">

@@ -23,6 +23,21 @@ serve(async (req) => {
   try {
     logStep("Function started");
     
+    // Parse request data
+    const requestData = await req.json();
+    const stripeSecretKey = requestData.stripeSecretKey || Deno.env.get("STRIPE_SECRET_KEY");
+    const checkSecretOnly = requestData.checkSecretOnly || false;
+    
+    if (checkSecretOnly) {
+      logStep("Checking if stripe secret is configured");
+      return new Response(JSON.stringify({ 
+        secretsReady: !!stripeSecretKey,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+    
     // Authenticate user and verify admin role
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -57,11 +72,10 @@ serve(async (req) => {
     if (roleData?.role !== "administrator") throw new Error("Only administrators can perform this action");
     logStep("User is administrator");
     
-    // Initialize Stripe client with the secret key from env
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    // Initialize Stripe client with the secret key
+    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set");
     
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
     logStep("Stripe initialized");
     
     // Check if products already exist
