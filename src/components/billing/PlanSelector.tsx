@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plan, getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
@@ -8,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import PlanChangeDialog from './PlanChangeDialog';
+import { toast } from '@/hooks/use-toast';
 
 interface PlanSelectorProps {
   currentPlan?: string | null;
@@ -82,13 +82,23 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       return;
     }
     
-    // Show confirmation dialog for plan changes if not currently on this plan
+    // Get subscription status from localStorage
+    const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
+    
+    // Show confirmation dialog ONLY for existing subscribers changing plans
+    // For free users or first-time subscribers, go directly to checkout
     const currentPlanIncludesId = currentPlan && currentPlan.includes(plan.id);
     const isCurrentPlan = currentPlan === plan.priceId || currentPlanIncludesId;
     
-    if (!isCurrentPlan) {
+    if (hasActiveSubscription && !isCurrentPlan) {
+      // Existing subscriber changing plans - show dialog
       setSelectedPlan(plan);
       setShowPlanChangeDialog(true);
+    } else if (!hasActiveSubscription) {
+      // Free user subscribing for the first time - go directly to checkout
+      if (onSelect) {
+        onSelect(plan.priceId, selectedCycle);
+      }
     }
   };
   

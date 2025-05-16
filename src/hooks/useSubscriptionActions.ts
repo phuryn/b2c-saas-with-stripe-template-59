@@ -20,27 +20,34 @@ export function useSubscriptionActions() {
     try {
       setSubscriptionLoading(true);
       
+      // Check if the user has an active subscription
+      const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
+      
+      console.log('Current subscription status:', { hasActiveSubscription, planId, cycle });
+      
       // If there's no active subscription, use create-checkout to redirect to Stripe
-      if (!localStorage.getItem('hasActiveSubscription')) {
+      if (!hasActiveSubscription) {
+        console.log('No active subscription, creating checkout session');
         const data = await createCheckoutSession(planId);
         
         if (data?.url) {
           // Redirect to Stripe Checkout
           window.location.href = data.url;
-          return;
+          return { success: true };
         }
         
         throw new Error('Failed to create checkout session');
       }
       
-      // For existing subscriptions, use update-subscription as before
+      // For existing subscriptions, use update-subscription
+      console.log('Updating existing subscription');
       const data = await updateSubscription(planId, cycle);
       
       // If we got client_secret back, the user needs to complete payment setup
       if (data?.subscription?.client_secret) {
         // For now, we'll handle by redirecting to customer portal
         await openCustomerPortal();
-        return;
+        return { success: true };
       }
 
       // If no client_secret, the update was successful
