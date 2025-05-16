@@ -3,11 +3,37 @@
  * Utility functions for subscription rate limiting and error handling
  */
 
-// Constants for rate limiting
+// Constants for rate limiting - updated for optimized caching strategy
 export const MAX_RETRIES = 3;
 export const RETRY_DELAY = 5000; // 5 seconds between retries
 export const DEBOUNCE_DELAY = 300; // 300ms debounce period
-export const CHECK_INTERVAL = 300000; // 5 minutes (300,000ms) between subscription checks
+
+// Tiered caching strategy
+export const SHORT_CACHE_INTERVAL = 60000; // 1 minute (for billing pages)
+export const MEDIUM_CACHE_INTERVAL = 300000; // 5 minutes (after subscription changes)
+export const LONG_CACHE_INTERVAL = 600000; // 10 minutes (normal operations)
+
+// Default check interval now 10 minutes instead of 5
+export const CHECK_INTERVAL = LONG_CACHE_INTERVAL;
+
+// Storage keys
+export const LAST_CHECK_KEY = 'last_subscription_check';
+export const LAST_SUB_CHANGE_KEY = 'last_subscription_change';
+export const CACHED_SUB_DATA_KEY = 'last_known_subscription';
+export const HAS_ACTIVE_SUB_KEY = 'hasActiveSubscription';
+
+/**
+ * Tracks when subscription changes occur
+ */
+export const trackSubscriptionChange = (): void => {
+  try {
+    localStorage.setItem(LAST_SUB_CHANGE_KEY, Date.now().toString());
+    // Force a check on the next page load
+    localStorage.removeItem(LAST_CHECK_KEY);
+  } catch (e) {
+    console.warn('Could not track subscription change:', e);
+  }
+};
 
 /**
  * Checks if a request should be rate-limited based on last attempt time
@@ -45,26 +71,57 @@ export const debounce = <F extends (...args: any[]) => any>(
 };
 
 /**
+ * Determines appropriate check interval based on context
+ */
+export const getCheckInterval = (pathname: string): number => {
+  // Recently made subscription changes get medium cache
+  try {
+    const lastSubChange = Number(localStorage.getItem(LAST_SUB_CHANGE_KEY) || 0);
+    if (lastSubChange > 0) {
+      const timeSinceChange = Date.now() - lastSubChange;
+      // If change was made in the last 30 minutes, use medium cache interval
+      if (timeSinceChange < 1800000) { // 30 minutes
+        return MEDIUM_CACHE_INTERVAL;
+      }
+    }
+  } catch (e) {
+    // Ignore storage errors and continue with checks
+  }
+  
+  // Special case: Billing pages get short cache
+  if (pathname.includes('/billing') || 
+      pathname.includes('/plan') || 
+      pathname.includes('/subscribe')) {
+    return SHORT_CACHE_INTERVAL;
+  }
+  
+  // Default to long cache for regular app usage
+  return LONG_CACHE_INTERVAL;
+};
+
+/**
  * Checks if enough time has passed since last subscription check
  */
-export const shouldCheckSubscription = (forceCheck: boolean = false): boolean => {
+export const shouldCheckSubscription = (forceCheck: boolean = false, pathname: string = window.location.pathname): boolean => {
   try {
     if (forceCheck) return true;
     
-    // Special case: Always check on billing pages
-    if (window.location.pathname.includes('/billing') || 
-        window.location.pathname.includes('/plan')) {
+    // Special case: Always check on billing pages on initial load
+    if ((pathname.includes('/billing') || pathname.includes('/plan')) && 
+        !sessionStorage.getItem('billing_page_checked')) {
+      sessionStorage.setItem('billing_page_checked', 'true');
       return true;
     }
     
-    const lastCheck = Number(localStorage.getItem('last_subscription_check') || 0);
+    const lastCheck = Number(localStorage.getItem(LAST_CHECK_KEY) || 0);
     const now = Date.now();
+    const interval = getCheckInterval(pathname);
     
     // Allow checking if:
     // 1. Never checked before (lastCheck is 0)
-    // 2. Enough time has passed since last check
+    // 2. Enough time has passed since last check based on context
     // 3. Force check is requested
-    return lastCheck === 0 || (now - lastCheck) > CHECK_INTERVAL;
+    return lastCheck === 0 || (now - lastCheck) > interval;
   } catch (e) {
     return true;
   }
@@ -75,7 +132,14 @@ export const shouldCheckSubscription = (forceCheck: boolean = false): boolean =>
  */
 export const updateLastCheckTimestamp = (): void => {
   try {
-    localStorage.setItem('last_subscription_check', Date.now().toString());
+    localStorage.setItem(LAST_CHECK_KEY, Date.now().toString());
+    
+    // Clear billing page check flag when updating timestamp
+    // This allows for fresh checks when revisiting billing pages
+    if (window.location.pathname.includes('/billing') || 
+        window.location.pathname.includes('/plan')) {
+      sessionStorage.removeItem('billing_page_checked');
+    }
   } catch (e) {
     console.warn('Could not update last subscription check timestamp:', e);
   }
@@ -107,7 +171,7 @@ export const handleSubscriptionError = (
  */
 export const getCachedSubscriptionData = () => {
   try {
-    const cachedData = localStorage.getItem('last_known_subscription');
+    const cachedData = localStorage.getItem(CACHED_SUB_DATA_KEY);
     return cachedData ? JSON.parse(cachedData) : null;
   } catch (e) {
     console.warn('Error reading cached subscription data:', e);
@@ -119,5 +183,19 @@ export const getCachedSubscriptionData = () => {
  * Reset subscription rate limiting state
  */
 export const resetSubscriptionRateLimiting = () => {
-  localStorage.removeItem('last_subscription_check');
+  localStorage.removeItem(LAST_CHECK_KEY);
+};
+
+/**
+ * Check if subscription check is currently in progress
+ * Used to prevent multiple simultaneous checks
+ */
+let checkInProgress = false;
+
+export const isCheckInProgress = (): boolean => {
+  return checkInProgress;
+};
+
+export const setCheckInProgress = (value: boolean): void => {
+  checkInProgress = value;
 };

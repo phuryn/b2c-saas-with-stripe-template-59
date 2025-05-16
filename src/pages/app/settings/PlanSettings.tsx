@@ -1,11 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import PlanSelector from '@/components/billing/PlanSelector';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useSubscription } from '@/context/SubscriptionContext';
 import { useStripePrices } from '@/hooks/useStripePrices';
 import SubscriptionHeader from '@/components/billing/SubscriptionHeader';
 import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
@@ -19,17 +19,16 @@ const PlanSettings: React.FC = () => {
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly'); // Default to yearly
   const [initialized, setInitialized] = useState(false);
+  const [initialChecked, setInitialChecked] = useState(false);
   
-  // Use our custom hooks
+  // Use our subscription context
   const {
     subscription,
     loading: subscriptionLoading,
     refreshing,
     subscriptionLoading: actionLoading,
     checkSubscriptionStatus,
-    refreshSubscriptionData,
     handleSelectPlan,
-    openCustomerPortal,
     handleDowngrade,
     handleRenewSubscription
   } = useSubscription();
@@ -39,11 +38,13 @@ const PlanSettings: React.FC = () => {
     loading: pricesLoading,
   } = useStripePrices();
 
+  // Only check once when the component loads
   useEffect(() => {
-    if (session) {
-      checkSubscriptionStatus(true); // Force a check to ensure we have the latest data
+    if (session && !initialChecked) {
+      setInitialChecked(true);
+      checkSubscriptionStatus(false);
     }
-  }, [session]);
+  }, [session, initialChecked, checkSubscriptionStatus]);
 
   // Get the current cycle based on the subscription plan
   const getCurrentCycle = (): BillingCycle => {
@@ -71,7 +72,7 @@ const PlanSettings: React.FC = () => {
       setSelectedCycle(currentCycle);
       setInitialized(true);
     }
-  }, [subscription]);
+  }, [subscription, initialized]);
 
   // Reset initialization if subscription changes
   useEffect(() => {
@@ -84,7 +85,6 @@ const PlanSettings: React.FC = () => {
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
       toast.success('Subscription updated successfully');
-      checkSubscriptionStatus();
     } else if (searchParams.get('canceled') === 'true') {
       toast.info('Subscription update canceled');
     }
@@ -101,8 +101,6 @@ const PlanSettings: React.FC = () => {
         console.log('Updating cycle after plan selection to:', result.cycle);
         setSelectedCycle(result.cycle);
       }
-      
-      await refreshSubscriptionData(); // Refresh subscription data after successful plan change
     }
   };
 
@@ -116,7 +114,6 @@ const PlanSettings: React.FC = () => {
     if (success) {
       toast.success('Subscription cancelled successfully');
       setShowDowngradeDialog(false);
-      await refreshSubscriptionData(); // Refresh subscription data after downgrade
     }
   };
 
@@ -125,18 +122,8 @@ const PlanSettings: React.FC = () => {
     const success = await handleRenewSubscription();
     if (success) {
       toast.success('Subscription renewed successfully');
-      await refreshSubscriptionData(); // Refresh subscription data after renewal
     }
     return success;
-  };
-
-  const getCurrentPlanId = () => {
-    if (!subscription?.current_plan) return null;
-    
-    if (subscription.current_plan.includes('standard')) return 'standard';
-    if (subscription.current_plan.includes('premium')) return 'premium';
-    if (subscription.current_plan.includes('enterprise')) return 'enterprise';
-    return null;
   };
 
   // Handler for cycle changes in PlanSelector
