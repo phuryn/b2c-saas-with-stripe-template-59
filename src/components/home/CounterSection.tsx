@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 const CounterSection: React.FC = () => {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [isAnimationReady, setIsAnimationReady] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const targetCount = 109016;
   const animationDuration = 2000; // milliseconds
@@ -16,6 +17,10 @@ const CounterSection: React.FC = () => {
       const [entry] = entries;
       if (entry.isIntersecting) {
         setIsVisible(true);
+        // Add a slight delay before setting animation ready
+        setTimeout(() => {
+          setIsAnimationReady(true);
+        }, 50);
       }
     }, { threshold: 0.2 });
     
@@ -57,13 +62,19 @@ const CounterSection: React.FC = () => {
     <section className="section-padding bg-primary-blue text-white" ref={sectionRef}>
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-3xl mx-auto">
-          <div className={`text-5xl md:text-7xl font-bold mb-6 animate-count-up ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+          <div 
+            className={`text-5xl md:text-7xl font-bold mb-6 animate-fade-up ${isAnimationReady ? 'animate-ready' : ''}`}
+            style={{ transform: isAnimationReady ? 'translateY(0)' : 'translateY(20px)' }}
+          >
             {formattedCount}
           </div>
-          <p className={`text-xl md:text-2xl ${isVisible ? 'opacity-100' : 'opacity-0'}`} style={{ 
-            transition: "opacity 0.5s ease-in-out", 
-            transitionDelay: "0.3s" 
-          }}>
+          <p 
+            className={`text-xl md:text-2xl animate-fade-up ${isAnimationReady ? 'animate-ready' : ''}`}
+            style={{ 
+              transform: isAnimationReady ? 'translateY(0)' : 'translateY(20px)',
+              transitionDelay: "0.3s" 
+            }}
+          >
             subscribers from companies like Amazon, Google, and Meta
           </p>
         </div>
