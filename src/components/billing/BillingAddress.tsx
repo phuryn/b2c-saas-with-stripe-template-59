@@ -1,3 +1,4 @@
+
 import React, { useState, forwardRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
+
 interface BillingAddressProps {
   subscription: {
     subscribed: boolean;
@@ -20,15 +22,14 @@ interface BillingAddressProps {
     } | null;
   } | null;
 }
+
 const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({
   subscription: initialSubscription
 }, ref) => {
   const [subscription, setSubscription] = useState(initialSubscription);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   // Debug logging for tax ID
   useEffect(() => {
@@ -37,15 +38,13 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({
       console.log('Customer name in billing address:', subscription.billing_address.name);
     }
   }, [subscription]);
+
   const openCustomerPortal = async () => {
     try {
       setLoading(true);
       // Simply call the customer portal without specifying a flow
       // The default portal gives access to all billing information settings
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('customer-portal');
+      const { data, error } = await supabase.functions.invoke('customer-portal');
       if (error) {
         console.error('Error opening customer portal:', error);
         throw new Error(error.message);
@@ -75,41 +74,73 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({
 
   // Log the billing address to see what we're getting from Supabase
   console.log('Billing address data:', subscription?.billing_address);
-  return <div className="space-y-4" ref={ref}>
+
+  // Format the address line with city, state, postal_code
+  const formatAddressLine = () => {
+    const addr = subscription?.billing_address;
+    if (!addr) return null;
+
+    const cityPart = addr.city || '';
+    const statePart = addr.state || '';
+    const postalPart = addr.postal_code || '';
+
+    // Only add comma after city if state or postal code exists
+    if (cityPart && (statePart || postalPart)) {
+      return (
+        <p>
+          {cityPart}{(statePart || postalPart) ? ',' : ''} {statePart} {postalPart}
+        </p>
+      );
+    } else if (cityPart) {
+      return <p>{cityPart}</p>;
+    } else if (statePart || postalPart) {
+      return <p>{statePart} {postalPart}</p>;
+    }
+    return null;
+  };
+
+  return (
+    <div className="space-y-4" ref={ref}>
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Billing Information</h3>
       </div>
       
       <Card>
         <CardContent className="pt-6">
-          {loading ? <div className="flex justify-center items-center py-8">
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div> : error ? <div className="text-center py-4">
+            </div>
+          ) : error ? (
+            <div className="text-center py-4">
               <div className="flex justify-center mb-2">
                 <AlertTriangle className="h-8 w-8 text-amber-500" />
               </div>
               <p className="text-red-500 mb-4">{error}</p>
-            </div> : subscription?.billing_address ? <div className="space-y-4">
+            </div>
+          ) : subscription?.billing_address ? (
+            <div className="space-y-4">
               {/* Display company/customer name prominently if available */}
-              {subscription.billing_address.name && <p className="font-medium text-base">{subscription.billing_address.name}</p>}
+              {subscription.billing_address.name && (
+                <p className="font-medium text-base">{subscription.billing_address.name}</p>
+              )}
               
               {/* Address without label */}
               <div>
-                <p>{subscription.billing_address.line1}</p>
+                {subscription.billing_address.line1 && <p>{subscription.billing_address.line1}</p>}
                 {subscription.billing_address.line2 && <p>{subscription.billing_address.line2}</p>}
-                <p>
-                  {subscription.billing_address.city}, {subscription.billing_address.state} {subscription.billing_address.postal_code}
-                </p>
-                <p>{subscription.billing_address.country}</p>
+                {formatAddressLine()}
+                {subscription.billing_address.country && <p>{subscription.billing_address.country}</p>}
               </div>
               
               {/* Tax ID (if available) - with separator */}
-              {subscription.billing_address.tax_id && <>
-                  
+              {subscription.billing_address.tax_id && (
+                <>
                   <div className="pt-1">
                     <p>Tax ID: {subscription.billing_address.tax_id}</p>
                   </div>
-                </>}
+                </>
+              )}
               
               <div className="mt-4 pt-2">
                 <Button variant="outline" onClick={openCustomerPortal} disabled={loading}>
@@ -117,16 +148,21 @@ const BillingAddress = forwardRef<HTMLDivElement, BillingAddressProps>(({
                   Edit Billing Information
                 </Button>
               </div>
-            </div> : <div className="text-center py-4">
+            </div>
+          ) : (
+            <div className="text-center py-4">
               <p className="text-gray-500 mb-4">No billing information on file.</p>
               <Button variant="outline" onClick={openCustomerPortal} disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Add Billing Information
               </Button>
-            </div>}
+            </div>
+          )}
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 });
+
 BillingAddress.displayName = 'BillingAddress';
 export default BillingAddress;
