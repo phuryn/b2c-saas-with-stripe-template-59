@@ -4,6 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
+import { resetSubscriptionRateLimiting, forceNextSubscriptionCheck } from '@/utils/subscriptionRateLimit';
 
 type AuthContextType = {
   user: User | null;
@@ -146,6 +147,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               fetchUserRole(session.user.id);
               fetchUserProfile(session.user.id);
             }, 1000);
+            
+            // For explicit sign in events, force a subscription check
+            if (event === 'SIGNED_IN') {
+              console.log("Explicit sign in detected, resetting subscription rate limiting");
+              
+              // Force a new subscription check on the next request
+              setTimeout(() => {
+                forceNextSubscriptionCheck(session.user.id);
+              }, 1500);
+            }
           }
 
           // Show sign-in toast only for explicit sign-in events
@@ -173,6 +184,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUserMetadata(null);
             setProfile(null);
             setAuthProvider(null);
+            
+            // Clear subscription data
+            resetSubscriptionRateLimiting();
           }
         }
       }
@@ -272,6 +286,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Clear local storage items first
       localStorage.removeItem('recentLogin');
+      
+      // Reset subscription rate limiting before sign out
+      resetSubscriptionRateLimiting();
       
       // Force token refresh before sign out to ensure we have a valid token
       try {

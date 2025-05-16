@@ -15,6 +15,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
+import { resetSubscriptionRateLimiting, forceNextSubscriptionCheck } from '@/utils/subscriptionRateLimit';
 
 const loginFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -73,7 +74,7 @@ const Auth: React.FC = () => {
       setIsSubmitting(true);
       console.log("Attempting email login for:", values.email);
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
@@ -82,6 +83,12 @@ const Auth: React.FC = () => {
         throw error;
       }
 
+      // Force subscription check reset to ensure fresh data after login
+      if (data.user) {
+        console.log("Login successful, resetting subscription rate limiting");
+        forceNextSubscriptionCheck(data.user.id);
+      }
+      
       // Store login timestamp in localStorage to help prevent redirect loops
       localStorage.setItem('recentLogin', Date.now().toString());
       
@@ -104,6 +111,9 @@ const Auth: React.FC = () => {
   const handleGoogleSignIn = async () => {
     try {
       console.log("Attempting Google sign-in");
+      
+      // Reset subscription rate limiting before OAuth sign-in attempt
+      resetSubscriptionRateLimiting();
       
       // Store login timestamp in localStorage to help prevent redirect loops
       localStorage.setItem('recentLogin', Date.now().toString());

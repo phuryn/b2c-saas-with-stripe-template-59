@@ -138,4 +138,36 @@ export const resetSubscriptionRateLimiting = () => {
       localStorage.removeItem(key);
     }
   }
+
+  // Also clear last known subscription data to force a fresh fetch
+  localStorage.removeItem('last_known_subscription');
+  localStorage.removeItem('hasActiveSubscription');
+  
+  console.log('Subscription rate limiting state has been reset');
 };
+
+/**
+ * Force immediate subscription check on next request
+ * This specifically handles user-switch scenarios in shared environments
+ */
+export const forceNextSubscriptionCheck = (userId: string) => {
+  try {
+    // Reset rate limiting
+    resetSubscriptionRateLimiting();
+    
+    // Store the last user ID that was checked
+    // This can be used to detect user changes and force refreshes
+    const lastUserId = localStorage.getItem('last_checked_user_id');
+    
+    // If the last checked user is different, we definitely need a refresh
+    if (lastUserId && lastUserId !== userId) {
+      console.log(`User changed from ${lastUserId} to ${userId}, forcing subscription check`);
+    }
+    
+    // Store current user ID as the last checked
+    localStorage.setItem('last_checked_user_id', userId);
+  } catch (e) {
+    console.warn('Error while setting up forced subscription check:', e);
+  }
+};
+

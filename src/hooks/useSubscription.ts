@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Subscription } from '@/types/subscription';
@@ -43,6 +42,7 @@ export function useSubscription() {
   const retryCountRef = useRef<number>(0);
   const debounceTimerRef = useRef<number | null>(null);
   const checkInProgressRef = useRef<boolean>(false); // Track if a check is already in progress
+  const lastCheckedUserIdRef = useRef<string | null>(null); // Track the last user ID that was checked
 
   /**
    * Fetch subscription status from API
@@ -58,6 +58,13 @@ export function useSubscription() {
     if (checkInProgressRef.current) {
       console.log('Skipping subscription check - another check already in progress');
       return subscription;
+    }
+    
+    // Check if this is a different user than last time - if so, force a check
+    const userIdChanged = lastCheckedUserIdRef.current && lastCheckedUserIdRef.current !== user.id;
+    if (userIdChanged) {
+      console.log(`User changed from ${lastCheckedUserIdRef.current} to ${user.id}, forcing check`);
+      force = true;
     }
     
     // Rate limiting and debouncing protection
@@ -77,6 +84,7 @@ export function useSubscription() {
       setLoading(prev => !subscription && prev); // Only show loading if no cached data
       setRefreshing(true);
       lastAttemptRef.current = Date.now();
+      lastCheckedUserIdRef.current = user.id; // Update last checked user ID
       
       console.log('Fetching subscription status...');
       const data = await fetchSubscriptionStatus();
@@ -194,12 +202,24 @@ export function useSubscription() {
     // Only check subscription if user is authenticated and auth loading is complete
     if (user && !authLoading && pageInitialLoad && !checkInProgressRef.current) {
       console.log("Auth confirmed, checking subscription status once");
-      checkSubscriptionStatus(false);
+      // Check if user has changed since last check - we need the localStorage value here as well
+      const storedLastUserId = localStorage.getItem('last_checked_user_id');
+      const forceCheck = storedLastUserId !== user.id;
+      
+      if (forceCheck) {
+        console.log(`User changed from ${storedLastUserId} to ${user.id}, forcing check`);
+      }
+      
+      checkSubscriptionStatus(forceCheck);
+      
+      // Update localStorage with current user ID
+      localStorage.setItem('last_checked_user_id', user.id);
     } else if (!user && !authLoading) {
       // Clear subscription state when logged out
       setSubscription(null);
       localStorage.removeItem('last_known_subscription');
       localStorage.removeItem('hasActiveSubscription');
+      localStorage.removeItem('last_checked_user_id');
     }
     
     // Cleanup debounce timer
