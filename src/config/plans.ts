@@ -50,7 +50,7 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
     {
       id: 'standard',
       name: 'Standard',
-      priceId: cycle === 'monthly' ? STRIPE_CONFIG.prices.premium.monthly : STRIPE_CONFIG.prices.premium.yearly, // Fixed the mapping
+      priceId: cycle === 'monthly' ? STRIPE_CONFIG.prices.standard.monthly : STRIPE_CONFIG.prices.standard.yearly,
       description: 'Great for professionals and small teams.',
       limits: [
         '200 links / month',
@@ -64,7 +64,7 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
       ],
       showUpgrade: true,
       price: {
-        monthly: 10, // Correct price for Standard plan
+        monthly: 10,
         yearly: 100,
         currency: 'USD'
       }
@@ -72,7 +72,7 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
     {
       id: 'premium',
       name: 'Premium',
-      priceId: cycle === 'monthly' ? STRIPE_CONFIG.prices.standard.monthly : STRIPE_CONFIG.prices.standard.yearly, // Fixed the mapping
+      priceId: cycle === 'monthly' ? STRIPE_CONFIG.prices.premium.monthly : STRIPE_CONFIG.prices.premium.yearly,
       description: 'For growing teams with advanced needs.',
       limits: [
         '5000 links / month',
@@ -88,7 +88,7 @@ export const getPlans = (cycle: 'monthly' | 'yearly'): Plan[] => {
       recommended: cycle === 'yearly',
       showUpgrade: true,
       price: {
-        monthly: 20, // Correct price for Premium plan
+        monthly: 20,
         yearly: 200,
         currency: 'USD'
       }

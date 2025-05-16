@@ -72,11 +72,22 @@ const BillingSettings: React.FC = () => {
   };
 
   const getCurrentPlanId = () => {
-    if (!subscription?.subscription_tier) return 'free';
-    const tier = subscription.subscription_tier.toLowerCase();
-    if (tier.includes('standard')) return 'standard';
-    if (tier.includes('premium')) return 'premium';
-    if (tier.includes('enterprise')) return 'enterprise';
+    if (!subscription?.current_plan) return 'free';
+    
+    // Check current plan against known price IDs from config
+    if (subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly || 
+        subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) {
+      console.log("Detected standard plan based on price ID match with config");
+      return 'standard';
+    }
+    
+    if (subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly || 
+        subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) {
+      console.log("Detected premium plan based on price ID match with config");
+      return 'premium';
+    }
+    
+    if (subscription.current_plan.includes('enterprise')) return 'enterprise';
     return 'free';
   };
 

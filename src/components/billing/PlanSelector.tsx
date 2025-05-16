@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Plan, getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
@@ -53,6 +54,25 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     }
   }, [cycle]);
 
+  // Helper function to check if a plan is the current plan
+  const isPlanActive = (planId: string): boolean => {
+    if (!currentPlan) return false;
+    
+    // For standard plan
+    if (planId === 'standard') {
+      return currentPlan === STRIPE_CONFIG.prices.standard.monthly || 
+             currentPlan === STRIPE_CONFIG.prices.standard.yearly;
+    }
+    
+    // For premium plan
+    if (planId === 'premium') {
+      return currentPlan === STRIPE_CONFIG.prices.premium.monthly || 
+             currentPlan === STRIPE_CONFIG.prices.premium.yearly;
+    }
+    
+    return false;
+  };
+
   const handlePlanSelection = (plan: Plan) => {
     // On public page, redirect to appropriate location based on user and plan
     if (isPublicPage) {
@@ -87,20 +107,8 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     // Get subscription status from localStorage
     const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
     
-    // Check if this is the current plan - match by plan ID (standard/premium) not the full price ID
-    let isCurrentPlan = false;
-    if (currentPlan) {
-      if (plan.id === 'standard' && 
-          (currentPlan === STRIPE_CONFIG.prices.standard.monthly || 
-           currentPlan === STRIPE_CONFIG.prices.standard.yearly)) {
-        isCurrentPlan = true;
-      }
-      else if (plan.id === 'premium' && 
-               (currentPlan === STRIPE_CONFIG.prices.premium.monthly || 
-                currentPlan === STRIPE_CONFIG.prices.premium.yearly)) {
-        isCurrentPlan = true;
-      }
-    }
+    // Check if this is the current plan
+    const isCurrentPlan = isPlanActive(plan.id);
     
     if (isCurrentPlan) {
       // This is already the current plan
@@ -135,22 +143,12 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     const filteredPlans = isPublicPage ? plans : plans.filter(plan => !plan.free);
     
     return filteredPlans.map((plan) => {
-      // Check if this is the current plan by comparing with the STRIPE_CONFIG price IDs
-      // Only show active state if not on public page
-      let isActive = false;
-      if (!isPublicPage && currentPlan) {
-        if (plan.id === 'standard' && 
-            (currentPlan === STRIPE_CONFIG.prices.standard.monthly || 
-             currentPlan === STRIPE_CONFIG.prices.standard.yearly)) {
-          isActive = true;
-          console.log("Marked standard plan as active based on price ID match");
-        }
-        else if (plan.id === 'premium' && 
-                 (currentPlan === STRIPE_CONFIG.prices.premium.monthly || 
-                  currentPlan === STRIPE_CONFIG.prices.premium.yearly)) {
-          isActive = true;
-          console.log("Marked premium plan as active based on price ID match");
-        }
+      // Check if this is the current plan
+      const isActive = !isPublicPage && isPlanActive(plan.id);
+      
+      // Log active plans for debugging
+      if (isActive) {
+        console.log(`Marked ${plan.id} plan as active based on price ID match`);
       }
       
       let buttonText = plan.buttonText || 'Select Plan';
