@@ -74,17 +74,18 @@ const BillingSettings: React.FC = () => {
   const getCurrentPlanId = () => {
     if (!subscription?.current_plan) return 'free';
     
-    // Check current plan against known price IDs from config
-    if (subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly || 
-        subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) {
-      console.log("Detected standard plan based on price ID match with config");
-      return 'standard';
-    }
-    
+    // Check for premium plan first (using correct price IDs)
     if (subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly || 
         subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) {
       console.log("Detected premium plan based on price ID match with config");
       return 'premium';
+    }
+    
+    // Check for standard plan (using correct price IDs)
+    if (subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly || 
+        subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) {
+      console.log("Detected standard plan based on price ID match with config");
+      return 'standard';
     }
     
     if (subscription.current_plan.includes('enterprise')) return 'enterprise';
@@ -94,7 +95,7 @@ const BillingSettings: React.FC = () => {
   const getCurrentCycle = () => {
     if (!subscription?.current_plan) return 'monthly';
     
-    // Check against known price IDs from our config - with corrected mappings
+    // Check against known price IDs from our config
     const planId = subscription.current_plan;
     
     // Log for debugging

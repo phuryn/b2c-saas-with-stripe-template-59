@@ -58,19 +58,27 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   const isPlanActive = (planId: string): boolean => {
     if (!currentPlan) return false;
     
-    // For standard plan
+    // Handle plan identification based on the plan ID (not the price ID)
     if (planId === 'standard') {
-      return currentPlan === STRIPE_CONFIG.prices.standard.monthly || 
-             currentPlan === STRIPE_CONFIG.prices.standard.yearly;
+      // For standard plan, check both monthly and yearly price IDs
+      const standardPriceIds = [
+        STRIPE_CONFIG.prices.standard.monthly,
+        STRIPE_CONFIG.prices.standard.yearly
+      ];
+      return standardPriceIds.includes(currentPlan);
     }
     
-    // For premium plan
+    // For premium plan, check both monthly and yearly price IDs
     if (planId === 'premium') {
-      return currentPlan === STRIPE_CONFIG.prices.premium.monthly || 
-             currentPlan === STRIPE_CONFIG.prices.premium.yearly;
+      const premiumPriceIds = [
+        STRIPE_CONFIG.prices.premium.monthly, 
+        STRIPE_CONFIG.prices.premium.yearly
+      ];
+      return premiumPriceIds.includes(currentPlan);
     }
     
-    return false;
+    // For any other plan types
+    return currentPlan === planId;
   };
 
   const handlePlanSelection = (plan: Plan) => {

@@ -184,16 +184,18 @@ async function getActiveSubscription(stripe: Stripe, customerId: string) {
       cancelAtPeriodEnd
     });
 
-    // The price IDs were switched in the frontend config:
-    // price_1RLoRRLdL9hht8n4Gcqi3p2b and price_1RLoT5LdL9hht8n4n87AoFtZ are the Standard plan ($10)
-    // price_1RLoRrLdL9hht8n4LZcdyKQt and price_1RLoScLdL9hht8n4hSQtsOte are the Premium plan ($20)
+    // The price IDs map to the following plans:
+    // price_1RLoRRLdL9hht8n4Gcqi3p2b - Premium monthly - $10/month
+    // price_1RLoT5LdL9hht8n4n87AoFtZ - Premium yearly - $100/year
+    // price_1RLoRrLdL9hht8n4LZcdyKQt - Standard monthly - $20/month
+    // price_1RLoScLdL9hht8n4hSQtsOte - Standard yearly - $200/year
     
     if (currentPlan === 'price_1RLoRRLdL9hht8n4Gcqi3p2b' || 
         currentPlan === 'price_1RLoT5LdL9hht8n4n87AoFtZ') {
-      subscriptionTier = 'Standard';
+      subscriptionTier = 'Premium';
     } else if (currentPlan === 'price_1RLoRrLdL9hht8n4LZcdyKQt' || 
                currentPlan === 'price_1RLoScLdL9hht8n4hSQtsOte') {
-      subscriptionTier = 'Premium';
+      subscriptionTier = 'Standard';
     } else {
       subscriptionTier = 'Standard'; // Default
     }
