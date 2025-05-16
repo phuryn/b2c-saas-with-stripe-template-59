@@ -44,6 +44,12 @@ const PlanCard: React.FC<PlanCardProps> = ({
   const priceAmount = priceMatch ? priceMatch[1] : price;
   const priceInterval = priceMatch ? priceMatch[2] : '';
   
+  // For the Free plan, ensure we always show $0/month format
+  const displayPrice = name === 'Free' && price === 'Free' ? '$0/month' : price;
+  const displayPriceMatch = displayPrice.match(/^(\$[\d,\.]+)(\/\w+)$/);
+  const displayPriceAmount = displayPriceMatch ? displayPriceMatch[1] : displayPrice;
+  const displayPriceInterval = displayPriceMatch ? displayPriceMatch[2] : '';
+  
   const renderFeature = (feature: string) => (
     <li key={feature} className="flex items-start gap-2">
       <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -76,13 +82,13 @@ const PlanCard: React.FC<PlanCardProps> = ({
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold break-words">{name}</CardTitle>
           <div className="flex items-baseline">
-            {priceMatch ? (
+            {displayPriceMatch ? (
               <>
-                <span className="text-2xl font-bold text-primary-blue">{priceAmount}</span>
-                <span className="text-[#292929] text-sm ml-0.5">{priceInterval}</span>
+                <span className="text-2xl font-bold text-primary-blue">{displayPriceAmount}</span>
+                <span className="text-[#292929] text-sm ml-0.5">{displayPriceInterval}</span>
               </>
             ) : (
-              <span className="text-2xl font-bold text-primary-blue">{price}</span>
+              <span className="text-2xl font-bold text-primary-blue">{displayPrice}</span>
             )}
           </div>
           <p className="text-gray-500 mt-2 break-words">{description}</p>
