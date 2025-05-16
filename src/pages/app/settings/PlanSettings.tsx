@@ -155,8 +155,12 @@ const PlanSettings: React.FC = () => {
   const getCurrentPlanId = () => {
     if (!subscription?.current_plan) return null;
     
-    if (subscription.current_plan.includes('standard')) return 'standard';
-    if (subscription.current_plan.includes('premium')) return 'premium';
+    if (subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly ||
+        subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) return 'standard';
+    
+    if (subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly ||
+        subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) return 'premium';
+    
     if (subscription.current_plan.includes('enterprise')) return 'enterprise';
     return null;
   };
