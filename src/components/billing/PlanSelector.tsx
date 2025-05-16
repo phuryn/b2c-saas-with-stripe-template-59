@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import PlanChangeDialog from './PlanChangeDialog';
 import { toast } from '@/hooks/use-toast';
+import { STRIPE_CONFIG } from '@/config/stripe';
 
 interface PlanSelectorProps {
   currentPlan?: string | null;
@@ -86,9 +87,20 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     // Get subscription status from localStorage
     const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
     
-    // Check if this is the current plan
-    const currentPlanIncludesId = currentPlan && currentPlan.includes(plan.id);
-    const isCurrentPlan = currentPlan === plan.priceId || currentPlanIncludesId;
+    // Check if this is the current plan - match by plan ID (standard/premium) not the full price ID
+    let isCurrentPlan = false;
+    if (currentPlan) {
+      if (plan.id === 'standard' && 
+          (currentPlan === STRIPE_CONFIG.prices.standard.monthly || 
+           currentPlan === STRIPE_CONFIG.prices.standard.yearly)) {
+        isCurrentPlan = true;
+      }
+      else if (plan.id === 'premium' && 
+               (currentPlan === STRIPE_CONFIG.prices.premium.monthly || 
+                currentPlan === STRIPE_CONFIG.prices.premium.yearly)) {
+        isCurrentPlan = true;
+      }
+    }
     
     if (isCurrentPlan) {
       // This is already the current plan
@@ -128,14 +140,14 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       let isActive = false;
       if (!isPublicPage && currentPlan) {
         if (plan.id === 'standard' && 
-            (currentPlan === STRIPE_CONFIG.prices.premium.monthly || 
-             currentPlan === STRIPE_CONFIG.prices.premium.yearly)) {
+            (currentPlan === STRIPE_CONFIG.prices.standard.monthly || 
+             currentPlan === STRIPE_CONFIG.prices.standard.yearly)) {
           isActive = true;
           console.log("Marked standard plan as active based on price ID match");
         }
         else if (plan.id === 'premium' && 
-                 (currentPlan === STRIPE_CONFIG.prices.standard.monthly || 
-                  currentPlan === STRIPE_CONFIG.prices.standard.yearly)) {
+                 (currentPlan === STRIPE_CONFIG.prices.premium.monthly || 
+                  currentPlan === STRIPE_CONFIG.prices.premium.yearly)) {
           isActive = true;
           console.log("Marked premium plan as active based on price ID match");
         }
