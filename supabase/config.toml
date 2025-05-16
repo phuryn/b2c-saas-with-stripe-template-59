@@ -13,6 +13,7 @@ project_id = "bnwvnlgspaxuzbfiphik"
 
 [functions.get-invoices]
 
-[functions.initialize-stripe-products]
+[functions.configure-stripe-products]
 
-[functions.initialize-stripe-portal]
+[functions.configure-stripe-portal]
+

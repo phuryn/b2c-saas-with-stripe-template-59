@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
@@ -28,6 +27,23 @@ export function useSidebar() {
   }
 
   return context
+}
+
+// Custom hook for mobile detection, must be called inside a component function
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(false)
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  return isMobile
 }
 
 interface SidebarProviderProps extends React.ComponentProps<"div"> {
@@ -142,28 +158,10 @@ export const SidebarProvider = React.forwardRef<
 
 SidebarProvider.displayName = "SidebarProvider"
 
-// Utility functions needed for the sidebar
-function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(false)
-
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
-
-  return isMobile
-}
-
 import { cn } from "@/lib/utils"
 
-// Export constants but remove duplicate exports of components/hooks
+// Export constants but not the hook - must be used inside a component
 export { 
-  useIsMobile, 
   // Constants for use in other components
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_MOBILE,

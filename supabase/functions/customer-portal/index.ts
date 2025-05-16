@@ -88,10 +88,15 @@ serve(async (req) => {
         type: 'payment_method_update',
       };
     } else if (flow === 'billing_address_update') {
-      // Since Stripe doesn't support billing_address_update as a direct flow type,
-      // we'll just create a regular portal session without specifying a flow
-      logStep("Creating general portal session for billing address update");
-      // No specific flow_data needed here, the standard portal allows billing address updates
+      // Using customer_update flow with specific allowed_updates
+      logStep("Setting up billing address update flow");
+      portalOptions.flow_data = {
+        type: 'customer_update',
+        after_completion: { type: 'return_url' },
+        customer_update: {
+          allowed_updates: ['address', 'name', 'tax_id'],
+        }
+      };
     }
     
     const portalSession = await stripe.billingPortal.sessions.create(portalOptions);
