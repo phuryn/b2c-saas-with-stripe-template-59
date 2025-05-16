@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -42,8 +43,16 @@ const BillingSettings: React.FC = () => {
   } = useStripePrices();
   
   const [error, setError] = useState<string | null>(null);
+  const [initialFetchAttempted, setInitialFetchAttempted] = useState(false);
 
   useEffect(() => {
+    // Force refresh when component mounts
+    if (!initialFetchAttempted && user) {
+      console.log("BillingSettings: Initial mount, forcing subscription refresh");
+      refreshSubscriptionData();
+      setInitialFetchAttempted(true);
+    }
+    
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
       toast.success('Your subscription has been updated successfully.');
@@ -51,7 +60,7 @@ const BillingSettings: React.FC = () => {
     } else if (searchParams.get('canceled') === 'true') {
       toast.info('Subscription update canceled');
     }
-  }, [searchParams, refreshSubscriptionData]);
+  }, [searchParams, refreshSubscriptionData, initialFetchAttempted, user]);
 
   const handleManagePlan = () => {
     navigate('/app/settings/plan');
@@ -97,10 +106,15 @@ const BillingSettings: React.FC = () => {
     );
   };
 
+  const renderLoadingState = () => (
+    <div className="flex flex-col items-center justify-center py-12">
+      <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+      <p className="text-muted-foreground">Loading billing information...</p>
+    </div>
+  );
+
   if (loading || pricesLoading) {
-    return <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>;
+    return renderLoadingState();
   }
 
   const currentPlanId = getCurrentPlanId();

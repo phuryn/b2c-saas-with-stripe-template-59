@@ -11,7 +11,8 @@ import {
   shouldCheckSubscription,
   updateLastCheckTimestamp,
   MAX_RETRIES,
-  RETRY_DELAY 
+  RETRY_DELAY,
+  getCachedSubscriptionData
 } from '@/utils/subscriptionRateLimit';
 
 // Store last known subscription state in localStorage
@@ -38,6 +39,7 @@ export function useSubscription() {
   const [loading, setLoading] = useState(!subscription); // Only show loading if no cached data
   const [refreshing, setRefreshing] = useState(false);
   const [errorState, setErrorState] = useState(false);
+  const [pageInitialLoad, setPageInitialLoad] = useState(true);
   
   // Tracking for rate limiting
   const lastAttemptRef = useRef<number>(0);
@@ -54,8 +56,12 @@ export function useSubscription() {
       return subscription;  // Return cached subscription
     }
 
+    // Special case: Always force check on the billing page during initial load
+    const isBillingPage = window.location.pathname.includes('/billing');
+    const shouldForceCheck = force || (pageInitialLoad && isBillingPage);
+    
     // Rate limiting and debouncing protection
-    if (!force && !shouldCheckSubscription(force)) {
+    if (!shouldForceCheck && !shouldCheckSubscription(force)) {
       console.log('Skipping subscription check due to rate limiting', new Date().toISOString());
       return subscription;  // Return cached subscription
     }
@@ -68,9 +74,12 @@ export function useSubscription() {
 
     try {
       setLoading(prev => !subscription && prev); // Only show loading if no cached data
+      setRefreshing(true);
       lastAttemptRef.current = Date.now();
       
+      console.log('Fetching subscription status...');
       const data = await fetchSubscriptionStatus();
+      console.log('Subscription status fetched:', data);
       
       // Update last check timestamp
       updateLastCheckTimestamp();
@@ -91,6 +100,8 @@ export function useSubscription() {
         }
       }
       
+      // Clear page initial load flag
+      setPageInitialLoad(false);
       return data;
     } catch (err) {
       retryCountRef.current++;
@@ -112,7 +123,7 @@ export function useSubscription() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [errorState, subscription, user]);
+  }, [errorState, subscription, user, pageInitialLoad]);
 
   /**
    * Refresh subscription data with debouncing
@@ -160,12 +171,25 @@ export function useSubscription() {
     handleRenewSubscription 
   } = useSubscriptionActions();
 
+  // Listen for URL changes to detect billing page navigation
+  useEffect(() => {
+    const isBillingPage = window.location.pathname.includes('/billing');
+    if (isBillingPage) {
+      // Force check on billing page navigation
+      setPageInitialLoad(true);
+      if (user && !authLoading) {
+        console.log('Navigated to billing page, forcing subscription check');
+        checkSubscriptionStatus(true);
+      }
+    }
+  }, [window.location.pathname]);
+
   // Initial subscription check when auth state changes
   useEffect(() => {
     // Only check subscription if user is authenticated and auth loading is complete
     if (user && !authLoading) {
       console.log("Auth confirmed, checking subscription status once");
-      checkSubscriptionStatus(false);
+      checkSubscriptionStatus(pageInitialLoad);
     } else if (!user && !authLoading) {
       // Clear subscription state when logged out
       setSubscription(null);
@@ -179,7 +203,7 @@ export function useSubscription() {
         window.clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [user, authLoading, checkSubscriptionStatus]);
+  }, [user, authLoading, checkSubscriptionStatus, pageInitialLoad]);
 
   return {
     subscription,

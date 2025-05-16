@@ -51,6 +51,12 @@ export const shouldCheckSubscription = (forceCheck: boolean = false): boolean =>
   try {
     if (forceCheck) return true;
     
+    // Special case: Always check on billing pages
+    if (window.location.pathname.includes('/billing') || 
+        window.location.pathname.includes('/plan')) {
+      return true;
+    }
+    
     const lastCheck = Number(localStorage.getItem('last_subscription_check') || 0);
     const now = Date.now();
     
@@ -115,4 +121,3 @@ export const getCachedSubscriptionData = () => {
 export const resetSubscriptionRateLimiting = () => {
   localStorage.removeItem('last_subscription_check');
 };
-
