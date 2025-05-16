@@ -7,6 +7,7 @@ import Pricing from '@/pages/Pricing';
 import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy'; // Changed from PrivacyPolicy to Privacy
 import AppLayout from '@/components/layout/AppLayout';
+import PublicLayout from '@/components/layout/PublicLayout';
 import Dashboard from '@/pages/app/Dashboard';
 import Settings from '@/pages/app/settings/Settings'; // Changed path to match the actual file location
 import BillingSettings from '@/pages/app/settings/BillingSettings';
@@ -20,11 +21,15 @@ function App() {
       <AuthProvider>
         <SubscriptionProvider>
           <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy_policy" element={<Privacy />} />
+            {/* Public Routes with PublicLayout */}
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Auth />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy_policy" element={<Privacy />} />
+            </Route>
             
             {/* App Routes */}
             <Route path="/app" element={<AppLayout />}>
