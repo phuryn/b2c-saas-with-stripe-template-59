@@ -32,9 +32,9 @@ const AppSidebar: React.FC = () => {
     <>
       {/* App Logo and Toggle - On one line and properly aligned */}
       <SidebarHeader className="flex items-center justify-between">
-        <div className="flex items-center justify-between w-full py-3 px-4">
+        <div className="flex items-center justify-between w-full py-3 px-2">
           {/* Show full logo in expanded state, small logo in collapsed state */}
-          <Link to="/app" className="ml-1">
+          <Link to="/app" className="ml-2">
             {state === 'collapsed' ? (
               <img src="/small-logo.svg" alt="TRUSTY" width={28} height={28} className="h-5 w-auto" />
             ) : (
@@ -69,7 +69,7 @@ const AppSidebar: React.FC = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/app')} className="text-base ml-2 pr-4">
+                <SidebarMenuButton asChild isActive={isActive('/app')} className="text-base ml-2">
                   <Link to="/app" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app') && "text-primary-blue bg-primary-blue/10")}>
                     <Home className={cn("h-5 w-5", isActive('/app') ? "text-primary-blue" : "text-gray-800")} />
                     <span className={cn(isActive('/app') && "text-primary-blue")}>Home</span>
@@ -104,7 +104,7 @@ const AppSidebar: React.FC = () => {
   return (
     <Sidebar collapsible="icon" className="bg-white" style={{
       '--sidebar-width': '13rem',
-      '--sidebar-width-icon': '3rem'
+      '--sidebar-width-icon': '2.75rem'
     } as React.CSSProperties}>
       {renderSidebarContent()}
     </Sidebar>
