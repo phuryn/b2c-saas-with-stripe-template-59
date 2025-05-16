@@ -21,7 +21,7 @@ const CTASection: React.FC = () => {
           {user ? (
             <Link to="/app">
               <Button size="lg" className="bg-white text-primary-blue hover:bg-gray-100">
-                Open Your App
+                Your Dashboard
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

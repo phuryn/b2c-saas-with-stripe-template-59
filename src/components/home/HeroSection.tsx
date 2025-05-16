@@ -41,7 +41,7 @@ const HeroSection: React.FC = () => {
             }}>
               <Link to="/app">
                 <Button className="bg-primary-blue hover:bg-primary-blue/90 text-white text-lg px-8 py-6">
-                  Open Your App
+                  Your Dashboard
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
