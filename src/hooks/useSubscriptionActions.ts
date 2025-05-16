@@ -43,6 +43,19 @@ export function useSubscriptionActions() {
       console.log('Updating existing subscription');
       const data = await updateSubscription(planId, cycle);
       
+      // If we got a redirect_to_checkout flag, the user needs to go through checkout
+      if (data?.redirect_to_checkout) {
+        console.log('Redirect to checkout requested by server');
+        const checkoutData = await createCheckoutSession(planId);
+        
+        if (checkoutData?.url) {
+          window.location.href = checkoutData.url;
+          return { success: true };
+        }
+        
+        throw new Error('Failed to create checkout session after redirect request');
+      }
+      
       // If we got client_secret back, the user needs to complete payment setup
       if (data?.subscription?.client_secret) {
         // For now, we'll handle by redirecting to customer portal

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Plan, getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
@@ -71,12 +72,13 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
       }
     }
     
-    // Normal app flow below
+    // Enterprise plan always goes to email
     if (plan.id === 'enterprise') {
       window.location.href = 'mailto:contact@trusty.com?subject=Enterprise Plan Inquiry';
       return;
     }
     
+    // Handle downgrade to free plan
     if (plan.free) {
       onDowngrade && onDowngrade();
       return;
@@ -85,18 +87,24 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     // Get subscription status from localStorage
     const hasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
     
-    // Show confirmation dialog ONLY for existing subscribers changing plans
-    // For free users or first-time subscribers, go directly to checkout
+    // Check if this is the current plan
     const currentPlanIncludesId = currentPlan && currentPlan.includes(plan.id);
     const isCurrentPlan = currentPlan === plan.priceId || currentPlanIncludesId;
     
-    if (hasActiveSubscription && !isCurrentPlan) {
-      // Existing subscriber changing plans - show dialog
+    if (isCurrentPlan) {
+      // This is already the current plan
+      toast.info("You are already subscribed to this plan");
+      return;
+    }
+    
+    if (hasActiveSubscription) {
+      // Show dialog only when changing from one paid plan to another
       setSelectedPlan(plan);
       setShowPlanChangeDialog(true);
-    } else if (!hasActiveSubscription) {
-      // Free user subscribing for the first time - go directly to checkout
+    } else {
+      // Free user subscribing - go directly to checkout without dialog
       if (onSelect) {
+        console.log('Free user subscribing, going directly to checkout');
         onSelect(plan.priceId, selectedCycle);
       }
     }

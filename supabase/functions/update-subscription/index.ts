@@ -88,15 +88,58 @@ serve(async (req) => {
     }
     
     // Handle price update case
-    const { newPriceId } = requestBody;
+    const { newPriceId, cycle } = requestBody;
     if (!newPriceId) throw new Error("New price ID is required");
-    logStep("Request data parsed", { newPriceId });
+    logStep("Request data parsed", { newPriceId, cycle });
     
-    const customerId = await getStripeCustomer(stripe, user.email);
-    const subscription = await getActiveSubscription(stripe, customerId);
-
-    if (!subscription) {
-      const result = await createNewSubscription(stripe, customerId, newPriceId);
+    try {
+      // First attempt to get the customer (if they exist)
+      const customerId = await getStripeCustomer(stripe, user.email);
+      logStep("Customer found or created", { customerId });
+      
+      // Check if they have an active subscription
+      const subscription = await getActiveSubscription(stripe, customerId);
+      
+      if (!subscription) {
+        logStep("No active subscription, redirecting to checkout", { customerId, priceId: newPriceId });
+        // Free user upgrading - create a checkout session instead
+        return new Response(JSON.stringify({ 
+          redirect_to_checkout: true,
+          message: "User should be redirected to checkout"
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      
+      // If they have an active subscription, proceed with the update
+      logStep("Active subscription found, updating", { subscriptionId: subscription.id });
+      
+      // Check if the new price is the same as the current one
+      if (!checkIfPriceChanged(subscription, newPriceId)) {
+        logStep("No change needed, new price is the same as current price");
+        return new Response(JSON.stringify({ 
+          success: true, 
+          subscription: {
+            id: subscription.id,
+            current_period_end: new Date(subscription.current_period_end * 1000),
+            plan: subscription.items.data[0].price.id,
+            action: "no_change"
+          }
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      
+      // Update subscription with new price
+      const subscriptionItemId = subscription.items.data[0].id;
+      const result = await updateSubscriptionPrice(
+        stripe, 
+        subscription.id, 
+        subscriptionItemId, 
+        newPriceId
+      );
       
       return new Response(JSON.stringify({ 
         success: true, 
@@ -105,41 +148,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
+    } catch (error) {
+      logStep("Error in subscription handling", { error: error.message });
+      throw error; // Re-throw to be caught by outer try/catch
     }
-
-    // Check if the new price is the same as the current one
-    if (!checkIfPriceChanged(subscription, newPriceId)) {
-      logStep("No change needed, new price is the same as current price");
-      return new Response(JSON.stringify({ 
-        success: true, 
-        subscription: {
-          id: subscription.id,
-          current_period_end: new Date(subscription.current_period_end * 1000),
-          plan: subscription.items.data[0].price.id,
-          action: "no_change"
-        }
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    // Update subscription with new price
-    const subscriptionItemId = subscription.items.data[0].id;
-    const result = await updateSubscriptionPrice(
-      stripe, 
-      subscription.id, 
-      subscriptionItemId, 
-      newPriceId
-    );
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      subscription: result
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
