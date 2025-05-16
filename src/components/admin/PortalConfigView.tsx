@@ -178,7 +178,7 @@ const PortalConfigView: React.FC<PortalConfigViewProps> = ({
 
 const FeatureStatus: React.FC<{ enabled?: boolean }> = ({ enabled }) => {
   return enabled ? (
-    <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-200">
+    <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">
       <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Enabled
     </Badge>
   ) : (

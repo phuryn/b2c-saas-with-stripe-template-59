@@ -30,6 +30,23 @@ export function useSidebar() {
   return context
 }
 
+// Move the useIsMobile hook inside the component
+function useIsMobileHook() {
+  const [isMobile, setIsMobile] = React.useState(false)
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  return isMobile
+}
+
 interface SidebarProviderProps extends React.ComponentProps<"div"> {
   defaultOpen?: boolean
   open?: boolean
@@ -52,7 +69,7 @@ export const SidebarProvider = React.forwardRef<
     },
     ref
   ) => {
-    const isMobile = useIsMobile()
+    const isMobile = useIsMobileHook();
     const [openMobile, setOpenMobile] = React.useState(false)
 
     // This is the internal state of the sidebar.
@@ -142,28 +159,11 @@ export const SidebarProvider = React.forwardRef<
 
 SidebarProvider.displayName = "SidebarProvider"
 
-// Utility functions needed for the sidebar
-function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(false)
-
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
-
-  return isMobile
-}
-
 import { cn } from "@/lib/utils"
 
 // Export constants but remove duplicate exports of components/hooks
 export { 
-  useIsMobile, 
+  // useIsMobile moved into a proper hook inside the component
   // Constants for use in other components
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_MOBILE,
