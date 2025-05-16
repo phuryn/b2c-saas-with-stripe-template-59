@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -62,7 +63,7 @@ const PublicHeader: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-gray-100">
+    <header className="sticky top-0 z-40 w-full bg-background border-b border-gray-100">
       <nav className="container mx-auto flex items-center justify-between h-16 px-4">
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
