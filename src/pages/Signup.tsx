@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FcGoogle } from "react-icons/fc";
-import { FaLinkedin } from "react-icons/fa";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,41 +88,6 @@ const Signup: React.FC = () => {
       toast({
         title: "Authentication failed",
         description: "Could not sign in with Google. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleLinkedInSignIn = async () => {
-    try {
-      const currentUrl = window.location.href;
-      const baseUrl = window.location.hostname.startsWith('app.')
-        ? currentUrl.split('/signup')[0]
-        : currentUrl.split('/signup')[0].replace('://', '://app.');
-      
-      // Store login timestamp to prevent redirect loops
-      localStorage.setItem('recentLogin', Date.now().toString());
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "linkedin_oidc",
-        options: {
-          redirectTo: `${baseUrl}/app?directSignup=true`,
-          queryParams: {
-            prompt: "select_account"
-          }
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-      
-      // No need to redirect here - the OAuth flow will handle it
-    } catch (error) {
-      console.error("Error with LinkedIn sign in:", error);
-      toast({
-        title: "Authentication failed",
-        description: "Could not sign in with LinkedIn. Please try again.",
         variant: "destructive",
       });
     }
@@ -245,15 +209,6 @@ const Signup: React.FC = () => {
                 >
                   <FcGoogle className="h-6 w-6" />
                   <span>Continue with Google</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full flex items-center gap-2 justify-center py-6"
-                  onClick={handleLinkedInSignIn}
-                >
-                  <FaLinkedin className="h-6 w-6 text-[#0A66C2]" />
-                  <span>Continue with LinkedIn</span>
                 </Button>
               </div>
             </CardContent>

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,7 +22,7 @@ type AuthContextType = {
     updated_at: string | null;
   } | null;
   updateProfile: (data: { display_name: string }) => Promise<void>;
-  authProvider: 'email' | 'google' | 'linkedin' | null;
+  authProvider: 'email' | 'google' | null;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -54,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     display_name: string | null;
     updated_at: string | null;
   } | null>(null);
-  const [authProvider, setAuthProvider] = useState<'email' | 'google' | 'linkedin' | null>(null);
+  const [authProvider, setAuthProvider] = useState<'email' | 'google' | null>(null);
   const { toast: shadcnToast } = useToast();
 
   // Function to safely fetch user role with error handling
@@ -132,8 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Determine auth provider
           if (session.user.app_metadata?.provider) {
             setAuthProvider(
-              session.user.app_metadata.provider === 'google' ? 'google' : 
-              session.user.app_metadata.provider === 'linkedin_oidc' ? 'linkedin' : 'email'
+              session.user.app_metadata.provider === 'google' ? 'google' : 'email'
             );
           } else {
             setAuthProvider('email');
@@ -200,8 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Determine auth provider
           if (session.user.app_metadata?.provider) {
             setAuthProvider(
-              session.user.app_metadata.provider === 'google' ? 'google' : 
-              session.user.app_metadata.provider === 'linkedin_oidc' ? 'linkedin' : 'email'
+              session.user.app_metadata.provider === 'google' ? 'google' : 'email'
             );
           } else {
             setAuthProvider('email');

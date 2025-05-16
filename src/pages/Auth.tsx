@@ -6,7 +6,6 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FcGoogle } from 'react-icons/fc';
-import { FaLinkedin } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -137,39 +136,6 @@ const Auth: React.FC = () => {
     }
   };
 
-  const handleLinkedInSignIn = async () => {
-    try {
-      console.log("Attempting LinkedIn sign-in");
-      
-      const currentUrl = window.location.href;
-      const baseUrl = window.location.hostname.startsWith('app.')
-        ? currentUrl.split('/auth')[0]
-        : currentUrl.split('/auth')[0].replace('://', '://app.');
-      
-      // Store login timestamp in localStorage to help prevent redirect loops
-      localStorage.setItem('recentLogin', Date.now().toString());
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'linkedin_oidc',
-        options: {
-          redirectTo: `${baseUrl}/app?directLogin=true`,
-          queryParams: {
-            prompt: 'select_account'
-          }
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      // No need to redirect here - the OAuth flow will handle it
-    } catch (error: any) {
-      console.error('Error with LinkedIn sign in:', error);
-      toast.error("Could not sign in with LinkedIn. Please try again.");
-    }
-  };
-
   return (
     <section className="section-padding">
       <div className="container mx-auto px-4">
@@ -234,15 +200,6 @@ const Auth: React.FC = () => {
                 >
                   <FcGoogle className="h-6 w-6" />
                   <span>Continue with Google</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2 justify-center py-6"
-                  onClick={handleLinkedInSignIn}
-                >
-                  <FaLinkedin className="h-6 w-6 text-[#0A66C2]" />
-                  <span>Continue with LinkedIn</span>
                 </Button>
               </div>
             </CardContent>
