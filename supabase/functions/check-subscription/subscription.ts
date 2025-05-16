@@ -1,4 +1,3 @@
-
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { logStep } from "./logger.ts";
 import type { User } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -184,22 +183,20 @@ async function getActiveSubscription(stripe: Stripe, customerId: string) {
       cancelAtPeriodEnd
     });
 
-    // Corrected price ID mapping to subscription tiers
-    // price_1RLoRRLdL9hht8n4Gcqi3p2b - Standard monthly - $10/month
-    // price_1RLoT5LdL9hht8n4n87AoFtZ - Standard yearly - $100/year
-    // price_1RLoRrLdL9hht8n4LZcdyKQt - Premium monthly - $20/month
-    // price_1RLoScLdL9hht8n4hSQtsOte - Premium yearly - $200/year
-    
+    // Return the exact price ID to ensure accurate plan identification in the frontend
+    // This allows the frontend to match the plan based on the specific cycle (monthly or yearly)
     if (currentPlan === 'price_1RLoRRLdL9hht8n4Gcqi3p2b' || 
         currentPlan === 'price_1RLoT5LdL9hht8n4n87AoFtZ') {
       subscriptionTier = 'Standard';
+      logStep("Determined subscription tier", { currentPlan, subscriptionTier });
     } else if (currentPlan === 'price_1RLoRrLdL9hht8n4LZcdyKQt' || 
                currentPlan === 'price_1RLoScLdL9hht8n4hSQtsOte') {
       subscriptionTier = 'Premium';
+      logStep("Determined subscription tier", { currentPlan, subscriptionTier });
     } else {
       subscriptionTier = 'Standard'; // Default
+      logStep("Using default subscription tier", { currentPlan, subscriptionTier });
     }
-    logStep("Determined subscription tier", { currentPlan, subscriptionTier });
   }
   
   return {

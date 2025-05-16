@@ -53,27 +53,23 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     }
   }, [cycle]);
 
-  // Helper function to check if a plan is the current plan
+  // Helper function to check if a plan is the current plan - FIXED to properly account for billing cycle
   const isPlanActive = (planId: string): boolean => {
     if (!currentPlan) return false;
     
-    // Handle plan identification correctly based on the price IDs
+    // Only check against price IDs for the CURRENT cycle
     if (planId === 'standard') {
-      // For standard plan, check both monthly and yearly price IDs
-      const standardPriceIds = [
-        STRIPE_CONFIG.prices.standard.monthly,
-        STRIPE_CONFIG.prices.standard.yearly
-      ];
-      return standardPriceIds.includes(currentPlan);
+      // Check if the current plan matches the Standard price ID for the CURRENT cycle
+      return currentPlan === (selectedCycle === 'monthly' 
+        ? STRIPE_CONFIG.prices.standard.monthly 
+        : STRIPE_CONFIG.prices.standard.yearly);
     }
     
-    // For premium plan, check both monthly and yearly price IDs
     if (planId === 'premium') {
-      const premiumPriceIds = [
-        STRIPE_CONFIG.prices.premium.monthly, 
-        STRIPE_CONFIG.prices.premium.yearly
-      ];
-      return premiumPriceIds.includes(currentPlan);
+      // Check if the current plan matches the Premium price ID for the CURRENT cycle
+      return currentPlan === (selectedCycle === 'monthly'
+        ? STRIPE_CONFIG.prices.premium.monthly
+        : STRIPE_CONFIG.prices.premium.yearly);
     }
     
     // For any other plan types (free, enterprise)
@@ -150,12 +146,12 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     const filteredPlans = isPublicPage ? plans : plans.filter(plan => !plan.free);
     
     return filteredPlans.map((plan) => {
-      // Check if this is the current plan using the corrected helper
+      // Check if this is the current plan using the cycle-aware helper
       const isActive = !isPublicPage && isPlanActive(plan.id);
       
       // Log active plans for debugging
       if (isActive) {
-        console.log(`Marked ${plan.id} plan as active based on price ID match with ${currentPlan}`);
+        console.log(`Marked ${plan.id} plan as active for ${selectedCycle} cycle based on price ID match with ${currentPlan}`);
       }
       
       let buttonText = plan.buttonText || 'Select Plan';

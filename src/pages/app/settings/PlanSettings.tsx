@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -154,17 +155,32 @@ const PlanSettings: React.FC = () => {
   const getCurrentPlanId = () => {
     if (!subscription?.current_plan) return null;
     
-    // Check for standard plan (using the proper price IDs)
-    if (subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly ||
-        subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) {
-        console.log("Detected standard plan based on price ID match with config");
-        return 'standard'; 
+    // Only match against price IDs for the CURRENT cycle (selectedCycle)
+    // This ensures we only highlight the plan in the currently selected cycle
+    
+    // Check for standard plan based on the current cycle
+    if (selectedCycle === 'monthly' && 
+        subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly) {
+        console.log("Detected standard monthly plan based on price ID match with config");
+        return 'standard';
     }
     
-    // Check for premium plan (using the proper price IDs)
-    if (subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly ||
+    if (selectedCycle === 'yearly' && 
+        subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) {
+        console.log("Detected standard yearly plan based on price ID match with config");
+        return 'standard';
+    }
+    
+    // Check for premium plan based on the current cycle
+    if (selectedCycle === 'monthly' && 
+        subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly) {
+        console.log("Detected premium monthly plan based on price ID match with config");
+        return 'premium';
+    }
+    
+    if (selectedCycle === 'yearly' && 
         subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) {
-        console.log("Detected premium plan based on price ID match with config");
+        console.log("Detected premium yearly plan based on price ID match with config");
         return 'premium';
     }
     
