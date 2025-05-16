@@ -39,7 +39,11 @@ export const updateSubscription = async (
   newPriceId?: string, 
   cycle?: 'monthly' | 'yearly',
   options?: { cancel?: boolean; renew?: boolean }
-): Promise<{ success?: boolean; subscription?: { client_secret?: string } } | null> => {
+): Promise<{ 
+  success?: boolean; 
+  subscription?: { client_secret?: string };
+  redirect_to_checkout?: boolean;
+} | null> => {
   const { data, error } = await supabase.functions.invoke('update-subscription', {
     body: { 
       newPriceId, 
