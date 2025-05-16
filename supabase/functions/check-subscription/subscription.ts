@@ -1,4 +1,3 @@
-
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { logStep } from "./logger.ts";
 import type { User } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -185,9 +184,14 @@ async function getActiveSubscription(stripe: Stripe, customerId: string) {
     });
 
     // Determine the subscription tier based on the price ID
-    if (currentPlan.includes('standard')) {
+    // Note: We're fixing the mapping to match the actual pricing
+    if (currentPlan === 'price_1RLoRRLdL9hht8n4Gcqi3p2b' || 
+        currentPlan === 'price_1RLoT5LdL9hht8n4n87AoFtZ') {
+      // These are the $10 Standard plan price IDs
       subscriptionTier = 'Standard';
-    } else if (currentPlan.includes('premium')) {
+    } else if (currentPlan === 'price_1RLoRrLdL9hht8n4LZcdyKQt' || 
+               currentPlan === 'price_1RLoScLdL9hht8n4hSQtsOte') {
+      // These are the $20 Premium plan price IDs
       subscriptionTier = 'Premium';
     } else {
       subscriptionTier = 'Standard'; // Default

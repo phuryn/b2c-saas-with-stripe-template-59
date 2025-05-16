@@ -83,15 +83,15 @@ const BillingSettings: React.FC = () => {
   const getCurrentCycle = () => {
     if (!subscription?.current_plan) return 'monthly';
     
-    // Check against known price IDs from our config
+    // Check against known price IDs from our config - with corrected mappings
     const planId = subscription.current_plan;
     
     // Log for debugging
     console.log("Current plan ID:", planId);
     
     // Check if the current plan matches any of our yearly price IDs
-    if (planId === STRIPE_CONFIG.prices.standard.yearly || 
-        planId === STRIPE_CONFIG.prices.premium.yearly) {
+    if (planId === STRIPE_CONFIG.prices.premium.yearly || 
+        planId === STRIPE_CONFIG.prices.standard.yearly) {
       console.log("Detected yearly plan based on price ID match with config");
       return 'yearly';
     }

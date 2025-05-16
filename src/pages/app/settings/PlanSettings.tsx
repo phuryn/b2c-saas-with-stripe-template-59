@@ -155,11 +155,19 @@ const PlanSettings: React.FC = () => {
   const getCurrentPlanId = () => {
     if (!subscription?.current_plan) return null;
     
-    if (subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly ||
-        subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) return 'standard';
-    
+    // Check the current plan using the actual Stripe price IDs
+    // Note: We need to cross-reference with the correct plan based on the price
     if (subscription.current_plan === STRIPE_CONFIG.prices.premium.monthly ||
-        subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) return 'premium';
+        subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) {
+        console.log("Detected standard plan based on price ID match with config");
+        return 'standard'; // This is actually the $10 standard plan
+    }
+    
+    if (subscription.current_plan === STRIPE_CONFIG.prices.standard.monthly ||
+        subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly) {
+        console.log("Detected premium plan based on price ID match with config");
+        return 'premium'; // This is actually the $20 premium plan
+    }
     
     if (subscription.current_plan.includes('enterprise')) return 'enterprise';
     return null;

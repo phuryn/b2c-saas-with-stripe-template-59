@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plan, getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
@@ -124,12 +123,23 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     const filteredPlans = isPublicPage ? plans : plans.filter(plan => !plan.free);
     
     return filteredPlans.map((plan) => {
-      // Check if this is the current plan by comparing price IDs directly
+      // Check if this is the current plan by comparing with the STRIPE_CONFIG price IDs
       // Only show active state if not on public page
-      const isActive = !isPublicPage && (
-        currentPlan === plan.priceId || 
-        (plan.id !== 'free' && currentPlan?.includes(plan.id))
-      );
+      let isActive = false;
+      if (!isPublicPage && currentPlan) {
+        if (plan.id === 'standard' && 
+            (currentPlan === STRIPE_CONFIG.prices.premium.monthly || 
+             currentPlan === STRIPE_CONFIG.prices.premium.yearly)) {
+          isActive = true;
+          console.log("Marked standard plan as active based on price ID match");
+        }
+        else if (plan.id === 'premium' && 
+                 (currentPlan === STRIPE_CONFIG.prices.standard.monthly || 
+                  currentPlan === STRIPE_CONFIG.prices.standard.yearly)) {
+          isActive = true;
+          console.log("Marked premium plan as active based on price ID match");
+        }
+      }
       
       let buttonText = plan.buttonText || 'Select Plan';
       
