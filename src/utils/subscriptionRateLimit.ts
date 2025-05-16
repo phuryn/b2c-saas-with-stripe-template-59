@@ -63,7 +63,6 @@ export const shouldCheckSubscription = (forceCheck: boolean = false): boolean =>
     // Allow checking if:
     // 1. Never checked before (lastCheck is 0)
     // 2. Enough time has passed since last check
-    // 3. Force check is requested
     return lastCheck === 0 || (now - lastCheck) > CHECK_INTERVAL;
   } catch (e) {
     return true;

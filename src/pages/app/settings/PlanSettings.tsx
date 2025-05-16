@@ -12,6 +12,7 @@ import SubscriptionInfo from '@/components/billing/SubscriptionInfo';
 import DowngradeDialog from '@/components/billing/DowngradeDialog';
 import { BillingCycle } from '@/types/subscription';
 import { getPlans } from '@/config/plans';
+import { resetSubscriptionRateLimiting } from '@/utils/subscriptionRateLimit';
 
 const PlanSettings: React.FC = () => {
   const { user, session } = useAuth();
@@ -41,6 +42,8 @@ const PlanSettings: React.FC = () => {
 
   useEffect(() => {
     if (session) {
+      // Reset rate limiting and force a fresh check for the plans page
+      resetSubscriptionRateLimiting();
       checkSubscriptionStatus(true); // Force a check to ensure we have the latest data
     }
   }, [session]);
@@ -84,7 +87,8 @@ const PlanSettings: React.FC = () => {
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
       toast.success('Subscription updated successfully');
-      checkSubscriptionStatus();
+      resetSubscriptionRateLimiting(); // Reset rate limiting on successful update
+      checkSubscriptionStatus(true); // Force a fresh check
     } else if (searchParams.get('canceled') === 'true') {
       toast.info('Subscription update canceled');
     }
@@ -102,7 +106,9 @@ const PlanSettings: React.FC = () => {
         setSelectedCycle(result.cycle);
       }
       
-      await refreshSubscriptionData(); // Refresh subscription data after successful plan change
+      // Reset rate limiting and force refresh
+      resetSubscriptionRateLimiting();
+      await refreshSubscriptionData(); 
     }
   };
 
@@ -116,7 +122,8 @@ const PlanSettings: React.FC = () => {
     if (success) {
       toast.success('Subscription cancelled successfully');
       setShowDowngradeDialog(false);
-      await refreshSubscriptionData(); // Refresh subscription data after downgrade
+      resetSubscriptionRateLimiting(); // Reset rate limiting after downgrade
+      await refreshSubscriptionData();
     }
   };
 
@@ -125,7 +132,8 @@ const PlanSettings: React.FC = () => {
     const success = await handleRenewSubscription();
     if (success) {
       toast.success('Subscription renewed successfully');
-      await refreshSubscriptionData(); // Refresh subscription data after renewal
+      resetSubscriptionRateLimiting(); // Reset rate limiting after renewal
+      await refreshSubscriptionData();
     }
     return success;
   };

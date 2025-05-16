@@ -23,6 +23,7 @@ const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   // Get subscription data with initialization
   const {
@@ -34,16 +35,17 @@ const AppLayout: React.FC = () => {
   // Only initialize subscription once after auth is confirmed
   useEffect(() => {
     // Only check subscription once auth is confirmed and user exists
-    if (user && !authLoading && !location.pathname.startsWith('/auth')) {
+    if (user && !authLoading && !initialCheckDone && !location.pathname.startsWith('/auth')) {
       console.log("Auth confirmed in AppLayout, checking subscription status once");
       // Use a slight delay to ensure auth is fully propagated
       const timer = setTimeout(() => {
         checkSubscriptionStatus(false); // Don't force check - respect caching
+        setInitialCheckDone(true);
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, initialCheckDone]);
 
   // Get user initials for avatar
   const getInitials = () => {

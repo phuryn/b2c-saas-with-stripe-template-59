@@ -15,9 +15,6 @@ import {
   getCachedSubscriptionData
 } from '@/utils/subscriptionRateLimit';
 
-// Store last known subscription state in localStorage
-const SUBSCRIPTION_STORAGE_KEY = 'last_known_subscription';
-
 /**
  * Hook for managing subscription state and operations
  */
@@ -29,7 +26,7 @@ export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(() => {
     // Try to initialize from localStorage if available
     try {
-      const storedSubscription = localStorage.getItem(SUBSCRIPTION_STORAGE_KEY);
+      const storedSubscription = localStorage.getItem('last_known_subscription');
       return storedSubscription ? JSON.parse(storedSubscription) : null;
     } catch (e) {
       console.warn('Error reading subscription from localStorage:', e);
@@ -58,7 +55,8 @@ export function useSubscription() {
 
     // Special case: Always force check on the billing page during initial load
     const isBillingPage = window.location.pathname.includes('/billing');
-    const shouldForceCheck = force || (pageInitialLoad && isBillingPage);
+    const isPlanPage = window.location.pathname.includes('/plan');
+    const shouldForceCheck = force || (pageInitialLoad && (isBillingPage || isPlanPage));
     
     // Rate limiting and debouncing protection
     if (!shouldForceCheck && !shouldCheckSubscription(force)) {
@@ -91,7 +89,7 @@ export function useSubscription() {
       
       // Store subscription state in localStorage for future reference
       if (data) {
-        localStorage.setItem(SUBSCRIPTION_STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem('last_known_subscription', JSON.stringify(data));
         
         if (data?.subscribed) {
           localStorage.setItem('hasActiveSubscription', 'true');
@@ -171,18 +169,20 @@ export function useSubscription() {
     handleRenewSubscription 
   } = useSubscriptionActions();
 
-  // Listen for URL changes to detect billing page navigation
+  // Check for URL changes to detect billing/plan page navigation
   useEffect(() => {
     const isBillingPage = window.location.pathname.includes('/billing');
-    if (isBillingPage) {
-      // Force check on billing page navigation
+    const isPlanPage = window.location.pathname.includes('/plan');
+    
+    if (isBillingPage || isPlanPage) {
+      // Force check on billing/plan page navigation
       setPageInitialLoad(true);
       if (user && !authLoading) {
-        console.log('Navigated to billing page, forcing subscription check');
+        console.log(`Navigated to ${isBillingPage ? 'billing' : 'plan'} page, forcing subscription check`);
         checkSubscriptionStatus(true);
       }
     }
-  }, [window.location.pathname]);
+  }, [window.location.pathname, user, authLoading, checkSubscriptionStatus]);
 
   // Initial subscription check when auth state changes
   useEffect(() => {
@@ -193,7 +193,7 @@ export function useSubscription() {
     } else if (!user && !authLoading) {
       // Clear subscription state when logged out
       setSubscription(null);
-      localStorage.removeItem(SUBSCRIPTION_STORAGE_KEY);
+      localStorage.removeItem('last_known_subscription');
       localStorage.removeItem('hasActiveSubscription');
     }
     
