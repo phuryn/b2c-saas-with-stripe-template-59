@@ -17,7 +17,7 @@ import PlanCard from '@/components/billing/PlanCard';
 import { getPlans } from '@/config/plans';
 import { formatPrice } from '@/utils/pricing';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useSubscription } from '@/context/SubscriptionContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useStripePrices } from '@/hooks/useStripePrices';
 
 const BillingSettings: React.FC = () => {
@@ -25,7 +25,7 @@ const BillingSettings: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  // Use our subscription context
+  // Use our subscription hook for consistent behavior with PlanSettings
   const {
     subscription,
     loading,
@@ -43,9 +43,16 @@ const BillingSettings: React.FC = () => {
   } = useStripePrices();
   
   const [error, setError] = useState<string | null>(null);
-  const [initialChecked, setInitialChecked] = useState(false);
+  const [initialFetchAttempted, setInitialFetchAttempted] = useState(false);
 
   useEffect(() => {
+    // Force refresh when component mounts
+    if (!initialFetchAttempted && user) {
+      console.log("BillingSettings: Initial mount, forcing subscription refresh");
+      refreshSubscriptionData();
+      setInitialFetchAttempted(true);
+    }
+    
     // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
       toast.success('Your subscription has been updated successfully.');
@@ -53,12 +60,7 @@ const BillingSettings: React.FC = () => {
     } else if (searchParams.get('canceled') === 'true') {
       toast.info('Subscription update canceled');
     }
-    
-    // Set initial checked flag to prevent multiple checks
-    if (!initialChecked && user) {
-      setInitialChecked(true);
-    }
-  }, [searchParams, refreshSubscriptionData, initialChecked, user]);
+  }, [searchParams, refreshSubscriptionData, initialFetchAttempted, user]);
 
   const handleManagePlan = () => {
     navigate('/app/settings/plan');

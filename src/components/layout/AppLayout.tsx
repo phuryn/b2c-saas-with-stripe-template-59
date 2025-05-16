@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
-import { useSubscription } from '@/context/SubscriptionContext';
 import AppSidebar from './AppSidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { getPlans } from '@/config/plans';
 
 const AppLayout: React.FC = () => {
@@ -23,11 +24,26 @@ const AppLayout: React.FC = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
 
-  // Get subscription data without initialization - this will use cached data if available
+  // Get subscription data with initialization
   const {
     subscription,
-    loading: subscriptionLoading
+    loading: subscriptionLoading,
+    checkSubscriptionStatus
   } = useSubscription();
+
+  // Only initialize subscription once after auth is confirmed
+  useEffect(() => {
+    // Only check subscription once auth is confirmed and user exists
+    if (user && !authLoading && !location.pathname.startsWith('/auth')) {
+      console.log("Auth confirmed in AppLayout, checking subscription status once");
+      // Use a slight delay to ensure auth is fully propagated
+      const timer = setTimeout(() => {
+        checkSubscriptionStatus(false); // Don't force check - respect caching
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, authLoading]);
 
   // Get user initials for avatar
   const getInitials = () => {

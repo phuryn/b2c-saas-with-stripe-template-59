@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -6,7 +5,6 @@ import {
   openCustomerPortalApi, 
   createCheckoutSession 
 } from '@/api/subscriptionApi';
-import { trackSubscriptionChange } from '@/utils/subscriptionRateLimit';
 
 /**
  * Hook for subscription-related actions
@@ -32,9 +30,6 @@ export function useSubscriptionActions() {
         const data = await createCheckoutSession(planId);
         
         if (data?.url) {
-          // Track that a subscription change was initiated
-          trackSubscriptionChange();
-          
           // Redirect to Stripe Checkout
           window.location.href = data.url;
           return { success: true };
@@ -53,9 +48,6 @@ export function useSubscriptionActions() {
         const checkoutData = await createCheckoutSession(planId);
         
         if (checkoutData?.url) {
-          // Track that a subscription change was initiated
-          trackSubscriptionChange();
-          
           window.location.href = checkoutData.url;
           return { success: true };
         }
@@ -65,9 +57,6 @@ export function useSubscriptionActions() {
       
       // If we got client_secret back, the user needs to complete payment setup
       if (data?.subscription?.client_secret) {
-        // Track that a subscription change occurred
-        trackSubscriptionChange();
-        
         // For now, we'll handle by redirecting to customer portal
         await openCustomerPortal();
         return { success: true };
@@ -75,9 +64,6 @@ export function useSubscriptionActions() {
 
       // If no client_secret, the update was successful
       if (data?.success) {
-        // Track that a subscription change occurred
-        trackSubscriptionChange();
-        
         // Return the cycle along with success status for UI updates
         console.log('Subscription updated successfully with cycle:', cycle);
         return { success: true, cycle };
@@ -127,8 +113,6 @@ export function useSubscriptionActions() {
       const data = await updateSubscription(undefined, undefined, { cancel: true });
       
       if (data?.success) {
-        // Track that a subscription change occurred
-        trackSubscriptionChange();
         return true;
       }
       
@@ -152,8 +136,6 @@ export function useSubscriptionActions() {
       const data = await updateSubscription(undefined, undefined, { renew: true });
       
       if (data?.success) {
-        // Track that a subscription change occurred
-        trackSubscriptionChange();
         return true;
       }
       
