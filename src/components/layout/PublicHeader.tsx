@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+
 const PublicHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -19,6 +20,7 @@ const PublicHeader: React.FC = () => {
     userMetadata,
     profile
   } = useAuth();
+
   const handleSignOut = async () => {
     if (isSigningOut) return;
     try {
@@ -49,7 +51,7 @@ const PublicHeader: React.FC = () => {
     href: "/pricing"
   }];
   const isActive = (path: string) => location.pathname === path;
-  return <header className="sticky top-0 z-40 w-full bg-background border-b border-gray-100">
+  return <header className="sticky top-0 z-40 w-full bg-background border-b border-gray-100 shadow-sm">
       <nav className="container mx-auto flex items-center justify-between h-16 px-4">
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
@@ -129,4 +131,5 @@ const PublicHeader: React.FC = () => {
       </nav>
     </header>;
 };
+
 export default PublicHeader;
