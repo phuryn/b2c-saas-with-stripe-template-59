@@ -44,7 +44,7 @@ const HeroSection: React.FC = () => {
           <div className="mt-12 w-full max-w-4xl animate-fade-in" style={{
           animationDelay: "0.6s"
         }}>
-            <img alt="TRUSTY Dashboard Preview" className="w-full h-auto rounded-lg shadow-xl" src="/lovable-uploads/e1fac02a-7bd7-438a-bccf-cf0c57ab3693.png" />
+            <img alt="TRUSTY Dashboard Preview" className="w-full h-auto rounded-lg shadow-xl" src="/lovable-uploads/58997b93-31dd-4c45-87e8-379dbe417a75.png" />
           </div>
         </div>
       </div>
