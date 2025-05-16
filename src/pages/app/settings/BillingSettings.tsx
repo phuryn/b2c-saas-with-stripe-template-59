@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Import our components
@@ -102,7 +102,7 @@ const BillingSettings: React.FC = () => {
             className="ml-2"
             disabled={refreshing}
           >
-            {refreshing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+            {refreshing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <AlertTriangle className="h-4 w-4 mr-1" />}
             Retry
           </Button>
         </AlertDescription>
@@ -130,15 +130,7 @@ const BillingSettings: React.FC = () => {
   return <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-medium">Billing and Usage</h2>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={refreshSubscriptionData}
-          disabled={refreshing}
-        >
-          {refreshing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
-          Refresh
-        </Button>
+        {/* Refresh button removed from here */}
       </div>
       
       {error && renderErrorState()}
