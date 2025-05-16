@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -47,7 +46,6 @@ const AppLayout: React.FC = () => {
     }
   }, [user, authLoading, initialCheckDone]);
 
-  // Get user initials for avatar
   const getInitials = () => {
     const name = profile?.display_name || userMetadata?.name || userMetadata?.full_name || user?.email?.split('@')[0] || 'U';
     return name.substring(0, 2).toUpperCase();
@@ -72,7 +70,6 @@ const AppLayout: React.FC = () => {
       </div>;
   }
 
-  // Format the subscription tier with consistent naming and defensive coding
   const getFormattedPlanName = () => {
     if (subscription?.subscribed && subscription?.subscription_tier) {
       return `${subscription.subscription_tier} Plan`;

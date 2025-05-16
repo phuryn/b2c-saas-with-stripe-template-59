@@ -42,6 +42,7 @@ export function useSubscription() {
   const lastAttemptRef = useRef<number>(0);
   const retryCountRef = useRef<number>(0);
   const debounceTimerRef = useRef<number | null>(null);
+  const checkInProgressRef = useRef<boolean>(false); // Track if a check is already in progress
 
   /**
    * Fetch subscription status from API
@@ -53,13 +54,14 @@ export function useSubscription() {
       return subscription;  // Return cached subscription
     }
 
-    // Special case: Always force check on the billing page during initial load
-    const isBillingPage = window.location.pathname.includes('/billing');
-    const isPlanPage = window.location.pathname.includes('/plan');
-    const shouldForceCheck = force || (pageInitialLoad && (isBillingPage || isPlanPage));
+    // Don't allow concurrent checks
+    if (checkInProgressRef.current) {
+      console.log('Skipping subscription check - another check already in progress');
+      return subscription;
+    }
     
     // Rate limiting and debouncing protection
-    if (!shouldForceCheck && !shouldCheckSubscription(force)) {
+    if (!force && !shouldCheckSubscription(force)) {
       console.log('Skipping subscription check due to rate limiting', new Date().toISOString());
       return subscription;  // Return cached subscription
     }
@@ -71,6 +73,7 @@ export function useSubscription() {
     }
 
     try {
+      checkInProgressRef.current = true;
       setLoading(prev => !subscription && prev); // Only show loading if no cached data
       setRefreshing(true);
       lastAttemptRef.current = Date.now();
@@ -120,6 +123,7 @@ export function useSubscription() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      checkInProgressRef.current = false;
     }
   }, [errorState, subscription, user, pageInitialLoad]);
 
@@ -174,22 +178,23 @@ export function useSubscription() {
     const isBillingPage = window.location.pathname.includes('/billing');
     const isPlanPage = window.location.pathname.includes('/plan');
     
-    if (isBillingPage || isPlanPage) {
+    // Only check on first visit to billing/plan pages in this session
+    if ((isBillingPage || isPlanPage) && pageInitialLoad) {
       // Force check on billing/plan page navigation
       setPageInitialLoad(true);
-      if (user && !authLoading) {
+      if (user && !authLoading && !checkInProgressRef.current) {
         console.log(`Navigated to ${isBillingPage ? 'billing' : 'plan'} page, forcing subscription check`);
         checkSubscriptionStatus(true);
       }
     }
-  }, [window.location.pathname, user, authLoading, checkSubscriptionStatus]);
+  }, [window.location.pathname, user, authLoading, checkSubscriptionStatus, pageInitialLoad]);
 
   // Initial subscription check when auth state changes
   useEffect(() => {
     // Only check subscription if user is authenticated and auth loading is complete
-    if (user && !authLoading) {
+    if (user && !authLoading && pageInitialLoad && !checkInProgressRef.current) {
       console.log("Auth confirmed, checking subscription status once");
-      checkSubscriptionStatus(pageInitialLoad);
+      checkSubscriptionStatus(false);
     } else if (!user && !authLoading) {
       // Clear subscription state when logged out
       setSubscription(null);

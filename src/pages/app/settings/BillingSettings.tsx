@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -43,16 +44,16 @@ const BillingSettings: React.FC = () => {
   } = useStripePrices();
   
   const [error, setError] = useState<string | null>(null);
-  const [initialFetchAttempted, setInitialFetchAttempted] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
-    // Force refresh when component mounts - this is a billing page so we want fresh data
-    if (!initialFetchAttempted && user) {
+    // Force refresh once when component mounts - this is a billing page
+    if (!initialCheckDone && user) {
       console.log("BillingSettings: Initial mount, forcing subscription refresh");
       // Reset rate limiting and force a fresh check
       resetSubscriptionRateLimiting();
       refreshSubscriptionData();
-      setInitialFetchAttempted(true);
+      setInitialCheckDone(true);
     }
     
     // Check URL parameters for subscription status messages
@@ -63,7 +64,7 @@ const BillingSettings: React.FC = () => {
     } else if (searchParams.get('canceled') === 'true') {
       toast.info('Subscription update canceled');
     }
-  }, [searchParams, refreshSubscriptionData, initialFetchAttempted, user]);
+  }, [searchParams, refreshSubscriptionData, initialCheckDone, user]);
 
   const handleManagePlan = () => {
     navigate('/app/settings/plan');

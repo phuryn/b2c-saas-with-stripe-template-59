@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -20,6 +19,7 @@ const PlanSettings: React.FC = () => {
   const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<'monthly' | 'yearly'>('yearly'); // Default to yearly
   const [initialized, setInitialized] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   
   // Use our custom hooks
   const {
@@ -40,13 +40,15 @@ const PlanSettings: React.FC = () => {
     loading: pricesLoading,
   } = useStripePrices();
 
+  // Initial load - force refresh subscription once
   useEffect(() => {
-    if (session) {
+    if (session && !initialCheckDone) {
       // Reset rate limiting and force a fresh check for the plans page
       resetSubscriptionRateLimiting();
       checkSubscriptionStatus(true); // Force a check to ensure we have the latest data
+      setInitialCheckDone(true);
     }
-  }, [session]);
+  }, [session, initialCheckDone]);
 
   // Get the current cycle based on the subscription plan
   const getCurrentCycle = (): BillingCycle => {

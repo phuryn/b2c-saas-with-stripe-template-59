@@ -10,13 +10,26 @@ import { Subscription } from '@/types/subscription';
  * Fetch subscription status from Supabase
  */
 export const fetchSubscriptionStatus = async (): Promise<Subscription | null> => {
-  const { data, error } = await supabase.functions.invoke('check-subscription');
-  
-  if (error) {
-    throw new Error(error.message || 'Failed to check subscription status');
+  try {
+    const { data, error } = await supabase.functions.invoke('check-subscription');
+    
+    if (error) {
+      // If error includes a rate limit message, throw a more specific error
+      if (error.message && error.message.toLowerCase().includes('rate limit')) {
+        throw new Error('Rate limit exceeded. Please try again in a few moments.');
+      }
+      throw new Error(error.message || 'Failed to check subscription status');
+    }
+    
+    return data;
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('Rate limit exceeded')) {
+      console.warn('Rate limit exceeded when checking subscription, using cached data');
+      // In case of rate limiting, don't throw - return null and let the hook use cached data
+      return null;
+    }
+    throw err;
   }
-  
-  return data;
 };
 
 /**
@@ -43,6 +56,7 @@ export const updateSubscription = async (
   success?: boolean; 
   subscription?: { client_secret?: string };
   redirect_to_checkout?: boolean;
+  cycle?: 'monthly' | 'yearly';
 } | null> => {
   const { data, error } = await supabase.functions.invoke('update-subscription', {
     body: { 

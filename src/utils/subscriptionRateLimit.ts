@@ -54,7 +54,18 @@ export const shouldCheckSubscription = (forceCheck: boolean = false): boolean =>
     // Special case: Always check on billing pages
     if (window.location.pathname.includes('/billing') || 
         window.location.pathname.includes('/plan')) {
-      return true;
+      // On billing pages, only check once per session visit
+      const pageVisitKey = `last_visit_${window.location.pathname}`;
+      const lastVisit = localStorage.getItem(pageVisitKey);
+      
+      if (!lastVisit) {
+        // First time visiting this page in this session, allow check
+        localStorage.setItem(pageVisitKey, Date.now().toString());
+        return true;
+      }
+      
+      // Already checked on this page visit, don't check again
+      return false;
     }
     
     const lastCheck = Number(localStorage.getItem('last_subscription_check') || 0);
@@ -118,5 +129,13 @@ export const getCachedSubscriptionData = () => {
  * Reset subscription rate limiting state
  */
 export const resetSubscriptionRateLimiting = () => {
+  // Clear all rate limiting keys
   localStorage.removeItem('last_subscription_check');
+  
+  // Clear page visit markers
+  for (let key of Object.keys(localStorage)) {
+    if (key.startsWith('last_visit_')) {
+      localStorage.removeItem(key);
+    }
+  }
 };
