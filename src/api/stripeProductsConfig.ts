@@ -16,6 +16,8 @@ export const initializeStripeProducts = async (): Promise<{
   error?: string;
 }> => {
   try {
+    console.log('Initializing Stripe products and prices...');
+    
     const { data, error } = await supabase.functions.invoke('initialize-stripe-products', {
       body: {}
     });
@@ -24,6 +26,8 @@ export const initializeStripeProducts = async (): Promise<{
       console.error('Error initializing Stripe products:', error);
       throw new Error(error.message || 'Failed to initialize products');
     }
+    
+    console.log('Stripe products initialized successfully:', data);
     
     return {
       success: data.success,

@@ -17,6 +17,9 @@ export const configureStripeCustomerPortal = async (appUrl: string): Promise<{
   error?: string;
 }> => {
   try {
+    // Log the parameters being sent
+    console.log('Configuring Stripe portal with app URL:', appUrl);
+    
     const { data, error } = await supabase.functions.invoke('initialize-stripe-portal', {
       body: { appUrl }
     });
@@ -25,6 +28,9 @@ export const configureStripeCustomerPortal = async (appUrl: string): Promise<{
       console.error('Error configuring Stripe portal:', error);
       throw new Error(error.message || 'Failed to configure customer portal');
     }
+    
+    // Log the response from the function
+    console.log('Stripe portal configuration response:', data);
     
     return {
       success: data.success,

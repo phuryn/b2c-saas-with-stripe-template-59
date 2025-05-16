@@ -102,6 +102,8 @@ serve(async (req) => {
     
     try {
       // Configure the Stripe customer portal
+      logStep("Creating portal configuration with app URL", { appUrl });
+      
       const portalConfiguration = await stripe.billingPortal.configurations.create({
         business_profile: {
           headline: "Manage your subscription",
