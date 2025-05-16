@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useStripePrices } from '@/hooks/useStripePrices';
 import { resetSubscriptionRateLimiting } from '@/utils/subscriptionRateLimit';
+import { STRIPE_CONFIG } from '@/config/stripe';
 
 const BillingSettings: React.FC = () => {
   const { user } = useAuth();
@@ -80,55 +81,21 @@ const BillingSettings: React.FC = () => {
   };
 
   const getCurrentCycle = () => {
-    if (!subscription) return 'monthly';
+    if (!subscription?.current_plan) return 'monthly';
     
-    // First check if subscription_end is more than 6 months in the future
-    // This is a good indicator of a yearly plan
-    if (subscription.subscription_end) {
-      const endDate = new Date(subscription.subscription_end);
-      const sixMonthsFromNow = new Date();
-      sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
-      
-      if (endDate > sixMonthsFromNow) {
-        console.log("Yearly plan detected based on end date:", subscription.subscription_end);
-        return 'yearly';
-      }
+    // Check against known price IDs from our config
+    const planId = subscription.current_plan;
+    
+    // Log for debugging
+    console.log("Current plan ID:", planId);
+    
+    // Check if the current plan matches any of our yearly price IDs
+    if (planId === STRIPE_CONFIG.prices.standard.yearly || 
+        planId === STRIPE_CONFIG.prices.premium.yearly) {
+      console.log("Detected yearly plan based on price ID match with config");
+      return 'yearly';
     }
     
-    // Then check the plan ID if available
-    if (subscription.current_plan) {
-      const planId = subscription.current_plan.toLowerCase();
-      console.log("Current plan ID for cycle detection:", planId);
-      
-      // Look for common yearly indicators in the plan ID
-      if (
-        planId.includes('year') || 
-        planId.includes('annual') || 
-        planId.includes('yr')
-      ) {
-        return 'yearly';
-      }
-    }
-    
-    // For the standard plan price, check if the price is closer to $100 than $10
-    // This is a rough check but helps with the specific issue
-    if (subscription.subscription_tier === 'Standard') {
-      // If we're on plan page and see $100/year, we're on yearly
-      const planPage = window.location.pathname.includes('/plan');
-      if (planPage && stripePrices) {
-        const yearlyPlanId = Object.keys(stripePrices).find(id => 
-          id.toLowerCase().includes('standard') && 
-          id.toLowerCase().includes('year')
-        );
-        
-        if (yearlyPlanId && stripePrices[yearlyPlanId]?.unit_amount === 10000) {
-          console.log("Yearly plan detected based on price match");
-          return 'yearly';
-        }
-      }
-    }
-    
-    // Default to monthly if no yearly indicators are found
     return 'monthly';
   };
 
