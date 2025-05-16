@@ -68,7 +68,7 @@ const AppLayout: React.FC = () => {
       <div className="min-h-screen flex w-full bg-[rgb(247_247_247)]">
         <AppSidebar />
         <div className="flex-1 min-h-screen relative">
-          {/* User Profile Menu - now in a non-absolute row aligned to the right */}
+          {/* User Profile Menu - now with adjusted padding */}
           <div className="flex justify-end pr-6 pb-0 z-10">
             <UserProfileMenu onSignOut={handleSignOut} onUpgrade={handleUpgrade} />
           </div>
