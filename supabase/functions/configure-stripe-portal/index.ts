@@ -123,9 +123,11 @@ serve(async (req) => {
     // Configure the Stripe customer portal
     // First check if there's already a configuration
     const configs = await stripe.billingPortal.configurations.list({ limit: 1 });
+    logStep("Retrieved existing portal configurations", { count: configs.data.length });
+    
     let configId;
     
-    // Determine configuration properties
+    // Determine configuration properties with the requested default values
     const configProps = {
       business_profile: {
         headline: "Manage your subscription",
@@ -137,8 +139,8 @@ serve(async (req) => {
           enabled: true,
           allowed_updates: ['name', 'address', 'tax_id'],
         },
-        subscription_cancel: { enabled: true },
-        subscription_update: { enabled: true },
+        subscription_cancel: { enabled: false }, // Set to false as requested
+        subscription_update: { enabled: false }, // Set to false as requested
       },
     };
     
@@ -146,21 +148,42 @@ serve(async (req) => {
     if (configs.data.length > 0) {
       // Update existing config
       configId = configs.data[0].id;
-      logStep("Updating existing portal configuration", { configId });
+      logStep("Updating existing portal configuration", { configId, newSettings: configProps });
       await stripe.billingPortal.configurations.update(configId, configProps);
+      logStep("Portal configuration updated successfully", { configId });
     } else {
       // Create new config
-      logStep("Creating new portal configuration");
+      logStep("Creating new portal configuration", { settings: configProps });
       const newConfig = await stripe.billingPortal.configurations.create(configProps);
       configId = newConfig.id;
+      logStep("New portal configuration created", { configId });
     }
     
-    logStep("Customer portal configured", { configId });
+    // Get the final configuration to verify changes
+    const updatedConfig = await stripe.billingPortal.configurations.retrieve(configId);
+    logStep("Final portal configuration", {
+      id: updatedConfig.id,
+      active: updatedConfig.active,
+      subscription_cancel: updatedConfig.features.subscription_cancel.enabled,
+      subscription_update: updatedConfig.features.subscription_update.enabled,
+      customer_update: updatedConfig.features.customer_update
+    });
     
     return new Response(JSON.stringify({ 
       success: true, 
       message: "Customer portal configured successfully",
-      configId
+      configId,
+      configuration: {
+        active: updatedConfig.active,
+        features: {
+          subscription_cancel: updatedConfig.features.subscription_cancel.enabled,
+          subscription_update: updatedConfig.features.subscription_update.enabled,
+          customer_update: {
+            enabled: updatedConfig.features.customer_update.enabled,
+            allowed_updates: updatedConfig.features.customer_update.allowed_updates
+          }
+        }
+      }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

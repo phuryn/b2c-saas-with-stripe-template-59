@@ -59,11 +59,12 @@ const AdminStripeConfig: React.FC = () => {
 
     setLoading(true);
     try {
-      await configureStripePortal(
+      const result = await configureStripePortal(
         !secretsReady ? stripeSecretKey : undefined
       );
       
       toast.success("Customer portal configured successfully!");
+      console.log('Portal configuration result:', result);
       setSecretsReady(true);
     } catch (err) {
       console.error('Error configuring portal:', err);
@@ -269,8 +270,8 @@ const AdminStripeConfig: React.FC = () => {
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>Allow customers to view invoices: <span className="font-medium">Yes</span></li>
                   <li>Allow update billing information: <span className="font-medium">Yes</span> (Name, Address, Tax ID)</li>
-                  <li>Allow cancel subscriptions: <span className="font-medium">Yes</span></li>
-                  <li>Allow manage subscriptions: <span className="font-medium">Yes</span></li>
+                  <li>Allow cancel subscriptions: <span className="font-medium">No</span></li>
+                  <li>Allow manage subscriptions: <span className="font-medium">No</span></li>
                 </ul>
               </div>
             </CardContent>

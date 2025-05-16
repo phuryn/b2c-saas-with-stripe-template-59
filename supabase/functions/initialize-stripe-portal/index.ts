@@ -121,31 +121,67 @@ serve(async (req) => {
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
     logStep("Stripe initialized");
     
-    // Configure the Stripe customer portal
-    const portalConfiguration = await stripe.billingPortal.configurations.create({
-      business_profile: {
-        headline: "Manage your subscription",
-        privacy_policy_url: `${appUrl}/privacy_policy`,
-        terms_of_service_url: `${appUrl}/terms`,
-      },
-      features: {
-        invoice_history: { enabled: false },
-        payment_method_update: { enabled: true },
-        customer_update: {
-          enabled: true,
-          allowed_updates: ['email', 'address', 'tax_id'],
-        },
-        subscription_cancel: { enabled: false },
-        subscription_update: { enabled: false },
-      },
-    });
+    // First, check if there's already a portal configuration
+    const configs = await stripe.billingPortal.configurations.list({ limit: 1 });
+    let configId;
     
-    logStep("Customer portal configured", { configId: portalConfiguration.id });
+    // Configure the Stripe customer portal with requested settings
+    const portalConfiguration = configs.data.length > 0 
+      ? await stripe.billingPortal.configurations.update(configs.data[0].id, {
+          business_profile: {
+            headline: "Manage your subscription",
+          },
+          features: {
+            invoice_history: { enabled: true },
+            payment_method_update: { enabled: true },
+            customer_update: {
+              enabled: true,
+              allowed_updates: ['name', 'address', 'tax_id'],
+            },
+            subscription_cancel: { enabled: false }, // Set to false as requested
+            subscription_update: { enabled: false }, // Set to false as requested
+          },
+        })
+      : await stripe.billingPortal.configurations.create({
+          business_profile: {
+            headline: "Manage your subscription",
+          },
+          features: {
+            invoice_history: { enabled: true },
+            payment_method_update: { enabled: true },
+            customer_update: {
+              enabled: true,
+              allowed_updates: ['name', 'address', 'tax_id'],
+            },
+            subscription_cancel: { enabled: false }, // Set to false as requested
+            subscription_update: { enabled: false }, // Set to false as requested
+          },
+        });
+    
+    configId = portalConfiguration.id;
+    
+    logStep("Customer portal configured", { 
+      configId: portalConfiguration.id,
+      active: portalConfiguration.active,
+      subscription_cancel: portalConfiguration.features.subscription_cancel.enabled,
+      subscription_update: portalConfiguration.features.subscription_update.enabled
+    });
     
     return new Response(JSON.stringify({ 
       success: true, 
       message: "Customer portal configured successfully",
-      configId: portalConfiguration.id
+      configId: portalConfiguration.id,
+      configuration: {
+        active: portalConfiguration.active,
+        features: {
+          subscription_cancel: portalConfiguration.features.subscription_cancel.enabled,
+          subscription_update: portalConfiguration.features.subscription_update.enabled,
+          customer_update: {
+            enabled: portalConfiguration.features.customer_update.enabled,
+            allowed_updates: portalConfiguration.features.customer_update.allowed_updates
+          }
+        }
+      }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
