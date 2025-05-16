@@ -26,6 +26,7 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
+  useIsMobile,
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_MOBILE,
   SIDEBAR_WIDTH_ICON

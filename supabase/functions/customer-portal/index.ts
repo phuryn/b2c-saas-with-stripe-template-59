@@ -22,30 +22,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Parse request body if present
-    let requestData = {};
-    let flow = null;
-    let stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    
-    if (req.body) {
-      try {
-        const body = await req.json();
-        requestData = body;
-        flow = body?.flow;
-        
-        // If a Stripe secret key was provided in the request, use it
-        if (body?.stripeSecretKey) {
-          stripeSecretKey = body.stripeSecretKey;
-          logStep("Using Stripe key from request");
-        }
-        
-        logStep("Request body parsed", { flow });
-      } catch (e) {
-        logStep("No valid JSON body or empty body");
-      }
-    }
-
-    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     logStep("Stripe key verified");
 
     // Initialize Supabase client
@@ -65,13 +43,28 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length === 0) {
       throw new Error("No Stripe customer found for this user");
     }
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
+
+    // Parse request body if present
+    let requestBody = {};
+    let flow = null;
+    
+    if (req.body) {
+      try {
+        const body = await req.json();
+        requestBody = body;
+        flow = body?.flow;
+        logStep("Request body parsed", { flow });
+      } catch (e) {
+        logStep("No valid JSON body or empty body");
+      }
+    }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
     
@@ -88,15 +81,10 @@ serve(async (req) => {
         type: 'payment_method_update',
       };
     } else if (flow === 'billing_address_update') {
-      // Using customer_update flow with specific allowed_updates
-      logStep("Setting up billing address update flow");
-      portalOptions.flow_data = {
-        type: 'customer_update',
-        after_completion: { type: 'return_url' },
-        customer_update: {
-          allowed_updates: ['address', 'name', 'tax_id'],
-        }
-      };
+      // Since Stripe doesn't support billing_address_update as a direct flow type,
+      // we'll just create a regular portal session without specifying a flow
+      logStep("Creating general portal session for billing address update");
+      // No specific flow_data needed here, the standard portal allows billing address updates
     }
     
     const portalSession = await stripe.billingPortal.sessions.create(portalOptions);

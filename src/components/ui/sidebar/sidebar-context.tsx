@@ -1,12 +1,11 @@
-
 import * as React from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "13rem"
+const SIDEBAR_WIDTH = "13rem"  // Changed from "16rem" to "13rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3.5rem"  // Changed from "3rem" to "3.5rem" (56px) to prevent icon cutoff
+const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContext = {
@@ -28,23 +27,6 @@ export function useSidebar() {
   }
 
   return context
-}
-
-// Custom hook for mobile detection, must be called inside a component function
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(false)
-
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
-
-  return isMobile
 }
 
 interface SidebarProviderProps extends React.ComponentProps<"div"> {
@@ -159,10 +141,28 @@ export const SidebarProvider = React.forwardRef<
 
 SidebarProvider.displayName = "SidebarProvider"
 
+// Utility functions needed for the sidebar
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(false)
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  return isMobile
+}
+
 import { cn } from "@/lib/utils"
 
-// Export constants but not the hook - must be used inside a component
+// Export constants but remove duplicate exports of components/hooks
 export { 
+  useIsMobile, 
   // Constants for use in other components
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_MOBILE,

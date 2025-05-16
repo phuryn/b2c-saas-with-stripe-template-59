@@ -88,60 +88,10 @@ export const updateSubscription = async (
 /**
  * Open customer portal
  */
-export const openCustomerPortalApi = async (flow?: string): Promise<{ url: string } | null> => {
-  const { data, error } = await supabase.functions.invoke('customer-portal', {
-    body: { flow }
-  });
+export const openCustomerPortalApi = async (): Promise<{ url: string } | null> => {
+  const { data, error } = await supabase.functions.invoke('customer-portal');
   
   if (error) throw new Error(error.message || 'Failed to open customer portal');
   
   return data;
-};
-
-/**
- * Configure Stripe products and prices
- */
-export const configureStripeProducts = async (stripeSecretKey?: string): Promise<{
-  success: boolean;
-  priceIds: Record<string, string>;
-}> => {
-  const { data, error } = await supabase.functions.invoke('configure-stripe-products', {
-    body: { stripeSecretKey }
-  });
-  
-  if (error) throw new Error(error.message || 'Failed to configure Stripe products');
-  
-  return data;
-};
-
-/**
- * Configure Stripe customer portal
- */
-export const configureStripePortal = async (stripeSecretKey?: string): Promise<{
-  success: boolean;
-  configId: string;
-}> => {
-  const { data, error } = await supabase.functions.invoke('configure-stripe-portal', {
-    body: { stripeSecretKey }
-  });
-  
-  if (error) throw new Error(error.message || 'Failed to configure Stripe customer portal');
-  
-  return data;
-};
-
-/**
- * Check if secrets are ready
- */
-export const checkSecretsReady = async (): Promise<boolean> => {
-  try {
-    const { data } = await supabase.functions.invoke('configure-stripe-products', {
-      body: { checkSecretOnly: true }
-    });
-    
-    return data?.secretsReady || false;
-  } catch (err) {
-    console.error('Error checking secrets readiness:', err);
-    return false;
-  }
 };
