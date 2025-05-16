@@ -21,6 +21,9 @@ const BillingCycleSwitch: React.FC<BillingCycleSwitchProps> = ({
     console.log('BillingCycleSwitch: selectedCycle prop is', selectedCycle);
   }, [selectedCycle]);
 
+  // Using the Switch's checked state - true for monthly, false for yearly
+  const isMonthly = selectedCycle === 'monthly';
+
   return (
     <div className={`${isMobile ? 'mb-5' : 'mb-12'}`}>
       <div className="relative">
@@ -29,23 +32,23 @@ const BillingCycleSwitch: React.FC<BillingCycleSwitchProps> = ({
             <Badge 
               className={cn(
                 "mr-2 text-xs font-medium pointer-events-none",
-                selectedCycle === 'yearly' 
+                !isMonthly 
                   ? "bg-[#F2FCE2] text-primary-green" 
                   : "bg-[#F7F7F7] text-gray-500"
               )}
             >
               Save up to 17%
             </Badge>
-            <span className={`font-medium text-sm mr-2 ${selectedCycle === 'yearly' ? 'text-gray-800' : 'text-gray-500'}`}>
+            <span className={`font-medium text-sm mr-2 ${!isMonthly ? 'text-gray-800' : 'text-gray-500'}`}>
               Annually
             </span>
           </div>
           <Switch
-            checked={selectedCycle === 'monthly'}
+            checked={isMonthly}
             onCheckedChange={(checked) => onChange(checked ? 'monthly' : 'yearly')}
             className="mx-2"
           />
-          <span className={`font-medium text-sm ml-2 ${selectedCycle === 'monthly' ? 'text-gray-800' : 'text-gray-500'}`}>
+          <span className={`font-medium text-sm ml-2 ${isMonthly ? 'text-gray-800' : 'text-gray-500'}`}>
             Monthly
           </span>
         </div>

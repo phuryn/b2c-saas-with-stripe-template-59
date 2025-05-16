@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -52,31 +53,38 @@ const PlanSettings: React.FC = () => {
 
   // Get the current cycle based on the subscription plan
   const getCurrentCycle = (): BillingCycle => {
-    if (!subscription?.current_plan) return 'yearly'; // Default to yearly
+    if (!subscription?.current_plan) return 'yearly'; // Default to yearly for free users
     
     // Debug to see what's in the current plan
     console.log('Current plan value:', subscription.current_plan);
     
-    // Check for yearly with more robust detection, since price_1RLoScLdL9hht8n4hSQtsOte doesn't explicitly contain 'yearly'
-    // From the edge function logs we can see this corresponds to a yearly plan
-    if (subscription.current_plan === 'price_1RLoScLdL9hht8n4hSQtsOte') {
-      return 'yearly';
+    // Check for monthly plans first (more explicit identification)
+    if (subscription.current_plan.includes('monthly')) {
+      return 'monthly';
     }
     
-    // Fallback to standard check
-    return subscription.current_plan.includes('yearly') || 
-           subscription.current_plan.includes('annual') ? 'yearly' : 'monthly';
+    // All other plans are assumed to be yearly (including those without explicit markers)
+    // This includes price_1RLoScLdL9hht8n4hSQtsOte which is a yearly plan
+    return 'yearly';
   };
 
-  // Set the initial cycle based on subscription data BEFORE rendering the component
+  // Set the initial cycle based on subscription data OR default to yearly for free users
   useEffect(() => {
-    if (subscription?.subscribed && subscription?.current_plan && !initialized) {
-      const currentCycle = getCurrentCycle();
-      console.log('Setting initial cycle based on subscription to:', currentCycle);
-      setSelectedCycle(currentCycle);
+    // If subscription data is loaded (regardless of subscribed status)
+    if (subscription && !initialized) {
+      if (subscription.subscribed && subscription.current_plan) {
+        // For paid users: get cycle from subscription
+        const currentCycle = getCurrentCycle();
+        console.log('Setting initial cycle based on subscription to:', currentCycle);
+        setSelectedCycle(currentCycle);
+      } else {
+        // For free users: default to yearly
+        console.log('Free user - defaulting to yearly cycle');
+        setSelectedCycle('yearly');
+      }
       setInitialized(true);
     }
-  }, [subscription]);
+  }, [subscription, initialized]);
 
   // Reset initialization if subscription changes
   useEffect(() => {
@@ -85,12 +93,13 @@ const PlanSettings: React.FC = () => {
     }
   }, [subscription]);
 
+  // Check URL parameters for success message after checkout completion
   useEffect(() => {
-    // Check URL parameters for subscription status messages
     if (searchParams.get('success') === 'true') {
       toast.success('Subscription updated successfully');
       resetSubscriptionRateLimiting(); // Reset rate limiting on successful update
       checkSubscriptionStatus(true); // Force a fresh check
+      setInitialized(false); // Reset initialized state to force cycle detection
     } else if (searchParams.get('canceled') === 'true') {
       toast.info('Subscription update canceled');
     }
@@ -98,6 +107,7 @@ const PlanSettings: React.FC = () => {
 
   // Handle plan selection with automatic refresh
   const handlePlanSelection = async (planId: string, cycle: 'monthly' | 'yearly') => {
+    console.log('Selecting plan with cycle:', cycle);
     const result = await handleSelectPlan(planId, cycle);
     if (result && result.success) {
       toast.success('Plan updated successfully');

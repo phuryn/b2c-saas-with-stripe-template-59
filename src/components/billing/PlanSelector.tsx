@@ -104,7 +104,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
     } else {
       // Free user subscribing - go directly to checkout without dialog
       if (onSelect) {
-        console.log('Free user subscribing, going directly to checkout');
+        console.log('Free user subscribing, going directly to checkout with cycle:', selectedCycle);
         onSelect(plan.priceId, selectedCycle);
       }
     }
@@ -112,6 +112,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   
   const confirmPlanChange = () => {
     if (selectedPlan && onSelect) {
+      console.log('Confirming plan change with cycle:', selectedCycle);
       onSelect(selectedPlan.priceId, selectedCycle);
     }
     setShowPlanChangeDialog(false);
@@ -165,7 +166,7 @@ const PlanSelector: React.FC<PlanSelectorProps> = ({
   };
 
   const handleCycleChange = (cycle: 'monthly' | 'yearly') => {
-    console.log('BillingCycleSwitch: Cycle changed to', cycle);
+    console.log('PlanSelector: Cycle changed to', cycle);
     setSelectedCycle(cycle);
     // Call the parent's onCycleChange if provided
     if (onCycleChange) {
