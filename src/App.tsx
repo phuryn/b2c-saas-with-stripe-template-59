@@ -79,8 +79,7 @@ const App = () => {
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/signup" element={<Signup />} />
-                  {/* Redirect /login to /auth */}
-                  <Route path="/login" element={<Navigate to="/auth" replace />} />
+                  {/* Removed the /login redirect route as it's redundant with /auth */}
                 </Route>
               )}
               
