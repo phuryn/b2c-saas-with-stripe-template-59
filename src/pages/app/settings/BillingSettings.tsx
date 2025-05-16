@@ -81,7 +81,10 @@ const BillingSettings: React.FC = () => {
 
   const getCurrentCycle = () => {
     if (!subscription?.current_plan) return 'monthly';
-    return subscription.current_plan.includes('yearly') ? 'yearly' : 'monthly';
+    // More explicit check for yearly plans
+    const planId = subscription.current_plan.toLowerCase();
+    console.log("Current plan ID for cycle detection:", planId);
+    return planId.includes('year') ? 'yearly' : 'monthly';
   };
 
   const handleRetry = () => {
@@ -123,6 +126,11 @@ const BillingSettings: React.FC = () => {
 
   const currentPlanId = getCurrentPlanId();
   const currentCycle = getCurrentCycle();
+  
+  console.log("Determined current cycle:", currentCycle);
+  console.log("Current plan ID:", currentPlanId);
+  console.log("Subscription current_plan:", subscription?.current_plan);
+  
   const plans = getPlans(currentCycle as 'monthly' | 'yearly');
   const currentPlan = plans.find(plan => plan.id === currentPlanId);
   const isSubscriptionCanceling = subscription?.cancel_at_period_end === true;
