@@ -25,27 +25,20 @@ serve(async (req) => {
     // Parse request body if present
     let requestData = {};
     let flow = null;
-    let stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     
     if (req.body) {
       try {
         const body = await req.json();
         requestData = body;
         flow = body?.flow;
-        
-        // If a Stripe secret key was provided in the request, use it
-        if (body?.stripeSecretKey) {
-          stripeSecretKey = body.stripeSecretKey;
-          logStep("Using Stripe key from request");
-        }
-        
         logStep("Request body parsed", { flow });
       } catch (e) {
         logStep("No valid JSON body or empty body");
       }
     }
 
-    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set in Supabase Functions secrets");
     logStep("Stripe key verified");
 
     // Initialize Supabase client

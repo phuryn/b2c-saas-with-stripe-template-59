@@ -25,7 +25,7 @@ serve(async (req) => {
     
     // Parse request data
     const requestData = await req.json();
-    const stripeSecretKey = requestData.stripeSecretKey || Deno.env.get("STRIPE_SECRET_KEY");
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     const checkSecretOnly = requestData.checkSecretOnly || false;
     
     if (checkSecretOnly) {
@@ -72,47 +72,8 @@ serve(async (req) => {
     if (roleData?.role !== "administrator") throw new Error("Only administrators can perform this action");
     logStep("User is administrator");
     
-    // If a Stripe secret key was provided in the request, store it as a secret
-    if (requestData.stripeSecretKey) {
-      try {
-        // Store the secret using the Supabase Functions API
-        const supabaseUrl = Deno.env.get("SUPABASE_URL");
-        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-        
-        if (!supabaseUrl || !serviceRoleKey) {
-          throw new Error("Missing Supabase URL or service role key");
-        }
-        
-        const secretsUrl = `${supabaseUrl}/functions/v1/secrets`;
-        const response = await fetch(secretsUrl, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${serviceRoleKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            secrets: {
-              "STRIPE_SECRET_KEY": requestData.stripeSecretKey
-            }
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to store Stripe secret key: ${await response.text()}`);
-        }
-        
-        logStep("Stored Stripe secret key successfully");
-        
-        // Use the provided key for the rest of the function
-        stripeSecretKey = requestData.stripeSecretKey;
-      } catch (secretError) {
-        logStep("ERROR storing secret", { message: secretError.message });
-        // Continue with the provided key even if storing failed
-      }
-    }
-    
-    // Initialize Stripe client with the secret key
-    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    // Initialize Stripe client with the secret key from env
+    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set in Supabase Functions secrets");
     
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
     logStep("Stripe initialized");

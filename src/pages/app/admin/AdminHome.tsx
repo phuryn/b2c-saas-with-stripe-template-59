@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,16 +10,40 @@ import { toast } from "sonner";
 import { getPlans } from '@/config/plans';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { AlertCircle, CheckCircle2, Copy, File, Key } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import { AlertCircle, CheckCircle2, Copy, File, InfoIcon } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminHome: React.FC = () => {
   const [appUrl, setAppUrl] = useState('https://yourapp.com'); 
-  const [stripeSecretKey, setStripeSecretKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [resultPriceIds, setResultPriceIds] = useState<Record<string, string>>({});
+  const [isSecretKeySet, setIsSecretKeySet] = useState<boolean | null>(null);
   const { userRole } = useAuth();
+  
+  // Check if Stripe secret key is set
+  useEffect(() => {
+    async function checkSecretKey() {
+      try {
+        const { data, error } = await supabase.functions.invoke('initialize-stripe-portal', {
+          body: { checkSecretOnly: true }
+        });
+        
+        if (error) {
+          console.error('Error checking secret key:', error);
+          return;
+        }
+        
+        setIsSecretKeySet(data?.secretsReady || false);
+      } catch (err) {
+        console.error('Failed to check if secret key is set:', err);
+      }
+    }
+    
+    if (userRole === 'administrator') {
+      checkSecretKey();
+    }
+  }, [userRole]);
   
   // Function to initialize Stripe products and prices
   const handleInitializeProducts = async () => {
@@ -28,15 +52,15 @@ const AdminHome: React.FC = () => {
       return;
     }
 
-    if (!stripeSecretKey.trim()) {
-      toast.error("Please enter your Stripe Secret Key");
+    if (!isSecretKeySet) {
+      toast.error("Stripe Secret Key is not set in Supabase");
       return;
     }
 
     setProductsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('initialize-stripe-products', {
-        body: { stripeSecretKey }
+        body: { }
       });
       
       if (error) throw new Error(error.message);
@@ -59,15 +83,15 @@ const AdminHome: React.FC = () => {
       return;
     }
 
-    if (!stripeSecretKey.trim()) {
-      toast.error("Please enter your Stripe Secret Key");
+    if (!isSecretKeySet) {
+      toast.error("Stripe Secret Key is not set in Supabase");
       return;
     }
 
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('initialize-stripe-portal', {
-        body: { appUrl, stripeSecretKey }
+        body: { appUrl }
       });
       
       if (error) throw new Error(error.message);
@@ -149,28 +173,39 @@ const AdminHome: React.FC = () => {
         <CardHeader>
           <CardTitle>Stripe Configuration</CardTitle>
           <CardDescription>
-            Enter your Stripe Secret Key to initialize products and portal
+            Manage Stripe integration for your application
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="stripe-key" className="flex items-center">
-                <Key className="h-4 w-4 mr-2" /> 
-                Stripe Secret Key
-              </Label>
-              <Textarea 
-                id="stripe-key"
-                value={stripeSecretKey}
-                onChange={(e) => setStripeSecretKey(e.target.value)}
-                placeholder="sk_test_..."
-                className="font-mono"
-              />
-              <p className="text-sm text-muted-foreground">
-                Your Stripe Secret Key is required for initializing products and portal configuration
-              </p>
-            </div>
-          </div>
+          <Alert className="mb-4">
+            <InfoIcon className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-2">
+                <p className="font-medium">Your Stripe secret key must be configured in Supabase before using this page.</p>
+                <p className="text-sm text-muted-foreground">
+                  Go to Supabase Dashboard → Project Settings → Functions → Secrets and add your 
+                  <code className="bg-muted px-1 py-0.5 rounded mx-1">STRIPE_SECRET_KEY</code>
+                </p>
+                <div className="flex items-center mt-1">
+                  {isSecretKeySet === true && (
+                    <span className="flex items-center text-green-600">
+                      <CheckCircle2 className="h-4 w-4 mr-1" /> 
+                      Secret key is configured
+                    </span>
+                  )}
+                  {isSecretKeySet === false && (
+                    <span className="flex items-center text-red-500">
+                      <AlertCircle className="h-4 w-4 mr-1" /> 
+                      Secret key is not configured
+                    </span>
+                  )}
+                  {isSecretKeySet === null && (
+                    <span className="text-muted-foreground text-sm">Checking secret configuration...</span>
+                  )}
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
       
@@ -251,7 +286,7 @@ const AdminHome: React.FC = () => {
             <CardFooter>
               <Button 
                 onClick={handleInitializeProducts} 
-                disabled={productsLoading}
+                disabled={productsLoading || !isSecretKeySet}
                 className="mr-2"
               >
                 {productsLoading ? "Initializing..." : "Initialize Products and Prices"}
@@ -299,7 +334,7 @@ const AdminHome: React.FC = () => {
             <CardFooter>
               <Button 
                 onClick={handleInitializePortal} 
-                disabled={loading}
+                disabled={loading || !isSecretKeySet}
                 className="mr-2"
               >
                 {loading ? "Initializing..." : "Initialize Customer Portal"}
