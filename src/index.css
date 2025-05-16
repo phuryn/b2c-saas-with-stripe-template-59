@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -113,8 +114,13 @@
     @apply absolute left-0 text-gray-500;
   }
 
-  /* Override sidebar menu button padding when collapsed */
+  /* Override sidebar menu button padding when collapsed - making selector more specific */
   [data-collapsible="icon"] [data-sidebar="menu-button"] {
     padding: 0.375rem !important; /* This is equivalent to p-1.5 (6px) */
+  }
+  
+  /* Extra specificity to ensure our rule is applied */
+  html body [data-collapsible="icon"] [data-sidebar="menu-button"] {
+    padding: 0.375rem !important;
   }
 }
