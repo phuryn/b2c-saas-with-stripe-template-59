@@ -8,8 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Textarea } from '@/components/ui/textarea';
-import { Key, Copy, File, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Key, Copy, File, CheckCircle2, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
 import { configureStripeProducts, configureStripePortal, checkSecretsReady } from '@/api/subscriptionApi';
+import { Badge } from "@/components/ui/badge";
 
 const AdminStripeConfig: React.FC = () => {
   const [stripeSecretKey, setStripeSecretKey] = useState('');
@@ -17,6 +18,7 @@ const AdminStripeConfig: React.FC = () => {
   const [productsLoading, setProductsLoading] = useState(false);
   const [secretsReady, setSecretsReady] = useState(false);
   const [resultPriceIds, setResultPriceIds] = useState<Record<string, string>>({});
+  const [portalConfig, setPortalConfig] = useState<any>(null);
   
   useEffect(() => {
     const checkSecrets = async () => {
@@ -63,6 +65,7 @@ const AdminStripeConfig: React.FC = () => {
         !secretsReady ? stripeSecretKey : undefined
       );
       
+      setPortalConfig(result.configuration);
       toast.success("Customer portal configured successfully!");
       console.log('Portal configuration result:', result);
       setSecretsReady(true);
@@ -129,6 +132,21 @@ const AdminStripeConfig: React.FC = () => {
   // Determine path to config file for display
   const plansConfigPath = "src/config/plans.ts";
   const stripeConfigPath = "src/config/stripe.ts";
+
+  // Helper to render setting status
+  const renderSettingStatus = (enabled: boolean, label: string) => (
+    <div className="flex items-center space-x-2 text-sm">
+      {enabled ? (
+        <ToggleRight className="h-4 w-4 text-green-500" />
+      ) : (
+        <ToggleLeft className="h-4 w-4 text-red-500" />
+      )}
+      <span>{label}:</span>
+      <Badge variant={enabled ? "success" : "secondary"}>
+        {enabled ? "Enabled" : "Disabled"}
+      </Badge>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -267,12 +285,29 @@ const AdminStripeConfig: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <h3 className="font-medium">Portal Configuration Details:</h3>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Allow customers to view invoices: <span className="font-medium">Yes</span></li>
-                  <li>Allow update billing information: <span className="font-medium">Yes</span> (Name, Address, Tax ID)</li>
-                  <li>Allow cancel subscriptions: <span className="font-medium">No</span></li>
-                  <li>Allow manage subscriptions: <span className="font-medium">No</span></li>
-                </ul>
+                <div className="mt-4 p-4 rounded-md border">
+                  <div className="space-y-3">
+                    {renderSettingStatus(false, "Allow cancel subscriptions")}
+                    {renderSettingStatus(false, "Allow manage subscriptions")}
+                    <div className="border-t pt-3">
+                      <h4 className="font-medium mb-2">Allow customer to update:</h4>
+                      <div className="space-y-1 pl-2">
+                        {renderSettingStatus(true, "Name")}
+                        {renderSettingStatus(true, "Address")}
+                        {renderSettingStatus(true, "Tax ID")}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {portalConfig && (
+                  <div className="mt-4">
+                    <h4 className="font-medium mb-2">Current Configuration:</h4>
+                    <pre className="p-3 bg-slate-100 text-xs rounded-md overflow-auto">
+                      {JSON.stringify(portalConfig, null, 2)}
+                    </pre>
+                  </div>
+                )}
               </div>
             </CardContent>
             <CardFooter>
