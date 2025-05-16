@@ -101,6 +101,22 @@ serve(async (req) => {
         // No specific flow_data needed here, the standard portal allows billing address updates
       }
       
+      // Fetch the most recent portal configuration
+      logStep("Fetching available portal configurations");
+      const configurations = await stripe.billingPortal.configurations.list({
+        limit: 1,
+        active: true,
+      });
+      
+      // Use the configuration if available
+      if (configurations.data.length > 0) {
+        const configId = configurations.data[0].id;
+        logStep("Using existing portal configuration", { configId });
+        portalOptions.configuration = configId;
+      } else {
+        logStep("No existing portal configuration found, using default");
+      }
+      
       const portalSession = await stripe.billingPortal.sessions.create(portalOptions);
       logStep("Customer portal session created", { sessionId: portalSession.id });
 

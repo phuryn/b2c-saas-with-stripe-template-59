@@ -76,6 +76,14 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({
                     </span>
                   )}
                 </p>
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="px-0 h-6 text-blue-500"
+                  onClick={() => onOpenCustomerPortal('payment_method_update')}
+                >
+                  Update payment method
+                </Button>
               </div>
             )}
             

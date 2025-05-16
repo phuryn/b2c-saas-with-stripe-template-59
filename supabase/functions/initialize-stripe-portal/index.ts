@@ -111,13 +111,13 @@ serve(async (req) => {
           terms_of_service_url: `${appUrl}/terms`,
         },
         features: {
-          invoice_history: { enabled: false },
+          invoice_history: { enabled: true },
           payment_method_update: { enabled: true },
           customer_update: {
             enabled: true,
             allowed_updates: ['email', 'address', 'tax_id'],
           },
-          subscription_cancel: { enabled: false },
+          subscription_cancel: { enabled: true },
           subscription_update: { enabled: false },
         },
       });
