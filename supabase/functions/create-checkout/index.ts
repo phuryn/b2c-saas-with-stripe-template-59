@@ -50,6 +50,7 @@ serve(async (req) => {
     }
 
     // Create checkout session with tax ID collection and billing address
+    // Fix: Add customer_update configuration to allow updating name
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
@@ -64,6 +65,11 @@ serve(async (req) => {
       tax_id_collection: {
         enabled: true
       },
+      // Add customer update parameters to allow updating the name
+      customer_update: {
+        name: 'auto',
+        address: 'auto'
+      },
       // Add billing address collection - auto means it will collect but not require all fields
       billing_address_collection: 'auto',
       success_url: `${req.headers.get("origin")}/app/settings/plan?success=true`,
@@ -76,6 +82,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error('Checkout error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
