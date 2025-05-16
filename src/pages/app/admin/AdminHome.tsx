@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 const AdminHome: React.FC = () => {
   const [appUrl, setAppUrl] = useState('https://yourapp.com'); 
   const [loading, setLoading] = useState(false);
+  const [initializationResult, setInitializationResult] = useState<{success?: boolean; message?: string; configId?: string} | null>(null);
   const [productsLoading, setProductsLoading] = useState(false);
   const [resultPriceIds, setResultPriceIds] = useState<Record<string, string>>({});
   const [isSecretKeySet, setIsSecretKeySet] = useState<boolean | null>(null);
@@ -89,6 +90,8 @@ const AdminHome: React.FC = () => {
     }
 
     setLoading(true);
+    setInitializationResult(null);
+    
     try {
       const { data, error } = await supabase.functions.invoke('initialize-stripe-portal', {
         body: { appUrl }
@@ -96,10 +99,21 @@ const AdminHome: React.FC = () => {
       
       if (error) throw new Error(error.message);
       
+      setInitializationResult({
+        success: data.success,
+        message: data.message,
+        configId: data.configId
+      });
+      
       toast.success("Customer portal configured successfully!");
     } catch (err) {
       console.error('Error configuring portal:', err);
-      toast.error(err instanceof Error ? err.message : "Failed to configure customer portal");
+      const errorMessage = err instanceof Error ? err.message : "Failed to configure customer portal";
+      toast.error(errorMessage);
+      setInitializationResult({
+        success: false,
+        message: errorMessage
+      });
     } finally {
       setLoading(false);
     }
@@ -330,6 +344,25 @@ const AdminHome: React.FC = () => {
                   <li>Privacy policy: <span className="font-medium">{appUrl}/privacy_policy</span></li>
                 </ul>
               </div>
+              
+              {initializationResult && (
+                <Alert className="mt-4" variant={initializationResult.success ? "default" : "destructive"}>
+                  {initializationResult.success ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4" />
+                  )}
+                  <AlertDescription>
+                    <p className="font-medium">
+                      {initializationResult.success ? "Portal configured successfully!" : "Error configuring portal"}
+                    </p>
+                    <p className="text-sm">{initializationResult.message}</p>
+                    {initializationResult.configId && (
+                      <p className="text-xs mt-1">Configuration ID: {initializationResult.configId}</p>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
             <CardFooter>
               <Button 

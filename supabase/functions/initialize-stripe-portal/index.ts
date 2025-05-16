@@ -49,15 +49,24 @@ serve(async (req) => {
     );
     
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) {
+      logStep("ERROR", { message: "No authorization header provided" });
+      throw new Error("No authorization header provided");
+    }
     logStep("Authorization header found");
     
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    if (userError) {
+      logStep("ERROR", { message: `Authentication error: ${userError.message}` });
+      throw new Error(`Authentication error: ${userError.message}`);
+    }
     
     const user = userData.user;
-    if (!user?.id) throw new Error("User not authenticated");
+    if (!user?.id) {
+      logStep("ERROR", { message: "User not authenticated" });
+      throw new Error("User not authenticated");
+    }
     logStep("User authenticated", { userId: user.id });
     
     // Verify user has administrator role
@@ -72,45 +81,64 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
     
-    if (roleError) throw new Error(`Failed to verify role: ${roleError.message}`);
-    if (roleData?.role !== "administrator") throw new Error("Only administrators can perform this action");
+    if (roleError) {
+      logStep("ERROR", { message: `Failed to verify role: ${roleError.message}` });
+      throw new Error(`Failed to verify role: ${roleError.message}`);
+    }
+    if (roleData?.role !== "administrator") {
+      logStep("ERROR", { message: "Only administrators can perform this action" });
+      throw new Error("Only administrators can perform this action");
+    }
     logStep("User is administrator");
     
     // Initialize Stripe client with the secret key from env
-    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not set in Supabase Functions secrets");
+    if (!stripeSecretKey) {
+      logStep("ERROR", { message: "STRIPE_SECRET_KEY is not set in Supabase Functions secrets" });
+      throw new Error("STRIPE_SECRET_KEY is not set in Supabase Functions secrets");
+    }
     
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
     logStep("Stripe initialized");
     
-    // Configure the Stripe customer portal
-    const portalConfiguration = await stripe.billingPortal.configurations.create({
-      business_profile: {
-        headline: "Manage your subscription",
-        privacy_policy_url: `${appUrl}/privacy_policy`,
-        terms_of_service_url: `${appUrl}/terms`,
-      },
-      features: {
-        invoice_history: { enabled: false },
-        payment_method_update: { enabled: true },
-        customer_update: {
-          enabled: true,
-          allowed_updates: ['email', 'address', 'tax_id'],
+    try {
+      // Configure the Stripe customer portal
+      const portalConfiguration = await stripe.billingPortal.configurations.create({
+        business_profile: {
+          headline: "Manage your subscription",
+          privacy_policy_url: `${appUrl}/privacy_policy`,
+          terms_of_service_url: `${appUrl}/terms`,
         },
-        subscription_cancel: { enabled: false },
-        subscription_update: { enabled: false },
-      },
-    });
-    
-    logStep("Customer portal configured", { configId: portalConfiguration.id });
-    
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "Customer portal configured successfully",
-      configId: portalConfiguration.id
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+        features: {
+          invoice_history: { enabled: false },
+          payment_method_update: { enabled: true },
+          customer_update: {
+            enabled: true,
+            allowed_updates: ['email', 'address', 'tax_id'],
+          },
+          subscription_cancel: { enabled: false },
+          subscription_update: { enabled: false },
+        },
+      });
+      
+      logStep("Customer portal configured", { configId: portalConfiguration.id });
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Customer portal configured successfully",
+        configId: portalConfiguration.id
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } catch (stripeError) {
+      // Specific error handling for Stripe API errors
+      logStep("STRIPE ERROR", { 
+        message: stripeError instanceof Error ? stripeError.message : String(stripeError),
+        type: stripeError instanceof Stripe.errors.StripeError ? stripeError.type : 'unknown'
+      });
+      
+      throw stripeError;
+    }
     
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
