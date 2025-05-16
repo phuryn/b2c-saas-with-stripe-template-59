@@ -13,6 +13,7 @@ import DowngradeDialog from '@/components/billing/DowngradeDialog';
 import { BillingCycle } from '@/types/subscription';
 import { getPlans } from '@/config/plans';
 import { resetSubscriptionRateLimiting } from '@/utils/subscriptionRateLimit';
+import { STRIPE_CONFIG } from '@/config/stripe';
 
 const PlanSettings: React.FC = () => {
   const { user, session } = useAuth();
@@ -58,14 +59,15 @@ const PlanSettings: React.FC = () => {
     // Debug to see what's in the current plan
     console.log('Current plan value:', subscription.current_plan);
     
-    // Check for monthly plans first (more explicit identification)
-    if (subscription.current_plan.includes('monthly')) {
-      return 'monthly';
+    // Check if the current plan matches any of our yearly price IDs
+    if (subscription.current_plan === STRIPE_CONFIG.prices.standard.yearly || 
+        subscription.current_plan === STRIPE_CONFIG.prices.premium.yearly) {
+      console.log("Detected yearly plan based on price ID match with config");
+      return 'yearly';
     }
     
-    // All other plans are assumed to be yearly (including those without explicit markers)
-    // This includes price_1RLoScLdL9hht8n4hSQtsOte which is a yearly plan
-    return 'yearly';
+    // All other plans are assumed to be monthly
+    return 'monthly';
   };
 
   // Set the initial cycle based on subscription data OR default to yearly for free users
