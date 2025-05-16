@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger } from '@/components/ui/sidebar';
@@ -62,8 +61,7 @@ const AppSidebar: React.FC = () => {
                   <Link to="/app" className={cn(
                     "text-gray-800 hover:bg-[rgb(247_247_247)]", 
                     isActive('/app') && "text-primary-blue bg-primary-blue/10", 
-                    "text-base",
-                    state === 'collapsed' && "!p-1.5" // Change padding to 6px (p-1.5) when collapsed
+                    "text-base"
                   )}>
                     <Home className={cn("h-5 w-5", isActive('/app') ? "text-primary-blue" : "text-gray-800")} />
                     <span className={cn(isActive('/app') && "text-primary-blue")}>Home</span>
@@ -76,8 +74,7 @@ const AppSidebar: React.FC = () => {
                   <Link to="/app/links" className={cn(
                     "text-gray-800 hover:bg-[rgb(247_247_247)]", 
                     isActive('/app/links') && "text-primary-blue bg-primary-blue/10", 
-                    "text-base",
-                    state === 'collapsed' && "!p-1.5" // Change padding to 6px (p-1.5) when collapsed
+                    "text-base"
                   )}>
                     <Link2 className={cn("h-5 w-5", isActive('/app/links') ? "text-primary-blue" : "text-gray-800")} />
                     <span className={cn(isActive('/app/links') && "text-primary-blue")}>Links</span>

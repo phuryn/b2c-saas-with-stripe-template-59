@@ -113,5 +113,10 @@
     content: "○";
     @apply absolute left-0 text-gray-500;
   }
+
+  /* Override sidebar menu button padding when collapsed */
+  .group-data-\[collapsible\=icon\]\:\!p-2 {
+    padding: 0.375rem !important; /* This is equivalent to p-1.5 (6px) */
+  }
 }
 
