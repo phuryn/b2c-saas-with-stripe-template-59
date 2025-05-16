@@ -30,6 +30,7 @@ import Settings from "./pages/app/settings/Settings";
 import ProfileSettings from "./pages/app/settings/ProfileSettings";
 import BillingSettings from "./pages/app/settings/BillingSettings";
 import PlanSettings from "./pages/app/settings/PlanSettings";
+import AdminHome from "./pages/app/admin/AdminHome";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,7 +99,9 @@ const App = () => {
               
               {/* Protected routes for specific roles */}
               <Route element={<ProtectedRoute requiredRole="administrator" />}>
-                {/* Add admin routes here */}
+                <Route path="/app/admin" element={<AppLayout />}>
+                  <Route index element={<AdminHome />} />
+                </Route>
               </Route>
               
               <Route path="*" element={<NotFound />} />
