@@ -22,19 +22,19 @@ const HeroSection: React.FC = () => {
     <section className="bg-gray-highlight section-padding">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center text-center">
-          <h1 className={`font-bold mb-6 animate-fade-up ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+          <h1 className={`font-bold mb-6 animate-fade-up ${isVisible ? 'animate-ready' : ''}`}>
             Start building. Stop theorizing.
           </h1>
           <p 
-            className={`text-xl md:text-2xl max-w-3xl mb-8 text-gray-600 animate-fade-up ${isVisible ? 'opacity-100' : 'opacity-0'}`} 
-            style={{ animationDelay: "0.2s" }}
+            className={`text-xl md:text-2xl max-w-3xl mb-8 text-gray-600 animate-fade-up ${isVisible ? 'animate-ready' : ''}`} 
+            style={{ transitionDelay: "0.2s" }}
           >
             TRUSTY provides all the tools you need to transform your ideas into reality, with enterprise-grade reliability and security.
           </p>
           {!user && (
             <div 
-              className={`flex flex-col sm:flex-row gap-4 animate-fade-up ${isVisible ? 'opacity-100' : 'opacity-0'}`} 
-              style={{ animationDelay: "0.4s" }}
+              className={`flex flex-col sm:flex-row gap-4 animate-fade-up ${isVisible ? 'animate-ready' : ''}`} 
+              style={{ transitionDelay: "0.4s" }}
             >
               <Link to="/signup">
                 <Button className="bg-primary-blue hover:bg-primary-blue/90 text-white text-lg px-8 py-6">
@@ -51,8 +51,8 @@ const HeroSection: React.FC = () => {
           )}
           {user && (
             <div 
-              className={`animate-fade-up ${isVisible ? 'opacity-100' : 'opacity-0'}`} 
-              style={{ animationDelay: "0.4s" }}
+              className={`animate-fade-up ${isVisible ? 'animate-ready' : ''}`} 
+              style={{ transitionDelay: "0.4s" }}
             >
               <Link to="/app">
                 <Button className="bg-primary-blue hover:bg-primary-blue/90 text-white text-lg px-8 py-6">
@@ -63,8 +63,8 @@ const HeroSection: React.FC = () => {
             </div>
           )}
           <div 
-            style={{ animationDelay: "0.6s" }} 
-            className={`mt-12 w-full max-w-4xl animate-fade-up ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+            style={{ transitionDelay: "0.6s" }} 
+            className={`mt-12 w-full max-w-4xl animate-fade-up ${isVisible ? 'animate-ready' : ''}`}
           >
             <img 
               alt="TRUSTY Dashboard Preview" 

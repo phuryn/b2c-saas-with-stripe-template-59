@@ -64,16 +64,12 @@ const CounterSection: React.FC = () => {
         <div className="max-w-3xl mx-auto">
           <div 
             className={`text-5xl md:text-7xl font-bold mb-6 animate-fade-up ${isAnimationReady ? 'animate-ready' : ''}`}
-            style={{ transform: isAnimationReady ? 'translateY(0)' : 'translateY(20px)' }}
           >
             {formattedCount}
           </div>
           <p 
             className={`text-xl md:text-2xl animate-fade-up ${isAnimationReady ? 'animate-ready' : ''}`}
-            style={{ 
-              transform: isAnimationReady ? 'translateY(0)' : 'translateY(20px)',
-              transitionDelay: "0.3s" 
-            }}
+            style={{ transitionDelay: "0.3s" }}
           >
             subscribers from companies like Amazon, Google, and Meta
           </p>

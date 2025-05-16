@@ -134,15 +134,17 @@
     height: auto !important;
   }
 
-  /* Ensure elements with fade-up animation are initially invisible */
+  /* Fix for fade-up animation - ensure elements start invisible but can become visible */
   .animate-fade-up {
     opacity: 0;
-    visibility: hidden; /* Add visibility property to ensure elements are fully hidden */
+    transform: translateY(20px);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+    will-change: opacity, transform;
   }
 
-  /* Class for elements that are ready to animate */
+  /* When animation is ready to play */
   .animate-ready {
-    visibility: visible;
-    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+    opacity: 1;
+    transform: translateY(0);
   }
 }
