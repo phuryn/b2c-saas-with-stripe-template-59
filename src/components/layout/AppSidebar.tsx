@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarMenuButtonProps, SidebarSeparator, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { Home, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -30,15 +30,17 @@ const AppSidebar: React.FC = () => {
 
   const renderSidebarContent = () => (
     <>
-      {/* App Logo and Toggle - Modified to be on one line in desktop mode */}
+      {/* App Logo and Toggle - On one line and properly aligned */}
       <SidebarHeader className="flex items-center justify-between">
-        <div className="flex items-center justify-between w-full py-3">
-          {/* Show logo only in expanded state */}
-          {state !== 'collapsed' && (
-            <Link to="/app">
+        <div className="flex items-center justify-between w-full py-3 px-2">
+          {/* Show full logo in expanded state, small logo in collapsed state */}
+          <Link to="/app" className="ml-2">
+            {state === 'collapsed' ? (
+              <img src="/small-logo.svg" alt="TRUSTY" width={28} height={28} className="h-5 w-auto" />
+            ) : (
               <img src="/primary-logo.svg" alt="TRUSTY" width={120} height={28} className="h-5 w-auto" />
-            </Link>
-          )}
+            )}
+          </Link>
           
           {/* Toggle button - kept at the right side */}
           {!isMobile && (
@@ -67,7 +69,7 @@ const AppSidebar: React.FC = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/app')} className="text-base">
+                <SidebarMenuButton asChild isActive={isActive('/app')} className="text-base ml-2">
                   <Link to="/app" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app') && "text-primary-blue bg-primary-blue/10")}>
                     <Home className={cn("h-5 w-5", isActive('/app') ? "text-primary-blue" : "text-gray-800")} />
                     <span className={cn(isActive('/app') && "text-primary-blue")}>Home</span>
