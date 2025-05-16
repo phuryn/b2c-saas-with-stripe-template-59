@@ -1,14 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
-type ProtectedRouteProps = {
-  requiredRole?: 'administrator' | 'support' | 'user';
-};
-
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
-  const { user, userRole, isLoading } = useAuth();
+const ProtectedRoute: React.FC = () => {
+  const { user, isLoading } = useAuth();
   const location = useLocation();
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
@@ -30,7 +27,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
       // Log auth state for debugging
       console.log("Auth state in ProtectedRoute:", { 
         user: !!user, 
-        userRole, 
         isLoading, 
         path: location.pathname,
         redirectCount,
@@ -80,7 +76,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [user, userRole, isLoading, location.pathname, location.search, redirectCount, forceAccess]);
+  }, [user, isLoading, location.pathname, location.search, redirectCount, forceAccess]);
 
   // Show loading state until we've checked authentication
   if (isLoading || !hasCheckedAuth) {
@@ -113,26 +109,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
         </button>
       </div>
     );
-  }
-
-  // If a specific role is required, use the role check
-  if (requiredRole && !forceAccess) {
-    // If userRole is null due to database errors, we'll let the user through but show a warning
-    // This prevents being locked out of the app when there are database issues
-    if (userRole === null) {
-      // Show a warning toast that role permissions couldn't be verified
-      toast.warning("Could not verify permission level. Some features may be restricted.", {
-        duration: 5000,
-      });
-      console.warn("User role check failed, proceeding with limited access");
-      return <Outlet />;
-    }
-
-    // Check if user has required role (administrators can access everything)
-    if (userRole !== requiredRole && userRole !== 'administrator') {
-      console.log(`User role ${userRole} does not match required role ${requiredRole}`);
-      return <Navigate to="/" replace />;
-    }
   }
 
   return <Outlet />;
