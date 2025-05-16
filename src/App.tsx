@@ -26,7 +26,6 @@ import NotFound from "./pages/NotFound";
 
 // App pages
 import Dashboard from "./pages/app/Dashboard";
-import Links from "./pages/app/Links";
 import Settings from "./pages/app/settings/Settings";
 import ProfileSettings from "./pages/app/settings/ProfileSettings";
 import BillingSettings from "./pages/app/settings/BillingSettings";
@@ -89,7 +88,6 @@ const App = () => {
               <Route element={<ProtectedRoute />}>
                 <Route path="/app" element={<AppLayout />}>
                   <Route index element={<Dashboard />} />
-                  <Route path="links" element={<Links />} />
                   <Route path="settings" element={<Settings />}>
                     <Route index element={<Navigate to="/app/settings/profile" replace />} />
                     <Route path="profile" element={<ProfileSettings />} />

@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
   useSidebar
 } from '@/components/ui/sidebar';
-import { Home, Link2, Menu } from 'lucide-react';
+import { Home, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -76,18 +76,6 @@ const AppSidebar: React.FC = () => {
                   )}>
                     <Home className={cn("h-5 w-5", isActive('/app') ? "text-primary-blue" : "text-gray-800")} />
                     <span className={cn(isActive('/app') && "text-primary-blue")}>Home</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/app/links')} className="text-base">
-                  <Link to="/app/links" className={cn(
-                    "text-gray-800 hover:bg-[rgb(247_247_247)]", 
-                    isActive('/app/links') && "text-primary-blue bg-primary-blue/10"
-                  )}>
-                    <Link2 className={cn("h-5 w-5", isActive('/app/links') ? "text-primary-blue" : "text-gray-800")} />
-                    <span className={cn(isActive('/app/links') && "text-primary-blue")}>Links</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
