@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger } from '@/components/ui/sidebar';
-import { Home, Link2, ArrowLeft, ArrowRight, Menu } from 'lucide-react';
+import { Home, Link2, CircleChevronLeft, CircleChevronRight, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -38,7 +37,7 @@ const AppSidebar: React.FC = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <SidebarTrigger className="ml-auto">
-                  {state === 'collapsed' ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                  {/* The SidebarTrigger component now handles the icon internally */}
                 </SidebarTrigger>
               </TooltipTrigger>
               <TooltipContent side="right">
