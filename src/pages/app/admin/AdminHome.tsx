@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,33 +11,65 @@ import { getPlans } from '@/config/plans';
 import { useAuth } from '@/context/AuthContext';
 import { AlertCircle, CheckCircle2, Copy, File, InfoIcon } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { configureStripeCustomerPortal, checkStripeSecretConfigured } from '@/api/stripePortalConfig';
+import { 
+  configureStripeCustomerPortal, 
+  checkStripeSecretConfigured,
+  getStripePortalConfig 
+} from '@/api/stripePortalConfig';
 import { initializeStripeProducts } from '@/api/stripeProductsConfig';
+import PortalConfigView from '@/components/admin/PortalConfigView';
+import PortalConfigForm from '@/components/admin/PortalConfigForm';
 
 const AdminHome: React.FC = () => {
-  const [appUrl, setAppUrl] = useState('https://yourapp.com'); 
-  const [loading, setLoading] = useState(false);
-  const [initializationResult, setInitializationResult] = useState<{success?: boolean; message?: string; configId?: string} | null>(null);
   const [productsLoading, setProductsLoading] = useState(false);
   const [resultPriceIds, setResultPriceIds] = useState<Record<string, string>>({});
   const [isSecretKeySet, setIsSecretKeySet] = useState<boolean | null>(null);
   const { userRole } = useAuth();
   
-  // Check if Stripe secret key is set
+  // Portal configuration state
+  const [portalConfigLoading, setPortalConfigLoading] = useState(true);
+  const [portalConfig, setPortalConfig] = useState<any>(null);
+  const [isEditingPortalConfig, setIsEditingPortalConfig] = useState(false);
+  const [isSavingPortalConfig, setIsSavingPortalConfig] = useState(false);
+  
+  // Check if Stripe secret key is set and load portal configuration
   useEffect(() => {
-    async function checkSecretKey() {
+    async function initialize() {
       try {
         const isConfigured = await checkStripeSecretConfigured();
         setIsSecretKeySet(isConfigured);
+        
+        if (isConfigured) {
+          await loadPortalConfig();
+        }
       } catch (err) {
-        console.error('Failed to check if secret key is set:', err);
+        console.error('Failed to initialize admin panel:', err);
       }
     }
     
     if (userRole === 'administrator') {
-      checkSecretKey();
+      initialize();
     }
   }, [userRole]);
+  
+  // Load portal configuration
+  const loadPortalConfig = async () => {
+    setPortalConfigLoading(true);
+    try {
+      const result = await getStripePortalConfig();
+      
+      if (result.success && result.configExists) {
+        setPortalConfig(result.config);
+      } else {
+        setPortalConfig(null);
+      }
+    } catch (err) {
+      console.error('Error loading portal configuration:', err);
+      toast.error('Failed to load portal configuration');
+    } finally {
+      setPortalConfigLoading(false);
+    }
+  };
   
   // Function to initialize Stripe products and prices
   const handleInitializeProducts = async () => {
@@ -68,8 +101,8 @@ const AdminHome: React.FC = () => {
     }
   };
   
-  // Function to initialize Stripe customer portal
-  const handleInitializePortal = async () => {
+  // Function to save portal configuration
+  const handleSavePortalConfig = async (config: any) => {
     if (userRole !== 'administrator') {
       toast.error("Only administrators can perform this action");
       return;
@@ -80,38 +113,26 @@ const AdminHome: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-    setInitializationResult(null);
-    
+    setIsSavingPortalConfig(true);
     try {
-      const result = await configureStripeCustomerPortal(appUrl);
+      const result = await configureStripeCustomerPortal(config.app_url, config.features);
       
       if (!result.success) {
         throw new Error(result.error || "Failed to configure customer portal");
       }
       
-      setInitializationResult({
-        success: result.success,
-        message: result.message,
-        configId: result.configId
-      });
-      
+      setPortalConfig(result.config);
+      setIsEditingPortalConfig(false);
       toast.success("Customer portal configured successfully!");
     } catch (err) {
       console.error('Error configuring portal:', err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to configure customer portal";
-      toast.error(errorMessage);
-      setInitializationResult({
-        success: false,
-        message: errorMessage
-      });
+      toast.error(err instanceof Error ? err.message : "Failed to configure customer portal");
     } finally {
-      setLoading(false);
+      setIsSavingPortalConfig(false);
     }
   };
   
   // Format plans data for display
-  const plans = getPlans('monthly');
   const formatPlansForDisplay = () => {
     const plansCopy = JSON.parse(JSON.stringify(getPlans('monthly')));
     // Replace price IDs with asterisks for display
@@ -214,11 +235,56 @@ const AdminHome: React.FC = () => {
         </CardContent>
       </Card>
       
-      <Tabs defaultValue="products">
+      <Tabs defaultValue="portal">
         <TabsList className="mb-6">
-          <TabsTrigger value="products">Products & Prices</TabsTrigger>
           <TabsTrigger value="portal">Customer Portal</TabsTrigger>
+          <TabsTrigger value="products">Products & Prices</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="portal" className="space-y-6">
+          <div className="flex justify-end mb-4">
+            {!isEditingPortalConfig && (
+              <Button 
+                onClick={() => setIsEditingPortalConfig(true)}
+                variant="outline"
+                disabled={!isSecretKeySet}
+              >
+                {portalConfig ? "Edit Configuration" : "Create Configuration"}
+              </Button>
+            )}
+            {isEditingPortalConfig && (
+              <Button 
+                onClick={() => setIsEditingPortalConfig(false)}
+                variant="ghost"
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
+          
+          {isEditingPortalConfig ? (
+            <PortalConfigForm 
+              defaultConfig={portalConfig} 
+              onSubmit={handleSavePortalConfig}
+              isSubmitting={isSavingPortalConfig}
+            />
+          ) : (
+            <PortalConfigView 
+              config={portalConfig}
+              isLoading={portalConfigLoading}
+            />
+          )}
+          
+          <div className="text-sm text-muted-foreground mt-4 bg-muted p-4 rounded-md">
+            <p className="mb-2 font-medium">Technical details:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>These settings configure what customers can do in the Stripe Customer Portal</li>
+              <li>The configuration is stored in Stripe and cached in your database</li>
+              <li>Changes take effect immediately for all new portal sessions</li>
+              <li>Your customer-portal edge function automatically uses this configuration</li>
+            </ul>
+          </div>
+        </TabsContent>
         
         <TabsContent value="products">
           <Card>
@@ -295,73 +361,6 @@ const AdminHome: React.FC = () => {
                 className="mr-2"
               >
                 {productsLoading ? "Initializing..." : "Initialize Products and Prices"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="portal">
-          <Card>
-            <CardHeader>
-              <CardTitle>Initialize Customer Portal Configuration</CardTitle>
-              <CardDescription>
-                Configure the Stripe Customer Portal settings.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="app-url">Application URL</Label>
-                <Input 
-                  id="app-url"
-                  value={appUrl} 
-                  onChange={(e) => setAppUrl(e.target.value)}
-                  placeholder="https://yourdomain.com"
-                />
-                <p className="text-sm text-muted-foreground">
-                  This URL will be used to construct the terms of service and privacy policy links
-                </p>
-              </div>
-              
-              <Separator className="my-4" />
-              
-              <div className="space-y-2">
-                <h3 className="font-medium">Portal Configuration Details:</h3>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Allow customers to view invoices: <span className="font-medium">No</span></li>
-                  <li>Allow update billing information: <span className="font-medium">Yes</span> (Name, Address, Tax ID)</li>
-                  <li>Allow cancel subscriptions: <span className="font-medium">No</span></li>
-                  <li>Allow manage subscriptions: <span className="font-medium">No</span></li>
-                  <li>Terms of service: <span className="font-medium">{appUrl}/terms</span></li>
-                  <li>Privacy policy: <span className="font-medium">{appUrl}/privacy_policy</span></li>
-                </ul>
-              </div>
-              
-              {initializationResult && (
-                <Alert className="mt-4" variant={initializationResult.success ? "default" : "destructive"}>
-                  {initializationResult.success ? (
-                    <CheckCircle2 className="h-4 w-4" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4" />
-                  )}
-                  <AlertDescription>
-                    <p className="font-medium">
-                      {initializationResult.success ? "Portal configured successfully!" : "Error configuring portal"}
-                    </p>
-                    <p className="text-sm">{initializationResult.message}</p>
-                    {initializationResult.configId && (
-                      <p className="text-xs mt-1">Configuration ID: {initializationResult.configId}</p>
-                    )}
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={handleInitializePortal} 
-                disabled={loading || !isSecretKeySet}
-                className="mr-2"
-              >
-                {loading ? "Initializing..." : "Initialize Customer Portal"}
               </Button>
             </CardFooter>
           </Card>

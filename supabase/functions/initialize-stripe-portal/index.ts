@@ -101,8 +101,20 @@ serve(async (req) => {
     logStep("Stripe initialized");
     
     try {
+      // Extract portal configuration settings from request
+      const features = requestData.features || {
+        invoice_history: { enabled: true },
+        payment_method_update: { enabled: true },
+        customer_update: {
+          enabled: true,
+          allowed_updates: ['email', 'address', 'tax_id'],
+        },
+        subscription_cancel: { enabled: true },
+        subscription_update: { enabled: false },
+      };
+      
       // Configure the Stripe customer portal
-      logStep("Creating portal configuration with app URL", { appUrl });
+      logStep("Creating portal configuration with app URL", { appUrl, features });
       
       const portalConfiguration = await stripe.billingPortal.configurations.create({
         business_profile: {
@@ -110,24 +122,41 @@ serve(async (req) => {
           privacy_policy_url: `${appUrl}/privacy_policy`,
           terms_of_service_url: `${appUrl}/terms`,
         },
-        features: {
-          invoice_history: { enabled: true },
-          payment_method_update: { enabled: true },
-          customer_update: {
-            enabled: true,
-            allowed_updates: ['email', 'address', 'tax_id'],
-          },
-          subscription_cancel: { enabled: true },
-          subscription_update: { enabled: false },
-        },
+        features: features,
       });
       
       logStep("Customer portal configured", { configId: portalConfiguration.id });
       
+      // Store the configuration in the database for admin reference
+      const configData = {
+        config_id: portalConfiguration.id,
+        app_url: appUrl,
+        features: features,
+        created_at: new Date().toISOString(),
+        created_by: user.id,
+        is_active: true
+      };
+      
+      const { error: insertError } = await adminClient
+        .from("stripe_portal_config")
+        .upsert([configData], { onConflict: 'is_active' });
+      
+      if (insertError) {
+        logStep("ERROR", { message: `Failed to save configuration to database: ${insertError.message}` });
+        // Continue even if saving to DB fails, as the Stripe config was created successfully
+      } else {
+        logStep("Configuration saved to database");
+      }
+      
       return new Response(JSON.stringify({ 
         success: true, 
         message: "Customer portal configured successfully",
-        configId: portalConfiguration.id
+        configId: portalConfiguration.id,
+        config: {
+          app_url: appUrl,
+          features: features,
+          created_at: configData.created_at,
+        }
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

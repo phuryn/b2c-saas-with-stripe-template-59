@@ -2,17 +2,28 @@
 project_id = "bnwvnlgspaxuzbfiphik"
 
 [functions.check-subscription]
+verify_jwt = true
 
 [functions.create-checkout]
+verify_jwt = true
 
 [functions.customer-portal]
-
-[functions.update-subscription]
-
-[functions.get-prices]
+verify_jwt = true
 
 [functions.get-invoices]
+verify_jwt = true
 
-[functions.initialize-stripe-products]
+[functions.get-portal-config]
+verify_jwt = true
+
+[functions.get-prices]
+verify_jwt = true
 
 [functions.initialize-stripe-portal]
+verify_jwt = true
+
+[functions.initialize-stripe-products]
+verify_jwt = true
+
+[functions.update-subscription]
+verify_jwt = true
