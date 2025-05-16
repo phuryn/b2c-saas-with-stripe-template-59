@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
@@ -30,7 +31,7 @@ export function useSidebar() {
 }
 
 // Custom hook for mobile detection, must be called inside a component function
-function useIsMobile() {
+export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(false)
 
   React.useEffect(() => {

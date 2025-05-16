@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-// Import from sidebar-context instead of re-exporting
+// Import from sidebar-context including the useIsMobile hook
 import {
   useSidebar,
   useIsMobile,

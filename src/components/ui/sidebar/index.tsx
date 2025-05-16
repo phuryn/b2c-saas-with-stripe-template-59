@@ -27,11 +27,8 @@ export { SidebarFooter } from "./sidebar-components"
 export { 
   useSidebar,
   SidebarProvider,
+  useIsMobile,  // Added export of useIsMobile hook
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_MOBILE,
   SIDEBAR_WIDTH_ICON
 } from "./sidebar-context"
-
-// Import and use the global useIsMobile hook
-import { useIsMobile } from "@/hooks/use-mobile"
-export { useIsMobile }
