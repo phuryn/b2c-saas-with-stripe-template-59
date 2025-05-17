@@ -93,3 +93,7 @@ DROP TRIGGER IF EXISTS create_profile_on_signup ON auth.users;
 CREATE TRIGGER create_profile_on_signup
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.create_profile_for_user();
+
+-- Add unique constraint on email column in subscribers table
+ALTER TABLE IF EXISTS public.subscribers 
+ADD CONSTRAINT subscribers_email_key UNIQUE (email);
