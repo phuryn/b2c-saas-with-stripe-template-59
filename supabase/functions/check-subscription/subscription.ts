@@ -1,7 +1,8 @@
+
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { logStep } from "./logger.ts";
 import type { User } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { getStripeClient } from "./stripe.ts";
+import { getStripeClient, STRIPE_CONFIG } from "./stripe.ts";
 
 type SubscriptionData = {
   subscribed: boolean;
@@ -183,15 +184,22 @@ async function getActiveSubscription(stripe: Stripe, customerId: string) {
       cancelAtPeriodEnd
     });
 
-    // Return the exact price ID to ensure accurate plan identification in the frontend
-    // This allows the frontend to match the plan based on the specific cycle (monthly or yearly)
-    if (currentPlan === 'price_1RLoRRLdL9hht8n4Gcqi3p2b' || 
-        currentPlan === 'price_1RLoT5LdL9hht8n4n87AoFtZ') {
-      subscriptionTier = 'Standard';
+    // Use STRIPE_CONFIG to determine subscription tier based on price ID
+    const standardPriceIds = [
+      STRIPE_CONFIG.prices.standard.monthly,
+      STRIPE_CONFIG.prices.standard.yearly
+    ];
+    
+    const premiumPriceIds = [
+      STRIPE_CONFIG.prices.premium.monthly,
+      STRIPE_CONFIG.prices.premium.yearly
+    ];
+    
+    if (standardPriceIds.includes(currentPlan)) {
+      subscriptionTier = STRIPE_CONFIG.prices.standard.displayName;
       logStep("Determined subscription tier", { currentPlan, subscriptionTier });
-    } else if (currentPlan === 'price_1RLoRrLdL9hht8n4LZcdyKQt' || 
-               currentPlan === 'price_1RLoScLdL9hht8n4hSQtsOte') {
-      subscriptionTier = 'Premium';
+    } else if (premiumPriceIds.includes(currentPlan)) {
+      subscriptionTier = STRIPE_CONFIG.prices.premium.displayName;
       logStep("Determined subscription tier", { currentPlan, subscriptionTier });
     } else {
       subscriptionTier = 'Standard'; // Default

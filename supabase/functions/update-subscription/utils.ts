@@ -1,5 +1,6 @@
 
 // Common utilities for the update-subscription edge function
+import { STRIPE_CONFIG } from "../../../src/config/stripe.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,3 +11,6 @@ export const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[UPDATE-SUBSCRIPTION] ${step}${detailsStr}`);
 };
+
+// Export STRIPE_CONFIG for use in other files
+export { STRIPE_CONFIG };
