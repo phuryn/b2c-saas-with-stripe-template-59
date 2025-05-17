@@ -49,39 +49,3 @@ CREATE POLICY "Users can view own subscription"
 ON public.subscribers
 FOR SELECT
 USING (auth.uid() = user_id);
-
--- Policy: Users can update own subscriber record
-CREATE POLICY "Users can update own subscription"
-ON public.subscribers
-FOR UPDATE
-USING (auth.uid() = user_id);
-
--- Policy: Administrators can view all subscribers
-CREATE POLICY "Administrators can view all subscriptions"
-ON public.subscribers
-FOR SELECT
-USING (auth.uid() IN (
-  SELECT id FROM public.users WHERE role = 'administrator'
-));
-
--- Policy: Administrators can update all subscribers
-CREATE POLICY "Administrators can update all subscriptions"
-ON public.subscribers
-FOR UPDATE
-USING (auth.uid() IN (
-  SELECT id FROM public.users WHERE role = 'administrator'
-));
-
--- Policy: Administrators can insert subscribers
-CREATE POLICY "Administrators can insert subscriptions"
-ON public.subscribers
-FOR INSERT
-WITH CHECK (auth.uid() IN (
-  SELECT id FROM public.users WHERE role = 'administrator'
-));
-
--- Policy: Users can create their own subscription
-CREATE POLICY "Users can create their own subscription"
-ON public.subscribers
-FOR INSERT
-WITH CHECK (auth.uid() = user_id);
