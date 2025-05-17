@@ -8,43 +8,11 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscribers ENABLE ROW LEVEL SECURITY;
 
 -- USERS TABLE POLICIES
--- Policy: Administrators can view all users
-CREATE POLICY "Administrators can view all users"
-ON public.users
-FOR SELECT
-USING (auth.uid() IN (
-  SELECT id FROM public.users WHERE role = 'administrator'
-));
-
 -- Policy: Users can view own user record
 CREATE POLICY "Users can view own user record"
 ON public.users
 FOR SELECT
 USING (auth.uid() = id);
-
--- Policy: Administrators can insert users
-CREATE POLICY "Administrators can insert users"
-ON public.users
-FOR INSERT
-WITH CHECK (auth.uid() IN (
-  SELECT id FROM public.users WHERE role = 'administrator'
-));
-
--- Policy: Administrators can update users
-CREATE POLICY "Administrators can update users"
-ON public.users
-FOR UPDATE
-USING (auth.uid() IN (
-  SELECT id FROM public.users WHERE role = 'administrator'
-));
-
--- Policy: Administrators can delete users
-CREATE POLICY "Administrators can delete users"
-ON public.users
-FOR DELETE
-USING (auth.uid() IN (
-  SELECT id FROM public.users WHERE role = 'administrator'
-));
 
 -- PROFILES TABLE POLICIES
 -- Policy: Users can view own profile
