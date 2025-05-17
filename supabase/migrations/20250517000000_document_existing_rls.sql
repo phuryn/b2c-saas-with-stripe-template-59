@@ -1,7 +1,8 @@
 
--- This migration enables Row Level Security (RLS) policies
--- These policies will be executed during migration
+-- This migration is now obsolete and has been replaced by 20250517100000_update_rls_documentation.sql
+-- Please refer to the newer migration for accurate RLS policy documentation.
 
+-- DEPRECATED: Original content below for reference
 -- Enable RLS on these tables
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
