@@ -1,6 +1,6 @@
 
 // Common utilities for the update-subscription edge function
-import { STRIPE_CONFIG } from "../../../src/config/stripe.ts";
+import { STRIPE_CONFIG } from "../shared/stripe-config.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

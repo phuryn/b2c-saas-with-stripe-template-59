@@ -1,6 +1,7 @@
 
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { logStep } from "./utils.ts";
+import { STRIPE_CONFIG } from "../shared/stripe-config.ts";
 
 export async function cancelSubscription(stripe: Stripe, subscriptionId: string) {
   logStep("Scheduling subscription for cancellation at period end");
