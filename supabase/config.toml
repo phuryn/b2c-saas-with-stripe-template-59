@@ -1,18 +1,1 @@
-
-project_id = "bnwvnlgspaxuzbfiphik"
-
-[functions.check-subscription]
-
-[functions.create-checkout]
-
-[functions.customer-portal]
-
-[functions.update-subscription]
-
-[functions.get-prices]
-
-[functions.get-invoices]
-
-[functions.initialize-stripe-products]
-
-[functions.initialize-stripe-portal]
+project_id = "lrcjxltkejimlkmvtfik"
