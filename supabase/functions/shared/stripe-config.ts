@@ -1,4 +1,10 @@
 
+/**
+ * Stripe Configuration - Version 1.0.0
+ * Last updated: 2025-05-22
+ * Contains price IDs and customer portal URL
+ */
+
 export const STRIPE_CONFIG = {
   prices: {
     standard: {
