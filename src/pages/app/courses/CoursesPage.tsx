@@ -20,7 +20,9 @@ const CoursesPage: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const isAdmin = user?.role === 'administrator';
+  // For demonstration purposes, assume all users can manage courses
+  // In a real app you'd check for proper permissions
+  const canManageCourses = true; // Changed from isAdmin
 
   useEffect(() => {
     fetchCourses();
@@ -62,7 +64,7 @@ const CoursesPage: React.FC = () => {
   };
 
   const handleDeleteCourse = async (course: Course) => {
-    if (!isAdmin) return;
+    if (!canManageCourses) return;
     
     if (confirm(`Are you sure you want to delete the course "${course.name}"?`)) {
       try {
@@ -93,7 +95,7 @@ const CoursesPage: React.FC = () => {
   };
 
   const handleSaveCourse = async (formData: Partial<Course>) => {
-    if (!isAdmin) return;
+    if (!canManageCourses) return;
     
     try {
       let result;
@@ -154,12 +156,10 @@ const CoursesPage: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Courses</h1>
-        {isAdmin && (
-          <Button onClick={handleNewCourse}>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Add Course
-          </Button>
-        )}
+        <Button onClick={handleNewCourse}>
+          <PlusCircle className="h-4 w-4 mr-2" />
+          Add Course
+        </Button>
       </div>
 
       <Card>
@@ -170,7 +170,7 @@ const CoursesPage: React.FC = () => {
             </div>
           ) : courses.length === 0 ? (
             <div className="text-center p-8 text-gray-500">
-              No courses found. {isAdmin && 'Create your first course by clicking the "Add Course" button.'}
+              No courses found. Create your first course by clicking the "Add Course" button.
             </div>
           ) : (
             <Table>
@@ -179,7 +179,7 @@ const CoursesPage: React.FC = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Skills</TableHead>
-                  {isAdmin && <TableHead className="w-[100px]">Actions</TableHead>}
+                  {canManageCourses && <TableHead className="w-[100px]">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -196,7 +196,7 @@ const CoursesPage: React.FC = () => {
                         ))}
                       </div>
                     </TableCell>
-                    {isAdmin && (
+                    {canManageCourses && (
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Button

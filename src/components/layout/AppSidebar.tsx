@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
@@ -20,9 +19,6 @@ const AppSidebar: React.FC = () => {
   const {
     user
   } = useAuth();
-
-  // Check if user is an administrator
-  const isAdmin = user?.role === 'administrator';
 
   const isActive = (path: string) => {
     if (path === '/app') {
@@ -74,17 +70,15 @@ const AppSidebar: React.FC = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
-              {/* Courses menu item - Only visible to administrators */}
-              {isAdmin && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/app/courses')} className="text-base ml-2">
-                    <Link to="/app/courses" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app/courses') && "text-primary-blue bg-primary-blue/10")}>
-                      <GraduationCap className={cn("h-5 w-5", isActive('/app/courses') ? "text-primary-blue" : "text-gray-800")} />
-                      <span className={cn("ml-2", isActive('/app/courses') && "text-primary-blue")}>Courses</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
+              {/* Courses menu item - Make visible to all users */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/app/courses')} className="text-base ml-2">
+                  <Link to="/app/courses" className={cn("text-gray-800 hover:bg-[rgb(247_247_247)]", isActive('/app/courses') && "text-primary-blue bg-primary-blue/10")}>
+                    <GraduationCap className={cn("h-5 w-5", isActive('/app/courses') ? "text-primary-blue" : "text-gray-800")} />
+                    <span className={cn("ml-2", isActive('/app/courses') && "text-primary-blue")}>Courses</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
