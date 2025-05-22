@@ -1,11 +1,9 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Course } from '@/types/course';
@@ -41,9 +39,9 @@ const CourseForm: React.FC<CourseFormProps> = ({ course, onSave, onCancel }) => 
   const onSubmit = (values: FormValues) => {
     onSave({
       name: values.name,
-      description: values.description,
-      criteria: values.criteria,
-      skills: values.skills,
+      description: values.description || null,
+      criteria: values.criteria || null,
+      skills: values.skills, // This is now correctly transformed to string[] by our schema
     });
   };
 
