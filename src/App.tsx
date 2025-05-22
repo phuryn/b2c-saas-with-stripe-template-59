@@ -30,6 +30,8 @@ import Settings from "./pages/app/settings/Settings";
 import ProfileSettings from "./pages/app/settings/ProfileSettings";
 import BillingSettings from "./pages/app/settings/BillingSettings";
 import PlanSettings from "./pages/app/settings/PlanSettings";
+// Courses page
+import CoursesPage from "./pages/app/courses/CoursesPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -87,6 +89,7 @@ const App = () => {
               <Route element={<ProtectedRoute />}>
                 <Route path="/app" element={<AppLayout />}>
                   <Route index element={<Dashboard />} />
+                  <Route path="courses" element={<CoursesPage />} />
                   <Route path="settings" element={<Settings />}>
                     <Route index element={<Navigate to="/app/settings/profile" replace />} />
                     <Route path="profile" element={<ProfileSettings />} />
