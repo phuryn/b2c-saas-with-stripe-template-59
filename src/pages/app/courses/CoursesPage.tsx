@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import CourseForm from '@/components/courses/CourseForm';
 import { useAuth } from '@/context/AuthContext';
 import { Course } from '@/types/course';
+import { Navigate } from 'react-router-dom';
 
 const CoursesPage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -18,15 +18,21 @@ const CoursesPage: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
 
-  // For demonstration purposes, assume all users can manage courses
-  // In a real app you'd check for proper permissions
-  const canManageCourses = true; // Changed from isAdmin
+  // Check if user is an administrator
+  const isAdmin = userRole === 'administrator';
 
   useEffect(() => {
-    fetchCourses();
-  }, []);
+    if (isAdmin) {
+      fetchCourses();
+    }
+  }, [isAdmin]);
+
+  // If not an admin, redirect to home
+  if (!isAdmin) {
+    return <Navigate to="/app" replace />;
+  }
 
   const fetchCourses = async () => {
     try {
@@ -64,7 +70,7 @@ const CoursesPage: React.FC = () => {
   };
 
   const handleDeleteCourse = async (course: Course) => {
-    if (!canManageCourses) return;
+    if (!isAdmin) return;
     
     if (confirm(`Are you sure you want to delete the course "${course.name}"?`)) {
       try {
@@ -95,7 +101,7 @@ const CoursesPage: React.FC = () => {
   };
 
   const handleSaveCourse = async (formData: Partial<Course>) => {
-    if (!canManageCourses) return;
+    if (!isAdmin) return;
     
     try {
       let result;
@@ -179,7 +185,7 @@ const CoursesPage: React.FC = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Skills</TableHead>
-                  {canManageCourses && <TableHead className="w-[100px]">Actions</TableHead>}
+                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -196,7 +202,7 @@ const CoursesPage: React.FC = () => {
                         ))}
                       </div>
                     </TableCell>
-                    {canManageCourses && (
+                    
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Button
@@ -217,7 +223,7 @@ const CoursesPage: React.FC = () => {
                           </Button>
                         </div>
                       </TableCell>
-                    )}
+                    
                   </TableRow>
                 ))}
               </TableBody>
